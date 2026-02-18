@@ -42,6 +42,12 @@ ha-card {
   color: var(--primary-text-color);
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .nav-button[disabled] {
   opacity: 0.4;
   cursor: default;

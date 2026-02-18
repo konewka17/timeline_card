@@ -22,6 +22,7 @@ class TimelineCard extends HTMLElement {
     this._hass = null;
     this._loading = false;
     this._error = null;
+    this._rendered = false;
 
     this.shadowRoot.addEventListener("click", (event) => {
       const target = event.target.closest("[data-action]");
@@ -31,6 +32,8 @@ class TimelineCard extends HTMLElement {
         this._shiftDate(-1);
       } else if (action === "next") {
         this._shiftDate(1);
+      } else if (action === "refresh") {
+        this._refreshCurrentDay();
       }
     });
   }
@@ -50,10 +53,15 @@ class TimelineCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (this._config.entity) {
+    if (!this._config.entity) return;
+    const dateKey = toDateKey(this._selectedDate);
+    if (!this._cache.has(dateKey)) {
       this._ensureDay(this._selectedDate);
     }
-    this._render();
+    if (!this._rendered) {
+      this._render();
+      this._rendered = true;
+    }
   }
 
   getCardSize() {
@@ -64,6 +72,13 @@ class TimelineCard extends HTMLElement {
     const next = new Date(this._selectedDate);
     next.setDate(next.getDate() + direction);
     this._selectedDate = startOfDay(next);
+    this._ensureDay(this._selectedDate);
+    this._render();
+  }
+
+  _refreshCurrentDay() {
+    const key = toDateKey(this._selectedDate);
+    this._cache.delete(key);
     this._ensureDay(this._selectedDate);
     this._render();
   }
@@ -127,7 +142,10 @@ class TimelineCard extends HTMLElement {
           <div class="header">
             <ha-icon-button class="nav-button" data-action="prev" label="Previous day" icon="mdi:chevron-left"></ha-icon-button>
             <div class="date">${formatDate(this._selectedDate)}</div>
-            <ha-icon-button class="nav-button" data-action="next" label="Next day" icon="mdi:chevron-right" ${isFuture ? "disabled" : ""}></ha-icon-button>
+            <div class="header-actions">
+              <ha-icon-button class="nav-button" data-action="refresh" label="Refresh" icon="mdi:refresh"></ha-icon-button>
+              <ha-icon-button class="nav-button" data-action="next" label="Next day" icon="mdi:chevron-right" ${isFuture ? "disabled" : ""}></ha-icon-button>
+            </div>
           </div>
           <div class="body">
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
