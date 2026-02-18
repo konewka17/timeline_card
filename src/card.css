@@ -125,3 +125,12 @@ ha-card {
   font-size: 0.75rem;
   color: var(--disabled-text-color);
 }
+
+.debug {
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 0.75rem;
+  color: var(--secondary-text-color);
+  background: var(--secondary-background-color);
+  border-radius: 8px;
+}

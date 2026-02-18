@@ -35,12 +35,14 @@ min_stay_minutes: 10
 | `entity` | string | **required** | `device_tracker` or `person` entity to pull GPS history from. |
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
+| `show_debug` | boolean | `false` | Show debug info (points/zones/first/last timestamps). |
 
 ## Lovelace UI editor
 The card exposes a visual editor with:
 - Tracked entity selector
 - Stay radius (meters)
 - Minimum stay duration (minutes)
+- Debug toggle
 
 ## Notes
 - The card reads raw GPS history from the entity’s latitude/longitude attributes.

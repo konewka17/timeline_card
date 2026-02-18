@@ -328,6 +328,7 @@ function escapeHtml(text) {
 const OPTIONS = {
   stay_radius_m: 75,
   min_stay_minutes: 10,
+  show_debug: false,
 };
 
 class TimelineCardEditor extends HTMLElement {
@@ -383,9 +384,22 @@ class TimelineCardEditor extends HTMLElement {
     minStay.value = String(this._config.min_stay_minutes ?? OPTIONS.min_stay_minutes);
     minStay.addEventListener("input", (ev) => this._onNumberChanged("min_stay_minutes", ev));
 
+    const debugRow = document.createElement("label");
+    debugRow.style.display = "flex";
+    debugRow.style.alignItems = "center";
+    debugRow.style.justifyContent = "space-between";
+    debugRow.style.gap = "12px";
+    debugRow.textContent = "Show debug";
+
+    const debugToggle = document.createElement("ha-switch");
+    debugToggle.checked = Boolean(this._config.show_debug ?? OPTIONS.show_debug);
+    debugToggle.addEventListener("change", (ev) => this._onToggleChanged("show_debug", ev));
+    debugRow.appendChild(debugToggle);
+
     form.appendChild(entityPicker);
     form.appendChild(stayRadius);
     form.appendChild(minStay);
+    form.appendChild(debugRow);
     this.shadowRoot.appendChild(form);
   }
 
@@ -399,6 +413,11 @@ class TimelineCardEditor extends HTMLElement {
     const value = Number(ev.target.value);
     if (!Number.isFinite(value)) return;
     this._config = { ...this._config, [key]: value };
+    this._emitChange();
+  }
+
+  _onToggleChanged(key, ev) {
+    this._config = { ...this._config, [key]: Boolean(ev.target.checked) };
     this._emitChange();
   }
 
@@ -419,6 +438,7 @@ const DEFAULT_CONFIG = {
   entity: null,
   stay_radius_m: 75,
   min_stay_minutes: 10,
+  show_debug: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -482,7 +502,7 @@ class TimelineCard extends HTMLElement {
     const existing = this._cache.get(key);
     if (existing && (existing.segments || existing.loading)) return;
 
-    this._cache.set(key, { loading: true, segments: null, error: null });
+    this._cache.set(key, { loading: true, segments: null, error: null, debug: null });
     this._render();
 
     try {
@@ -492,12 +512,20 @@ class TimelineCard extends HTMLElement {
         stayRadiusM: this._config.stay_radius_m,
         minStayMinutes: this._config.min_stay_minutes,
       }, zones);
-      this._cache.set(key, { loading: false, segments, error: null });
+      const debug = {
+        points: points.length,
+        zones: zones.length,
+        first: points[0]?.ts || null,
+        last: points[points.length - 1]?.ts || null,
+      };
+      this._cache.set(key, { loading: false, segments, error: null, debug });
     } catch (err) {
+      console.warn("Timeline card: history fetch failed", err);
       this._cache.set(key, {
         loading: false,
         segments: null,
-        error: err && err.message ? err.message : "Unable to load history",
+        error: this._formatErrorMessage(err),
+        debug: null,
       });
     }
     this._render();
@@ -519,7 +547,7 @@ class TimelineCard extends HTMLElement {
   _render() {
     if (!this.shadowRoot) return;
     const dateKey = toDateKey(this._selectedDate);
-    const dayData = this._cache.get(dateKey) || { loading: false, segments: null, error: null };
+    const dayData = this._cache.get(dateKey) || { loading: false, segments: null, error: null, debug: null };
     const isFuture = this._selectedDate > startOfDay(new Date());
 
     this.shadowRoot.innerHTML = `
@@ -534,10 +562,31 @@ class TimelineCard extends HTMLElement {
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
+            ${this._config.show_debug ? this._renderDebug(dayData) : ""}
           </div>
         </div>
       </ha-card>
     `;
+  }
+
+  _renderDebug(dayData) {
+    const debug = dayData.debug;
+    if (!debug) return `<div class="debug">Debug: no data</div>`;
+    const first = debug.first ? new Date(debug.first).toLocaleString() : "n/a";
+    const last = debug.last ? new Date(debug.last).toLocaleString() : "n/a";
+    return `
+      <div class="debug">
+        Debug: points=${debug.points}, zones=${debug.zones}, first=${first}, last=${last}
+      </div>
+    `;
+  }
+
+  _formatErrorMessage(err) {
+    const message = err && err.message ? String(err.message) : "";
+    if (message.toLowerCase().includes("unknown command")) {
+      return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
+    }
+    return message || "Unable to load history";
   }
 }
 
@@ -559,6 +608,7 @@ function getStubConfig() {
     entity: "device_tracker.your_device",
     stay_radius_m: 75,
     min_stay_minutes: 10,
+    show_debug: false,
   };
 }
 

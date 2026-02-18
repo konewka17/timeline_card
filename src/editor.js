@@ -1,6 +1,7 @@
 const OPTIONS = {
   stay_radius_m: 75,
   min_stay_minutes: 10,
+  show_debug: false,
 };
 
 class TimelineCardEditor extends HTMLElement {
@@ -56,9 +57,22 @@ class TimelineCardEditor extends HTMLElement {
     minStay.value = String(this._config.min_stay_minutes ?? OPTIONS.min_stay_minutes);
     minStay.addEventListener("input", (ev) => this._onNumberChanged("min_stay_minutes", ev));
 
+    const debugRow = document.createElement("label");
+    debugRow.style.display = "flex";
+    debugRow.style.alignItems = "center";
+    debugRow.style.justifyContent = "space-between";
+    debugRow.style.gap = "12px";
+    debugRow.textContent = "Show debug";
+
+    const debugToggle = document.createElement("ha-switch");
+    debugToggle.checked = Boolean(this._config.show_debug ?? OPTIONS.show_debug);
+    debugToggle.addEventListener("change", (ev) => this._onToggleChanged("show_debug", ev));
+    debugRow.appendChild(debugToggle);
+
     form.appendChild(entityPicker);
     form.appendChild(stayRadius);
     form.appendChild(minStay);
+    form.appendChild(debugRow);
     this.shadowRoot.appendChild(form);
   }
 
@@ -72,6 +86,11 @@ class TimelineCardEditor extends HTMLElement {
     const value = Number(ev.target.value);
     if (!Number.isFinite(value)) return;
     this._config = { ...this._config, [key]: value };
+    this._emitChange();
+  }
+
+  _onToggleChanged(key, ev) {
+    this._config = { ...this._config, [key]: Boolean(ev.target.checked) };
     this._emitChange();
   }
 
