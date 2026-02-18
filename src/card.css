@@ -164,6 +164,12 @@ ha-card {
   color: var(--secondary-text-color);
 }
 
+.entry.stay .title{
+  background-color: #0001;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
 .title {
   font-size: 0.95rem;
   font-weight: 600;
@@ -173,6 +179,7 @@ ha-card {
 .meta {
   font-size: 0.85rem;
   color: var(--secondary-text-color);
+  font-weight: normal;
 }
 
 .debug {

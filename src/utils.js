@@ -46,9 +46,9 @@ export function formatDuration(ms) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return `${hours} h ${minutes} min`;
   }
-  return `${minutes}m`;
+  return `${minutes} min`;
 }
 
 export function formatDistance(meters) {
