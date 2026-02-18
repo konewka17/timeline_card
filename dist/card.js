@@ -303,10 +303,8 @@ function renderSegment(segment) {
           <ha-icon icon="mdi:map-marker-radius"></ha-icon>
         </div>
         <div class="content">
-          <div class="title">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+          <div><span class="title">${escapeHtml(segment.zoneName || "Unknown location")}</span> • ${renderCoords(segment)}</div>
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
-          <div class="meta">${formatDuration(segment.durationMs)}</div>
-          ${renderCoords(segment)}
         </div>
       </div>
     `;
@@ -319,7 +317,6 @@ function renderSegment(segment) {
       </div>
       <div class="content">
         <div class="title">Travel</div>
-        <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
         <div class="meta">${formatDuration(segment.durationMs)} • ${formatDistance(segment.distanceM)}</div>
       </div>
     </div>
@@ -579,7 +576,7 @@ class TimelineCard extends HTMLElement {
     if (!this.shadowRoot) return;
     const dateKey = toDateKey(this._selectedDate);
     const dayData = this._cache.get(dateKey) || { loading: false, segments: null, error: null, debug: null };
-    const isFuture = this._selectedDate > startOfDay(new Date());
+    const isFuture = this._selectedDate >= startOfDay(new Date());
 
     this.shadowRoot.innerHTML = `
       <style>${css}</style>

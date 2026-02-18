@@ -20,10 +20,8 @@ function renderSegment(segment) {
           <ha-icon icon="mdi:map-marker-radius"></ha-icon>
         </div>
         <div class="content">
-          <div class="title">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+          <div><span class="title">${escapeHtml(segment.zoneName || "Unknown location")}</span> • ${renderCoords(segment)}</div>
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
-          <div class="meta">${formatDuration(segment.durationMs)}</div>
-          ${renderCoords(segment)}
         </div>
       </div>
     `;
@@ -36,7 +34,6 @@ function renderSegment(segment) {
       </div>
       <div class="content">
         <div class="title">Travel</div>
-        <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
         <div class="meta">${formatDuration(segment.durationMs)} • ${formatDistance(segment.distanceM)}</div>
       </div>
     </div>

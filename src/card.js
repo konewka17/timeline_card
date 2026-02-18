@@ -134,7 +134,7 @@ class TimelineCard extends HTMLElement {
     if (!this.shadowRoot) return;
     const dateKey = toDateKey(this._selectedDate);
     const dayData = this._cache.get(dateKey) || { loading: false, segments: null, error: null, debug: null };
-    const isFuture = this._selectedDate > startOfDay(new Date());
+    const isFuture = this._selectedDate >= startOfDay(new Date());
 
     this.shadowRoot.innerHTML = `
       <style>${css}</style>
