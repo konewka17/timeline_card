@@ -73,48 +73,89 @@ ha-card {
 
 .timeline {
   position: relative;
-  padding-left: 24px;
+  padding: 8px 0;
 }
 
-.timeline::before {
-  content: "";
+.spine {
   position: absolute;
-  left: 12px;
   top: 0;
   bottom: 0;
-  width: 2px;
+  left: 76px;
+  width: 8px;
   background: var(--divider-color);
+  border-radius: 999px;
 }
 
 .entry {
   position: relative;
   display: grid;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 56px 32px 1fr auto;
+  align-items: center;
   column-gap: 12px;
   padding: 12px 0;
 }
 
-.marker {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  color: white;
+.left-icon {
   display: flex;
-  padding: 4px;
+  justify-content: flex-end;
+  padding-right: 4px;
+}
+
+.icon-ring {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--card-background-color, #fff);
+  border: 3px solid var(--primary-color);
+  display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 0 4px var(--card-background-color, #fff);
 }
 
-.entry.move .marker {
-  background: var(--secondary-color, #546e7a);
+.line-slot {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.line-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary-color) 45%, transparent);
+}
+
+.stay-icon {
+  color: var(--primary-color);
+}
+
+.move-icon {
+  color: var(--disabled-text-color);
 }
 
 .content {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.content.location {
+  align-items: flex-start;
+}
+
+.content.location.travel {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary-text-color);
+}
+
+.content.time {
+  justify-self: end;
+  text-align: right;
 }
 
 .title {
@@ -126,11 +167,6 @@ ha-card {
 .meta {
   font-size: 0.85rem;
   color: var(--secondary-text-color);
-}
-
-.coords {
-  font-size: 0.75rem;
-  color: var(--disabled-text-color);
 }
 
 .debug {

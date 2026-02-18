@@ -1,4 +1,4 @@
-var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding-left: 24px;\n}\n\n.timeline::before {\n  content: \"\";\n  position: absolute;\n  left: 12px;\n  top: 0;\n  bottom: 0;\n  width: 2px;\n  background: var(--divider-color);\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 24px 1fr;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.marker {\n  width: 20px;\n  height: 20px;\n  border-radius: 50%;\n  background: var(--primary-color);\n  color: white;\n  display: flex;\n  padding: 4px;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.entry.move .marker {\n  background: var(--secondary-color, #546e7a);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n}\n\n.coords {\n  font-size: 0.75rem;\n  color: var(--disabled-text-color);\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n";
+var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding: 8px 0;\n}\n\n.spine {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 76px;\n  width: 8px;\n  background: var(--divider-color);\n  border-radius: 999px;\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 56px 32px 1fr auto;\n  align-items: center;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.left-icon {\n  display: flex;\n  justify-content: flex-end;\n  padding-right: 4px;\n}\n\n.icon-ring {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--card-background-color, #fff);\n  border: 3px solid var(--primary-color);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.line-slot {\n  position: relative;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.line-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: color-mix(in srgb, var(--primary-color) 45%, transparent);\n}\n\n.stay-icon {\n  color: var(--primary-color);\n}\n\n.move-icon {\n  color: var(--disabled-text-color);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.content.location {\n  align-items: flex-start;\n}\n\n.content.location.travel {\n  flex-direction: row;\n  align-items: center;\n  gap: 6px;\n  color: var(--secondary-text-color);\n}\n\n.content.time {\n  justify-self: end;\n  text-align: right;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n";
 
 function toDateKey(date) {
   const y = date.getFullYear();
@@ -51,14 +51,6 @@ function formatDuration(ms) {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m`;
-}
-
-function formatDistance(meters) {
-  if (!Number.isFinite(meters)) return "0 m";
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`;
-  }
-  return `${Math.round(meters)} m`;
 }
 
 function haversineMeters(a, b) {
@@ -290,6 +282,7 @@ function renderTimeline(segments) {
 
   return `
     <div class="timeline">
+      <div class="spine"></div>
       ${segments.map(renderSegment).join("")}
     </div>
   `;
@@ -299,11 +292,18 @@ function renderSegment(segment) {
   if (segment.type === "stay") {
     return `
       <div class="entry stay">
-        <div class="marker">
-          <ha-icon icon="mdi:map-marker-radius"></ha-icon>
+        <div class="left-icon">
+          <div class="icon-ring">
+            <ha-icon class="stay-icon" icon="mdi:map-marker"></ha-icon>
+          </div>
         </div>
-        <div class="content">
-          <div class="title" title="${renderCoords(segment)}">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+        <div class="line-slot">
+          <div class="line-dot"></div>
+        </div>
+        <div class="content location">
+          <div class="title">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+        </div>
+        <div class="content time">
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
         </div>
       </div>
@@ -312,22 +312,17 @@ function renderSegment(segment) {
 
   return `
     <div class="entry move">
-      <div class="marker">
-        <ha-icon icon="mdi:car"></ha-icon>
-      </div>
-      <div class="content">
+      <div class="left-icon"></div>
+      <div class="line-slot"></div>
+      <div class="content location travel">
+        <ha-icon class="move-icon" icon="mdi:car"></ha-icon>
         <div class="title">Travel</div>
-        <div class="meta">${formatDuration(segment.durationMs)} • ${formatDistance(segment.distanceM)}</div>
+      </div>
+      <div class="content time">
+        <div class="meta">${formatDuration(segment.durationMs)}</div>
       </div>
     </div>
   `;
-}
-
-function renderCoords(segment) {
-  if (!segment.center) return "";
-  const lat = segment.center.lat.toFixed(5);
-  const lon = segment.center.lon.toFixed(5);
-  return `${lat}, ${lon}`;
 }
 
 function escapeHtml(text) {
@@ -582,7 +577,7 @@ class TimelineCard extends HTMLElement {
       <style>${css}</style>
       <ha-card>
         <div class="card">
-          <div class="header">
+          <div class="header my-header">
             <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
             <div class="date">${formatDate(this._selectedDate)}</div>
             <div class="header-actions">

@@ -140,7 +140,7 @@ class TimelineCard extends HTMLElement {
       <style>${css}</style>
       <ha-card>
         <div class="card">
-          <div class="header">
+          <div class="header my-header">
             <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
             <div class="date">${formatDate(this._selectedDate)}</div>
             <div class="header-actions">
