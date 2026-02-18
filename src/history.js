@@ -1,6 +1,13 @@
 import { startOfDay, endOfDay } from "./utils.js";
 
 export async function fetchHistory(hass, entityId, date) {
+  const states = await fetchEntityHistory(hass, entityId, date);
+  return states
+    .map((state) => toPoint(state))
+    .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+}
+
+export async function fetchEntityHistory(hass, entityId, date) {
   if (!hass || !entityId) return [];
   const start = startOfDay(date);
   const end = endOfDay(date);
@@ -16,9 +23,7 @@ export async function fetchHistory(hass, entityId, date) {
 
   const response = await callWS(hass, message);
   const states = extractEntityStates(response, entityId);
-  return states
-    .map((state) => toPoint(state))
-    .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+  return states.map((state) => normalizeState(state)).filter(Boolean);
 }
 
 async function callWS(hass, message) {
@@ -45,8 +50,20 @@ function extractEntityStates(response, entityId) {
   return response.filter((state) => state.entity_id === entityId);
 }
 
-function toPoint(state) {
+function normalizeState(state) {
+  if (!state) return null;
   const attrs = state.attributes || state.a || {};
+  const tsValue = state.last_changed || state.last_updated || state.created || state.timestamp || state.lu;
+  const ts = tsValue ? new Date(tsValue * 1000 || tsValue) : new Date();
+  return {
+    state: state.state ?? state.s ?? null,
+    attributes: attrs,
+    ts,
+  };
+}
+
+function toPoint(state) {
+  const attrs = state.attributes || {};
   let lat = Number(attrs.latitude);
   let lon = Number(attrs.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -56,12 +73,10 @@ function toPoint(state) {
       lon = Number(gps[1]);
     }
   }
-  const tsValue = state.last_changed || state.last_updated || state.created || state.timestamp || state.lu;
-  const ts = tsValue ? new Date(tsValue * 1000 || tsValue) : new Date();
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return {
     lat,
     lon,
-    ts,
+    ts: state.ts,
   };
 }

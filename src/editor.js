@@ -1,4 +1,5 @@
 const OPTIONS = {
+  places_entity: null,
   stay_radius_m: 75,
   min_stay_minutes: 10,
   show_debug: false,
@@ -57,6 +58,13 @@ class TimelineCardEditor extends HTMLElement {
     minStay.value = String(this._config.min_stay_minutes ?? OPTIONS.min_stay_minutes);
     minStay.addEventListener("input", (ev) => this._onNumberChanged("min_stay_minutes", ev));
 
+    const placesPicker = document.createElement("ha-entity-picker");
+    placesPicker.setAttribute("label", "Places entity (optional)");
+    placesPicker.hass = this._hass;
+    placesPicker.value = this._config.places_entity || "";
+    placesPicker.includeDomains = ["sensor"];
+    placesPicker.addEventListener("value-changed", (ev) => this._onEntityFieldChanged("places_entity", ev));
+
     const debugRow = document.createElement("label");
     debugRow.style.display = "flex";
     debugRow.style.alignItems = "center";
@@ -70,6 +78,7 @@ class TimelineCardEditor extends HTMLElement {
     debugRow.appendChild(debugToggle);
 
     form.appendChild(entityPicker);
+    form.appendChild(placesPicker);
     form.appendChild(stayRadius);
     form.appendChild(minStay);
     form.appendChild(debugRow);
@@ -79,6 +88,12 @@ class TimelineCardEditor extends HTMLElement {
   _onEntityChanged(ev) {
     const value = ev?.detail?.value || "";
     this._config = { ...this._config, entity: value };
+    this._emitChange();
+  }
+
+  _onEntityFieldChanged(key, ev) {
+    const value = ev?.detail?.value || "";
+    this._config = { ...this._config, [key]: value || null };
     this._emitChange();
   }
 

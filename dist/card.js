@@ -75,6 +75,13 @@ function haversineMeters(a, b) {
 }
 
 async function fetchHistory(hass, entityId, date) {
+  const states = await fetchEntityHistory(hass, entityId, date);
+  return states
+    .map((state) => toPoint(state))
+    .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+}
+
+async function fetchEntityHistory(hass, entityId, date) {
   if (!hass || !entityId) return [];
   const start = startOfDay(date);
   const end = endOfDay(date);
@@ -90,9 +97,7 @@ async function fetchHistory(hass, entityId, date) {
 
   const response = await callWS(hass, message);
   const states = extractEntityStates(response, entityId);
-  return states
-    .map((state) => toPoint(state))
-    .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+  return states.map((state) => normalizeState(state)).filter(Boolean);
 }
 
 async function callWS(hass, message) {
@@ -119,8 +124,20 @@ function extractEntityStates(response, entityId) {
   return response.filter((state) => state.entity_id === entityId);
 }
 
-function toPoint(state) {
+function normalizeState(state) {
+  if (!state) return null;
   const attrs = state.attributes || state.a || {};
+  const tsValue = state.last_changed || state.last_updated || state.created || state.timestamp || state.lu;
+  const ts = tsValue ? new Date(tsValue * 1000 || tsValue) : new Date();
+  return {
+    state: state.state ?? state.s ?? null,
+    attributes: attrs,
+    ts,
+  };
+}
+
+function toPoint(state) {
+  const attrs = state.attributes || {};
   let lat = Number(attrs.latitude);
   let lon = Number(attrs.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -130,13 +147,11 @@ function toPoint(state) {
       lon = Number(gps[1]);
     }
   }
-  const tsValue = state.last_changed || state.last_updated || state.created || state.timestamp || state.lu;
-  const ts = tsValue ? new Date(tsValue * 1000 || tsValue) : new Date();
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return {
     lat,
     lon,
-    ts,
+    ts: state.ts,
   };
 }
 
@@ -310,7 +325,7 @@ function renderSegment(segment) {
           <div class="line-dot"></div>
         </div>
         <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
         </div>
         <div class="content time">
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
@@ -343,6 +358,7 @@ function escapeHtml(text) {
 }
 
 const OPTIONS = {
+  places_entity: null,
   stay_radius_m: 75,
   min_stay_minutes: 10,
   show_debug: false,
@@ -401,6 +417,13 @@ class TimelineCardEditor extends HTMLElement {
     minStay.value = String(this._config.min_stay_minutes ?? OPTIONS.min_stay_minutes);
     minStay.addEventListener("input", (ev) => this._onNumberChanged("min_stay_minutes", ev));
 
+    const placesPicker = document.createElement("ha-entity-picker");
+    placesPicker.setAttribute("label", "Places entity (optional)");
+    placesPicker.hass = this._hass;
+    placesPicker.value = this._config.places_entity || "";
+    placesPicker.includeDomains = ["sensor"];
+    placesPicker.addEventListener("value-changed", (ev) => this._onEntityFieldChanged("places_entity", ev));
+
     const debugRow = document.createElement("label");
     debugRow.style.display = "flex";
     debugRow.style.alignItems = "center";
@@ -414,6 +437,7 @@ class TimelineCardEditor extends HTMLElement {
     debugRow.appendChild(debugToggle);
 
     form.appendChild(entityPicker);
+    form.appendChild(placesPicker);
     form.appendChild(stayRadius);
     form.appendChild(minStay);
     form.appendChild(debugRow);
@@ -423,6 +447,12 @@ class TimelineCardEditor extends HTMLElement {
   _onEntityChanged(ev) {
     const value = ev?.detail?.value || "";
     this._config = { ...this._config, entity: value };
+    this._emitChange();
+  }
+
+  _onEntityFieldChanged(key, ev) {
+    const value = ev?.detail?.value || "";
+    this._config = { ...this._config, [key]: value || null };
     this._emitChange();
   }
 
@@ -453,6 +483,7 @@ customElements.define("timeline-card-editor", TimelineCardEditor);
 
 const DEFAULT_CONFIG = {
   entity: null,
+  places_entity: null,
   stay_radius_m: 75,
   min_stay_minutes: 10,
   show_debug: false,
@@ -539,14 +570,21 @@ class TimelineCard extends HTMLElement {
 
     try {
       const points = await fetchHistory(this._hass, this._config.entity, date);
+      const placeStates = this._config.places_entity
+        ? await fetchEntityHistory(this._hass, this._config.places_entity, date)
+        : [];
       const zones = this._collectZones();
-      const segments = segmentTimeline(points, {
+      let segments = segmentTimeline(points, {
         stayRadiusM: this._config.stay_radius_m,
         minStayMinutes: this._config.min_stay_minutes,
       }, zones);
+      if (placeStates.length) {
+        segments = applyPlacesToStays(segments, placeStates, date);
+      }
       const debug = {
         points: points.length,
         zones: zones.length,
+        places: placeStates.length,
         first: points[0]?.ts || null,
         last: points[points.length - 1]?.ts || null,
       };
@@ -613,7 +651,7 @@ class TimelineCard extends HTMLElement {
     const last = debug.last ? new Date(debug.last).toLocaleString() : "n/a";
     return `
       <div class="debug">
-        Debug: points=${debug.points}, zones=${debug.zones}, first=${first}, last=${last}
+        Debug: points=${debug.points}, zones=${debug.zones}, places=${debug.places ?? 0}, first=${first}, last=${last}
       </div>
     `;
   }
@@ -625,6 +663,58 @@ class TimelineCard extends HTMLElement {
     }
     return message || "Unable to load history";
   }
+}
+
+function applyPlacesToStays(segments, placeStates, date) {
+  if (!placeStates.length) return segments;
+  const sortedPlaces = [...placeStates].sort((a, b) => a.ts - b.ts);
+  const placeIntervals = buildPlaceIntervals(sortedPlaces, date);
+
+  return segments.map((segment) => {
+    if (segment.type !== "stay") return segment;
+    if (segment.zoneName) return segment;
+    const name = pickPlaceName(placeIntervals, segment.start, segment.end);
+    if (!name) return segment;
+    return { ...segment, placeName: name };
+  });
+}
+
+function buildPlaceIntervals(placeStates, date) {
+  const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  return placeStates.map((state, index) => {
+    const next = placeStates[index + 1];
+    const end = next ? next.ts : endOfDay;
+    const name = placeDisplayName(state);
+    return {
+      start: state.ts,
+      end,
+      name,
+    };
+  });
+}
+
+function placeDisplayName(state) {
+  const attrs = state.attributes || {};
+  return attrs.formatted_place || attrs.formatted_address || state.state || null;
+}
+
+function pickPlaceName(intervals, start, end) {
+  const counts = new Map();
+  for (const interval of intervals) {
+    const overlapMs = Math.min(end, interval.end) - Math.max(start, interval.start);
+    if (overlapMs <= 0) continue;
+    if (!interval.name) continue;
+    counts.set(interval.name, (counts.get(interval.name) || 0) + overlapMs);
+  }
+  let best = null;
+  let bestMs = 0;
+  for (const [name, ms] of counts.entries()) {
+    if (ms > bestMs) {
+      best = name;
+      bestMs = ms;
+    }
+  }
+  return best;
 }
 
 customElements.define("timeline-card", TimelineCard);
@@ -643,6 +733,7 @@ function getConfigElement() {
 function getStubConfig() {
   return {
     entity: "device_tracker.your_device",
+    places_entity: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,

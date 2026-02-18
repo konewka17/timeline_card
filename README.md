@@ -33,6 +33,7 @@ min_stay_minutes: 10
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
 | `entity` | string | **required** | `device_tracker` or `person` entity to pull GPS history from. |
+| `places_entity` | string | `null` | Optional `sensor` from the Places integration to label unknown stays. |
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
 | `show_debug` | boolean | `false` | Show debug info (points/zones/first/last timestamps). |
@@ -40,6 +41,7 @@ min_stay_minutes: 10
 ## Lovelace UI editor
 The card exposes a visual editor with:
 - Tracked entity selector
+- Places entity (optional)
 - Stay radius (meters)
 - Minimum stay duration (minutes)
 - Debug toggle

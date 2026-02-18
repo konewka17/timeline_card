@@ -1,5 +1,5 @@
 import css from "./card.css";
-import { fetchHistory } from "./history.js";
+import { fetchHistory, fetchEntityHistory } from "./history.js";
 import { segmentTimeline } from "./segmentation.js";
 import { renderTimeline } from "./timeline.js";
 import { formatDate, startOfDay, toDateKey } from "./utils.js";
@@ -7,6 +7,7 @@ import "./editor.js";
 
 const DEFAULT_CONFIG = {
   entity: null,
+  places_entity: null,
   stay_radius_m: 75,
   min_stay_minutes: 10,
   show_debug: false,
@@ -93,14 +94,21 @@ class TimelineCard extends HTMLElement {
 
     try {
       const points = await fetchHistory(this._hass, this._config.entity, date);
+      const placeStates = this._config.places_entity
+        ? await fetchEntityHistory(this._hass, this._config.places_entity, date)
+        : [];
       const zones = this._collectZones();
-      const segments = segmentTimeline(points, {
+      let segments = segmentTimeline(points, {
         stayRadiusM: this._config.stay_radius_m,
         minStayMinutes: this._config.min_stay_minutes,
       }, zones);
+      if (placeStates.length) {
+        segments = applyPlacesToStays(segments, placeStates, date);
+      }
       const debug = {
         points: points.length,
         zones: zones.length,
+        places: placeStates.length,
         first: points[0]?.ts || null,
         last: points[points.length - 1]?.ts || null,
       };
@@ -167,7 +175,7 @@ class TimelineCard extends HTMLElement {
     const last = debug.last ? new Date(debug.last).toLocaleString() : "n/a";
     return `
       <div class="debug">
-        Debug: points=${debug.points}, zones=${debug.zones}, first=${first}, last=${last}
+        Debug: points=${debug.points}, zones=${debug.zones}, places=${debug.places ?? 0}, first=${first}, last=${last}
       </div>
     `;
   }
@@ -179,6 +187,58 @@ class TimelineCard extends HTMLElement {
     }
     return message || "Unable to load history";
   }
+}
+
+function applyPlacesToStays(segments, placeStates, date) {
+  if (!placeStates.length) return segments;
+  const sortedPlaces = [...placeStates].sort((a, b) => a.ts - b.ts);
+  const placeIntervals = buildPlaceIntervals(sortedPlaces, date);
+
+  return segments.map((segment) => {
+    if (segment.type !== "stay") return segment;
+    if (segment.zoneName) return segment;
+    const name = pickPlaceName(placeIntervals, segment.start, segment.end);
+    if (!name) return segment;
+    return { ...segment, placeName: name };
+  });
+}
+
+function buildPlaceIntervals(placeStates, date) {
+  const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  return placeStates.map((state, index) => {
+    const next = placeStates[index + 1];
+    const end = next ? next.ts : endOfDay;
+    const name = placeDisplayName(state);
+    return {
+      start: state.ts,
+      end,
+      name,
+    };
+  });
+}
+
+function placeDisplayName(state) {
+  const attrs = state.attributes || {};
+  return attrs.formatted_place || attrs.formatted_address || state.state || null;
+}
+
+function pickPlaceName(intervals, start, end) {
+  const counts = new Map();
+  for (const interval of intervals) {
+    const overlapMs = Math.min(end, interval.end) - Math.max(start, interval.start);
+    if (overlapMs <= 0) continue;
+    if (!interval.name) continue;
+    counts.set(interval.name, (counts.get(interval.name) || 0) + overlapMs);
+  }
+  let best = null;
+  let bestMs = 0;
+  for (const [name, ms] of counts.entries()) {
+    if (ms > bestMs) {
+      best = name;
+      bestMs = ms;
+    }
+  }
+  return best;
 }
 
 customElements.define("timeline-card", TimelineCard);
@@ -197,6 +257,7 @@ export function getConfigElement() {
 export function getStubConfig() {
   return {
     entity: "device_tracker.your_device",
+    places_entity: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,

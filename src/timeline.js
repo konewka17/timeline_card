@@ -26,7 +26,7 @@ function renderSegment(segment) {
           <div class="line-dot"></div>
         </div>
         <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || "Unknown location")}</div>
+          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
         </div>
         <div class="content time">
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
