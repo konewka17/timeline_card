@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "module": "dist/card.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "rollup": "^4.34.6",
+    "rollup-plugin-import-css": "^3.5.8"
+  }
+}
