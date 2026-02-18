@@ -41,10 +41,10 @@ function renderSegment(segment) {
       <div class="line-slot"></div>
       <div class="content location travel">
         <ha-icon class="move-icon" icon="mdi:car"></ha-icon>
-        <div class="title">Travel</div>
+        <div class="title">Travel <span class="meta">- ${formatDistance(segment.distanceM)}</span></div>
       </div>
       <div class="content time">
-        <div class="meta">${formatDuration(segment.durationMs)} - ${formatDistance(segment.distanceM)}</div>
+        <div class="meta">${formatDuration(segment.durationMs)}</div>
       </div>
     </div>
   `;

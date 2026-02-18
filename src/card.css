@@ -81,15 +81,15 @@ ha-card {
   top: 0;
   bottom: 0;
   left: 72px;
-  width: 8px;
-  background: var(--divider-color);
+  width: 12px;
+  background: var(--primary-color);
   border-radius: 999px;
 }
 
 .entry {
   position: relative;
   display: grid;
-  grid-template-columns: 56px 32px 1fr auto;
+  grid-template-columns: 50px 32px 1fr auto;
   align-items: center;
   column-gap: 12px;
   padding: 12px 0;
@@ -126,7 +126,7 @@ ha-card {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--primary-color) 45%, transparent);
+  background: color-mix(in srgb, white 45%, transparent);
 }
 
 .stay-icon {
@@ -134,7 +134,7 @@ ha-card {
 }
 
 .move-icon {
-  color: var(--disabled-text-color);
+  color: var(--secondary-text-color);
 }
 
 .content {
@@ -160,7 +160,8 @@ ha-card {
 }
 
 .entry.move .title {
-  font-weight: 500;
+  margin-left: 10px;
+  color: var(--secondary-text-color);
 }
 
 .title {
