@@ -1,4 +1,4 @@
-import "./card.css";
+import css from "./card.css";
 import { fetchHistory } from "./history.js";
 import { segmentTimeline } from "./segmentation.js";
 import { renderTimeline } from "./timeline.js";
@@ -137,6 +137,7 @@ class TimelineCard extends HTMLElement {
     const isFuture = this._selectedDate > startOfDay(new Date());
 
     this.shadowRoot.innerHTML = `
+      <style>${css}</style>
       <ha-card>
         <div class="card">
           <div class="header">
