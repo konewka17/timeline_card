@@ -5,7 +5,7 @@ export async function fetchHistory(hass, entityId, date) {
   const start = startOfDay(date);
   const end = endOfDay(date);
   const message = {
-    type: "history_during_period",
+    type: "history/history_during_period",
     start_time: start.toISOString(),
     end_time: end.toISOString(),
     entity_ids: [entityId],
