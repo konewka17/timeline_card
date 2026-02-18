@@ -20,7 +20,7 @@ function renderSegment(segment) {
           <ha-icon icon="mdi:map-marker-radius"></ha-icon>
         </div>
         <div class="content">
-          <div><span class="title">${escapeHtml(segment.zoneName || "Unknown location")}</span> • ${renderCoords(segment)}</div>
+          <div class="title" title="${renderCoords(segment)}">${escapeHtml(segment.zoneName || "Unknown location")}</div>
           <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
         </div>
       </div>
@@ -44,7 +44,7 @@ function renderCoords(segment) {
   if (!segment.center) return "";
   const lat = segment.center.lat.toFixed(5);
   const lon = segment.center.lon.toFixed(5);
-  return `<div class="coords">${lat}, ${lon}</div>`;
+  return `${lat}, ${lon}`;
 }
 
 function escapeHtml(text) {
