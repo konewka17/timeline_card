@@ -1,4 +1,4 @@
-import { formatDuration, formatTimeRange } from "./utils.js";
+import { formatDistance, formatDuration, formatTimeRange } from "./utils.js";
 
 export function renderTimeline(segments) {
   if (!segments || segments.length === 0) {
@@ -19,7 +19,7 @@ function renderSegment(segment) {
       <div class="entry stay">
         <div class="left-icon">
           <div class="icon-ring">
-            <ha-icon class="stay-icon" icon="mdi:map-marker"></ha-icon>
+            <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
           </div>
         </div>
         <div class="line-slot">
@@ -44,7 +44,7 @@ function renderSegment(segment) {
         <div class="title">Travel</div>
       </div>
       <div class="content time">
-        <div class="meta">${formatDuration(segment.durationMs)}</div>
+        <div class="meta">${formatDuration(segment.durationMs)} - ${formatDistance(segment.distanceM)}</div>
       </div>
     </div>
   `;

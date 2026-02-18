@@ -109,6 +109,7 @@ function buildStaySegment(stay, zones) {
     center: stay.center,
     radius: stay.radius,
     zoneName: zone ? zone.name : null,
+    zoneIcon: zone ? zone.icon : null,
   };
 }
 

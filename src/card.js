@@ -123,6 +123,7 @@ class TimelineCard extends HTMLElement {
       .filter((state) => state.entity_id && state.entity_id.startsWith("zone."))
       .map((state) => ({
         name: state.attributes?.friendly_name || state.entity_id,
+        icon: state.attributes?.icon || null,
         lat: Number(state.attributes?.latitude),
         lon: Number(state.attributes?.longitude),
         radius: Number(state.attributes?.radius) || 100,
