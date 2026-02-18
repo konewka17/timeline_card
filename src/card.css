@@ -95,12 +95,13 @@ ha-card {
 }
 
 .marker {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--primary-color);
-  color: var(--primary-text-color);
+  color: white;
   display: flex;
+  padding: 4px;
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 0 4px var(--card-background-color, #fff);
