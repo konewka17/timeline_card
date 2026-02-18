@@ -81,7 +81,7 @@ async function fetchHistory(hass, entityId, date) {
     start_time: start.toISOString(),
     end_time: end.toISOString(),
     entity_ids: [entityId],
-    minimal_response: true,
+    minimal_response: false,
     no_attributes: false,
     significant_changes_only: false,
   };
@@ -104,6 +104,12 @@ async function callWS(hass, message) {
 }
 
 function extractEntityStates(response, entityId) {
+  if (!response) return [];
+  // Newer history WS can return object keyed by entity_id.
+  if (!Array.isArray(response) && typeof response === "object") {
+    const list = response[entityId];
+    return Array.isArray(list) ? list : [];
+  }
   if (!Array.isArray(response)) return [];
   if (response.length === 0) return [];
   if (Array.isArray(response[0])) {
@@ -113,14 +119,23 @@ function extractEntityStates(response, entityId) {
 }
 
 function toPoint(state) {
-  const attrs = state.attributes || {};
-  const lat = Number(attrs.latitude);
-  const lon = Number(attrs.longitude);
+  const attrs = state.attributes || state.a || {};
+  let lat = Number(attrs.latitude);
+  let lon = Number(attrs.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    const gps = Array.isArray(attrs.gps) ? attrs.gps : null;
+    if (gps && gps.length >= 2) {
+      lat = Number(gps[0]);
+      lon = Number(gps[1]);
+    }
+  }
+  const tsValue = state.last_changed || state.last_updated || state.created || state.timestamp || state.lu;
+  const ts = tsValue ? new Date(tsValue * 1000 || tsValue) : new Date();
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return {
     lat,
     lon,
-    ts: new Date(state.last_changed || state.last_updated || state.created || state.timestamp || Date.now()),
+    ts,
   };
 }
 
