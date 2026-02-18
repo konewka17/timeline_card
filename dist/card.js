@@ -589,8 +589,8 @@ class TimelineCard extends HTMLElement {
             <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
             <div class="date">${formatDate(this._selectedDate)}</div>
             <div class="header-actions">
-              <ha-icon-button class="nav-button" data-action="refresh" label="Refresh" icon="mdi:refresh"></ha-icon-button>
-              <ha-icon-button class="nav-button" data-action="next" label="Next day" icon="mdi:chevron-right" ${isFuture ? "disabled" : ""}></ha-icon-button>
+              <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
+              <ha-icon-button class="nav-button" data-action="next" label="Next day" ${isFuture ? "disabled" : ""}><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
             </div>
           </div>
           <div class="body">
