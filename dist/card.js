@@ -676,8 +676,12 @@ class TimelineCard extends HTMLElement {
     });
 
     this._mapCard.style.height = "200px";
-    const haCard = this._mapCard.shadowRoot?.querySelector("ha-card");
-    haCard.style.height = "200px";
+    this._mapCard.updateComplete?.then(() => {
+      const haCard = this._mapCard.shadowRoot?.querySelector("ha-card");
+      if (haCard) {
+        haCard.style.height = "200px";
+      }
+    });
 
     if (this._hass) {
       this._mapCard.hass = this._hass;
