@@ -37,6 +37,7 @@ min_stay_minutes: 10
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
 | `show_debug` | boolean | `false` | Show debug info (points/zones/first/last timestamps). |
+| `show_map` | boolean | `true` | Show a Google Maps overlay. |
 
 ## Lovelace UI editor
 The card exposes a visual editor with:

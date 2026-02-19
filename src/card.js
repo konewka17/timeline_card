@@ -11,6 +11,7 @@ const DEFAULT_CONFIG = {
   stay_radius_m: 75,
   min_stay_minutes: 10,
   show_debug: false,
+  show_map: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -170,7 +171,7 @@ class TimelineCard extends HTMLElement {
         </div>
       </ha-card>
     `;
-    this._attachMapCard();
+    if (this._config.show_map) this._attachMapCard();
   }
 
   async _attachMapCard() {
@@ -192,8 +193,7 @@ class TimelineCard extends HTMLElement {
 
     this._mapCard = await helpers.createCardElement({
       type: "map",
-      entities: ["person.tom"],
-      hours_to_show: 24,
+      entities: [this._config.entity]
     });
 
     if (this._hass) {
@@ -294,5 +294,6 @@ export function getStubConfig() {
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,
+    show_map: false,
   };
 }
