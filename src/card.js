@@ -186,6 +186,12 @@ class TimelineCard extends HTMLElement {
       container.innerHTML = "";
       container.appendChild(this._mapCard);
     }
+
+    await this._mapCard.updateComplete?.catch(() => {});
+    const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
+    if (haMap) {
+      haMap.style.height = "200px";
+    }
   }
 
   async _createMapCard() {
@@ -196,13 +202,6 @@ class TimelineCard extends HTMLElement {
     this._mapCard = await helpers.createCardElement({
       type: "map",
       entities: [this._config.entity]
-    });
-
-    this._mapCard.updateComplete?.then(() => {
-      const haCard = this._mapCard.shadowRoot?.querySelector("ha-map");
-      if (haCard) {
-        haCard.style.height = "200px";
-      }
     });
 
     if (this._hass) {
