@@ -648,7 +648,9 @@ class TimelineCard extends HTMLElement {
         </div>
       </ha-card>
     `;
-    if (this._config.show_map) this._attachMapCard();
+    if (this._config.show_map){
+      this._attachMapCard();
+    }
   }
 
   async _attachMapCard() {
@@ -672,6 +674,7 @@ class TimelineCard extends HTMLElement {
       type: "map",
       entities: [this._config.entity]
     });
+    this._mapCard.getCardSize = () => 2;
 
     if (this._hass) {
       this._mapCard.hass = this._hass;
