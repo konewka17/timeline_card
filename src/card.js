@@ -54,6 +54,9 @@ class TimelineCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._mapCard) {
+      this._mapCard.hass = hass;
+    }
     if (!this._config.entity) return;
     const dateKey = toDateKey(this._selectedDate);
     if (!this._cache.has(dateKey)) {
@@ -158,6 +161,7 @@ class TimelineCard extends HTMLElement {
             </div>
           </div>
           <div class="body">
+            <div id="overview-map"></div>
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
@@ -166,6 +170,35 @@ class TimelineCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+    this._attachMapCard();
+  }
+
+  async _attachMapCard() {
+    await this._createMapCard();
+
+    const container = this.shadowRoot.getElementById("overview-map");
+    if (!container) return;
+
+    if (!container.contains(this._mapCard)) {
+      container.innerHTML = "";
+      container.appendChild(this._mapCard);
+    }
+  }
+
+  async _createMapCard() {
+    if (this._mapCard) return;
+
+    const helpers = await window.loadCardHelpers();
+
+    this._mapCard = await helpers.createCardElement({
+      type: "map",
+      entities: ["person.tom"],
+      hours_to_show: 24,
+    });
+
+    if (this._hass) {
+      this._mapCard.hass = this._hass;
+    }
   }
 
   _renderDebug(dayData) {

@@ -1,4 +1,4 @@
-var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding: 8px 0;\n}\n\n.spine {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 72px;\n  width: 12px;\n  background: var(--primary-color);\n  border-radius: 999px;\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 50px 32px 1fr auto;\n  align-items: center;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.left-icon {\n  display: flex;\n  justify-content: flex-end;\n  padding-right: 4px;\n}\n\n.icon-ring {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--card-background-color, #fff);\n  border: 3px solid var(--primary-color);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.line-slot {\n  position: relative;\n  width: 32px;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.line-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: color-mix(in srgb, white 45%, transparent);\n}\n\n.stay-icon {\n  color: var(--primary-color);\n}\n\n.move-icon {\n  color: var(--secondary-text-color);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.content.location {\n  align-items: flex-start;\n}\n\n.content.location.travel {\n  flex-direction: row;\n  align-items: center;\n  gap: 6px;\n  color: var(--secondary-text-color);\n}\n\n.content.time {\n  justify-self: end;\n  text-align: right;\n}\n\n.entry.move .title {\n  margin-left: 10px;\n  color: var(--secondary-text-color);\n}\n\n.entry.stay .title{\n  background-color: #0001;\n  padding: 3px 10px;\n  border-radius: 20px;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n  font-weight: normal;\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n";
+var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  flex: 1;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n";
 
 function toDateKey(date) {
   const y = date.getFullYear();
@@ -530,6 +530,9 @@ class TimelineCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._mapCard) {
+      this._mapCard.hass = hass;
+    }
     if (!this._config.entity) return;
     const dateKey = toDateKey(this._selectedDate);
     if (!this._cache.has(dateKey)) {
@@ -634,6 +637,7 @@ class TimelineCard extends HTMLElement {
             </div>
           </div>
           <div class="body">
+            <div id="overview-map"></div>
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
@@ -642,6 +646,35 @@ class TimelineCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+    this._attachMapCard();
+  }
+
+  async _attachMapCard() {
+    await this._createMapCard();
+
+    const container = this.shadowRoot.getElementById("overview-map");
+    if (!container) return;
+
+    if (!container.contains(this._mapCard)) {
+      container.innerHTML = "";
+      container.appendChild(this._mapCard);
+    }
+  }
+
+  async _createMapCard() {
+    if (this._mapCard) return;
+
+    const helpers = await window.loadCardHelpers();
+
+    this._mapCard = await helpers.createCardElement({
+      type: "map",
+      entities: ["person.tom"],
+      hours_to_show: 24,
+    });
+
+    if (this._hass) {
+      this._mapCard.hass = this._hass;
+    }
   }
 
   _renderDebug(dayData) {
