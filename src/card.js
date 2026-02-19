@@ -198,9 +198,8 @@ class TimelineCard extends HTMLElement {
       entities: [this._config.entity]
     });
 
-    this._mapCard.style.height = "200px";
     this._mapCard.updateComplete?.then(() => {
-      const haCard = this._mapCard.shadowRoot?.querySelector("ha-card");
+      const haCard = this._mapCard.shadowRoot?.querySelector("ha-map");
       if (haCard) {
         haCard.style.height = "200px";
       }
