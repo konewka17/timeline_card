@@ -162,7 +162,7 @@ class TimelineCard extends HTMLElement {
             </div>
           </div>
           <div class="body">
-            <div id="overview-map" class="map-wrapper"></div>
+            <div id="overview-map"></div>
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
@@ -197,7 +197,10 @@ class TimelineCard extends HTMLElement {
       type: "map",
       entities: [this._config.entity]
     });
-    this._mapCard.getCardSize = () => 2;
+
+    this._mapCard.style.height = "200px";
+    const haCard = this._mapCard.shadowRoot?.querySelector("ha-card");
+    haCard.style.height = "200px";
 
     if (this._hass) {
       this._mapCard.hass = this._hass;
