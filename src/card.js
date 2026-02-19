@@ -162,7 +162,7 @@ class TimelineCard extends HTMLElement {
             </div>
           </div>
           <div class="body">
-            <div id="overview-map"></div>
+            <div id="overview-map" class="map-wrapper"></div>
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}

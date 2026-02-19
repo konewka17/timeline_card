@@ -190,3 +190,7 @@ ha-card {
   background: var(--secondary-background-color);
   border-radius: 8px;
 }
+
+.map-wrapper {
+  height: 200px;
+}
