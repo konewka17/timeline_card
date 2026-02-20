@@ -173,11 +173,33 @@ class TimelineCard extends HTMLElement {
 
     _render() {
         if (!this.shadowRoot) return;
+        this._ensureBaseLayout();
+
         const dateKey = toDateKey(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {
             loading: false, segments: null, points: null, error: null, debug: null
         };
         const isFuture = this._selectedDate >= startOfDay(new Date());
+
+        const dateEl = this.shadowRoot.getElementById("timeline-date");
+        dateEl.textContent = formatDate(this._selectedDate);
+
+        const nextButton = this.shadowRoot.querySelector("[data-action='next']");
+        nextButton.toggleAttribute("disabled", isFuture);
+
+        const body = this.shadowRoot.getElementById("timeline-body");
+        body.innerHTML = `
+              ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
+              ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
+              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
+              ${this._config.show_debug ? this._renderDebug(dayData) : ""}
+            `;
+        this._attachMapCard();
+    }
+
+    _ensureBaseLayout() {
+        if (this._baseLayoutReady) return;
+        this._baseLayoutReady = true;
 
         this.shadowRoot.innerHTML = `
           <style>${css}</style>
@@ -186,22 +208,16 @@ class TimelineCard extends HTMLElement {
               <div id="overview-map"></div>
               <div class="header my-header">
                 <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                <div class="date">${formatDate(this._selectedDate)}</div>
+                <div id="timeline-date" class="date"></div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
-                  <ha-icon-button class="nav-button" data-action="next" label="Next day" ${isFuture ? "disabled" : ""}><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
+                  <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
-              <div class="body">
-                ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
-                ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
-                ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
-                ${this._config.show_debug ? this._renderDebug(dayData) : ""}
-              </div>
+              <div id="timeline-body" class="body"></div>
             </div>
           </ha-card>
         `;
-        this._attachMapCard();
     }
 
     async _attachMapCard() {
@@ -283,7 +299,7 @@ class TimelineCard extends HTMLElement {
     _syncHaMapPaths() {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
-        if (!haMap || ! Leaflet) return;
+        if (!haMap || !Leaflet) return;
 
         const basePaths = this._fullDayPaths.map((path) => ({
             ...path,
@@ -319,11 +335,11 @@ class TimelineCard extends HTMLElement {
         haMap._mapPaths.forEach((marker) => haMap.leafletMap.addLayer(marker));
     }
 
-    _fitMap(defer, bounds, pad=0.1) {
+    _fitMap(defer, bounds, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
-        if (!haMap || ! Leaflet || !this._fullDayPaths.length) return;
-        if (bounds === undefined){
+        if (!haMap || !Leaflet || !this._fullDayPaths.length) return;
+        if (bounds === undefined) {
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
         bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
