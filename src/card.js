@@ -172,6 +172,7 @@ class TimelineCard extends HTMLElement {
       <style>${css}</style>
       <ha-card>
         <div class="card">
+          <div id="overview-map"></div>
           <div class="header my-header">
             <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
             <div class="date">${formatDate(this._selectedDate)}</div>
@@ -181,7 +182,6 @@ class TimelineCard extends HTMLElement {
             </div>
           </div>
           <div class="body">
-            <div id="overview-map"></div>
             ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
             ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
             ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
@@ -250,7 +250,7 @@ class TimelineCard extends HTMLElement {
         const points = Array.isArray(dayData.points) ? dayData.points : [];
         this._fullDayPaths = points.length > 1
             ? [{
-                points: points.map(toHaMapPoint).filter(Boolean),
+                points: points,
                 color: "var(--primary-color)",
                 weight: 4,
                 gradualOpacity: 0.2,
@@ -300,17 +300,14 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
-            const centerPoint = segment.center ? toHaMapPoint(segment.center) : null;
-            if (!centerPoint) return;
-
             this._highlightedStay = [{
-                points: [centerPoint],
+                points: [segment.center],
                 color: "var(--accent-color)",
                 weight: 16,
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([centerPoint, centerPoint], {pad: 0.3});
+            haMap.fitBounds([segment.center], {pad: 0.3});
             return;
         }
 
@@ -345,10 +342,7 @@ class TimelineCard extends HTMLElement {
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];
-        return points
-            .filter((point) => point.ts >= segment.start && point.ts <= segment.end)
-            .map(toHaMapPoint)
-            .filter(Boolean);
+        return points.filter((point) => point.ts >= segment.start && point.ts <= segment.end);
     }
 
     _getCurrentDayData() {
@@ -374,20 +368,6 @@ class TimelineCard extends HTMLElement {
         }
         return message || "Unable to load history";
     }
-}
-
-function toHaMapPoint(point) {
-    if (!point) return null;
-    const lat = Number(point.lat ?? point.latitude);
-    const lon = Number(point.lon ?? point.lng ?? point.longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-    return {
-        lat,
-        lon,
-        lng: lon,
-        latitude: lat,
-        longitude: lon,
-    };
 }
 
 function applyPlacesToStays(segments, placeStates, date) {
