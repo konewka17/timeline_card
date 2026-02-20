@@ -275,7 +275,7 @@ function buildMoveSegment(points) {
     if (!points || points.length < 2) return null;
     let distance = 0;
     for (let i = 1; i < points.length; i += 1) {
-        distance += haversineMeters(points[i - 1], points[i]);
+        distance += haversineMeters(toLatLon(points[i - 1]), toLatLon(points[i]));
     }
     const start = points[0].timestamp;
     const end = points[points.length - 1].timestamp;
