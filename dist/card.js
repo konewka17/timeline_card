@@ -1,4 +1,4 @@
-var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding: 8px 0;\n}\n\n.spine {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 72px;\n  width: 12px;\n  background: var(--primary-color);\n  border-radius: 999px;\n}\n\n.timeline.trim-spine-top .spine {\n  top: 36px;\n}\n\n.timeline.trim-spine-bottom .spine {\n  bottom: 36px;\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 50px 32px 1fr auto;\n  align-items: center;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.left-icon {\n  display: flex;\n  justify-content: flex-end;\n  padding-right: 4px;\n}\n\n.icon-ring {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--card-background-color, #fff);\n  border: 3px solid var(--primary-color);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.line-slot {\n  position: relative;\n  width: 32px;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.line-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: color-mix(in srgb, white 45%, transparent);\n}\n\n.stay-icon {\n  color: var(--primary-color);\n}\n\n.move-icon {\n  color: var(--secondary-text-color);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.content.location {\n  align-items: flex-start;\n}\n\n.content.location.travel {\n  flex-direction: row;\n  align-items: center;\n  gap: 6px;\n  color: var(--secondary-text-color);\n}\n\n.content.time {\n  justify-self: end;\n  text-align: right;\n}\n\n.entry.move .title {\n  margin-left: 10px;\n  color: var(--secondary-text-color);\n}\n\n.entry.stay .title{\n  background-color: #0001;\n  padding: 3px 10px;\n  border-radius: 20px;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n  font-weight: normal;\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n\n#overview-map {\n  height: 200px;\n}\n\n.stay-marker{\n  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))\n}\n";
+var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date-wrap {\n  display: flex;\n  justify-content: center;\n  flex: 1;\n  min-width: 0;\n}\n\n.date-trigger {\n  display: inline-flex;\n  align-items: center;\n  border: 0;\n  background: transparent;\n  color: inherit;\n  font: inherit;\n  padding: 2px 4px;\n  margin: 0;\n  min-width: 0;\n  cursor: pointer;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.date-caret {\n  color: var(--secondary-text-color);\n  --mdc-icon-size: 20px;\n}\n\n.date-picker-input {\n  position: absolute;\n  opacity: 0;\n  pointer-events: none;\n  width: 0;\n  height: 0;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n  touch-action: pan-y;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding: 8px 0;\n}\n\n.spine {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 72px;\n  width: 12px;\n  background: var(--primary-color);\n  border-radius: 999px;\n}\n\n.timeline.trim-spine-top .spine {\n  top: 36px;\n}\n\n.timeline.trim-spine-bottom .spine {\n  bottom: 36px;\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 50px 32px 1fr auto;\n  align-items: center;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.left-icon {\n  display: flex;\n  justify-content: flex-end;\n  padding-right: 4px;\n}\n\n.icon-ring {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--card-background-color, #fff);\n  border: 3px solid var(--primary-color);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.line-slot {\n  position: relative;\n  width: 32px;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.line-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: color-mix(in srgb, white 45%, transparent);\n}\n\n.stay-icon {\n  color: var(--primary-color);\n}\n\n.move-icon {\n  color: var(--secondary-text-color);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.content.location {\n  align-items: flex-start;\n}\n\n.content.location.travel {\n  flex-direction: row;\n  align-items: center;\n  gap: 6px;\n  color: var(--secondary-text-color);\n}\n\n.content.time {\n  justify-self: end;\n  text-align: right;\n}\n\n.entry.move .title {\n  margin-left: 10px;\n  color: var(--secondary-text-color);\n}\n\n.entry.stay .title{\n  background-color: #0001;\n  padding: 3px 10px;\n  border-radius: 20px;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n  font-weight: normal;\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n\n#overview-map {\n  height: 200px;\n}\n\n.stay-marker{\n  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))\n}\n";
 
 function toDateKey(date) {
     const y = date.getFullYear();
@@ -530,6 +530,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -541,6 +542,21 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "open-date-picker") {
+                this._openDatePicker();
+            }
+        });
+
+
+        this.shadowRoot.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker") return;
+            if (!target.value) return;
+            const next = new Date(`${target.value}T00:00:00`);
+            if (!Number.isNaN(next.getTime())) {
+                this._selectedDate = startOfDay(next);
+                this._ensureDay(this._selectedDate);
+                this._render();
             }
         });
 
@@ -600,6 +616,11 @@ class TimelineCard extends HTMLElement {
     }
 
     _shiftDate(direction) {
+        const today = startOfDay(new Date());
+        if (direction > 0 && this._selectedDate >= today) {
+            return;
+        }
+
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
@@ -686,10 +707,17 @@ class TimelineCard extends HTMLElement {
         const dateEl = this.shadowRoot.getElementById("timeline-date");
         dateEl.textContent = formatDate(this._selectedDate);
 
+        const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
+        if (datePicker) {
+            datePicker.value = toDateKey(this._selectedDate);
+            datePicker.max = toDateKey(new Date());
+        }
+
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);
 
         const body = this.shadowRoot.getElementById("timeline-body");
+        this._bindTimelineTouch(body);
         body.innerHTML = `
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
@@ -710,7 +738,13 @@ class TimelineCard extends HTMLElement {
               <div id="overview-map"></div>
               <div class="header my-header">
                 <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                <div id="timeline-date" class="date"></div>
+                <div class="date-wrap">
+                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
+                    <span id="timeline-date" class="date"></span>
+                    <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
+                  </button>
+                  <input id="timeline-date-picker" class="date-picker-input" type="date">
+                </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
@@ -720,6 +754,44 @@ class TimelineCard extends HTMLElement {
             </div>
           </ha-card>
         `;
+    }
+
+
+    _openDatePicker() {
+        const input = this.shadowRoot?.getElementById("timeline-date-picker");
+        if (!input) return;
+        if (typeof input.showPicker === "function") {
+            input.showPicker();
+            return;
+        }
+        input.focus();
+        input.click();
+    }
+
+    _bindTimelineTouch(body) {
+        if (!body || body.dataset.swipeBound === "true") return;
+        body.dataset.swipeBound = "true";
+
+        body.addEventListener("touchstart", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            this._touchStart = {x: touch.clientX, y: touch.clientY};
+        }, {passive: true});
+
+        body.addEventListener("touchend", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch || !this._touchStart) return;
+
+            const deltaX = touch.clientX - this._touchStart.x;
+            const deltaY = touch.clientY - this._touchStart.y;
+            this._touchStart = null;
+
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
+                return;
+            }
+
+            this._shiftDate(deltaX > 0 ? -1 : 1);
+        }, {passive: true});
     }
 
     async _attachMapCard() {
@@ -793,6 +865,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         this._drawMapPaths();
         this._fitMap();
@@ -908,6 +981,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         if (segment.type === "stay") {
             this._highlightedStay = segment;
@@ -938,6 +1012,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
         this._drawMapPaths();
     }
 

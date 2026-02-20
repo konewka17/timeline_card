@@ -28,6 +28,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -39,6 +40,21 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "open-date-picker") {
+                this._openDatePicker();
+            }
+        });
+
+
+        this.shadowRoot.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker") return;
+            if (!target.value) return;
+            const next = new Date(`${target.value}T00:00:00`);
+            if (!Number.isNaN(next.getTime())) {
+                this._selectedDate = startOfDay(next);
+                this._ensureDay(this._selectedDate);
+                this._render();
             }
         });
 
@@ -98,6 +114,11 @@ class TimelineCard extends HTMLElement {
     }
 
     _shiftDate(direction) {
+        const today = startOfDay(new Date());
+        if (direction > 0 && this._selectedDate >= today) {
+            return;
+        }
+
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
@@ -184,10 +205,17 @@ class TimelineCard extends HTMLElement {
         const dateEl = this.shadowRoot.getElementById("timeline-date");
         dateEl.textContent = formatDate(this._selectedDate);
 
+        const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
+        if (datePicker) {
+            datePicker.value = toDateKey(this._selectedDate);
+            datePicker.max = toDateKey(new Date());
+        }
+
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);
 
         const body = this.shadowRoot.getElementById("timeline-body");
+        this._bindTimelineTouch(body);
         body.innerHTML = `
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
@@ -208,7 +236,13 @@ class TimelineCard extends HTMLElement {
               <div id="overview-map"></div>
               <div class="header my-header">
                 <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                <div id="timeline-date" class="date"></div>
+                <div class="date-wrap">
+                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
+                    <span id="timeline-date" class="date"></span>
+                    <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
+                  </button>
+                  <input id="timeline-date-picker" class="date-picker-input" type="date">
+                </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
@@ -218,6 +252,44 @@ class TimelineCard extends HTMLElement {
             </div>
           </ha-card>
         `;
+    }
+
+
+    _openDatePicker() {
+        const input = this.shadowRoot?.getElementById("timeline-date-picker");
+        if (!input) return;
+        if (typeof input.showPicker === "function") {
+            input.showPicker();
+            return;
+        }
+        input.focus();
+        input.click();
+    }
+
+    _bindTimelineTouch(body) {
+        if (!body || body.dataset.swipeBound === "true") return;
+        body.dataset.swipeBound = "true";
+
+        body.addEventListener("touchstart", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            this._touchStart = {x: touch.clientX, y: touch.clientY};
+        }, {passive: true});
+
+        body.addEventListener("touchend", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch || !this._touchStart) return;
+
+            const deltaX = touch.clientX - this._touchStart.x;
+            const deltaY = touch.clientY - this._touchStart.y;
+            this._touchStart = null;
+
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
+                return;
+            }
+
+            this._shiftDate(deltaX > 0 ? -1 : 1);
+        }, {passive: true});
     }
 
     async _attachMapCard() {
@@ -291,6 +363,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         this._drawMapPaths();
         this._fitMap();
@@ -406,6 +479,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         if (segment.type === "stay") {
             this._highlightedStay = segment;
@@ -436,6 +510,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
         this._drawMapPaths();
     }
 
