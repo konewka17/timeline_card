@@ -120,11 +120,11 @@ ha-card {
 }
 
 .timeline.trim-spine-top .spine {
-  top: 36px;
+  top: 32px;
 }
 
 .timeline.trim-spine-bottom .spine {
-  bottom: 36px;
+  bottom: 32px;
 }
 
 .entry {

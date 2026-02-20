@@ -62,6 +62,10 @@ function renderSegment(segment, index, {hideStart = false, hideEnd = false} = {}
 }
 
 function formatStayTime(start, end, {hideStart = false, hideEnd = false} = {}) {
+    if (hideStart && hideEnd) {
+        return "all day";
+    }
+
     if (hideStart && !hideEnd) {
         return formatTime(end);
     }

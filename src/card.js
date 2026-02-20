@@ -419,7 +419,7 @@ class TimelineCard extends HTMLElement {
                 "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))")
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
-            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon}))
+            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}))
         });
 
         if (this._highlightedStay) {
@@ -433,7 +433,7 @@ class TimelineCard extends HTMLElement {
                 "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))")
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
-            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon}))
+            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}))
 
         }
     }
