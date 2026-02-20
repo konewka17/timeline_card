@@ -74,11 +74,14 @@ function haversineMeters(a, b) {
     return r * c;
 }
 
+function toLatLon(point) {
+    return {lat: point.point[0], lon: point.point[1]}
+}
+
 async function fetchHistory(hass, entityId, date) {
     const states = await fetchEntityHistory(hass, entityId, date);
     return states
-        .map((state) => toPoint(state))
-        .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+        .map((state) => toPoint(state));
 }
 
 async function fetchEntityHistory(hass, entityId, date) {
@@ -149,9 +152,8 @@ function toPoint(state) {
     }
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
     return {
-        lat,
-        lon,
-        ts: state.ts,
+        point: [lat, lon],
+        timestamp: state.ts,
     };
 }
 
@@ -160,7 +162,7 @@ function segmentTimeline(points, options, zones) {
     const stayRadius = Math.max(10, options.stayRadiusM || 75);
     const minStayMs = Math.max(1, options.minStayMinutes || 10) * 60000;
 
-    const sorted = [...points].sort((a, b) => a.ts - b.ts);
+    const sorted = [...points].sort((a, b) => a.timestamp - b.timestamp);
     const stays = detectStays(sorted, stayRadius, minStayMs);
 
     const segments = [];
@@ -187,15 +189,16 @@ function detectStays(points, stayRadius, minStayMs) {
     let i = 0;
 
     while (i < points.length - 1) {
-        const cluster = [points[i]];
-        let center = {lat: points[i].lat, lon: points[i].lon};
+        const cluster = [toLatLon(points[i])];
+        let center = toLatLon(points[i]);
         let lastInIndex = i;
         let outlierUsed = false;
 
         for (let j = i + 1; j < points.length; j += 1) {
-            const distance = haversineMeters(center, points[j]);
+            const candidate = toLatLon(points[j]);
+            const distance = haversineMeters(center, candidate);
             if (distance <= stayRadius) {
-                cluster.push(points[j]);
+                cluster.push(candidate);
                 center = meanCenter(cluster);
                 lastInIndex = j;
                 outlierUsed = false;
@@ -210,14 +213,14 @@ function detectStays(points, stayRadius, minStayMs) {
             break;
         }
 
-        const duration = points[lastInIndex].ts - points[i].ts;
+        const duration = points[lastInIndex].timestamp - points[i].timestamp;
         if (duration >= minStayMs) {
             const radius = maxDistance(center, cluster);
             stays.push({
                 startIndex: i,
                 endIndex: lastInIndex,
-                start: points[i].ts,
-                end: points[lastInIndex].ts,
+                start: points[i].timestamp,
+                end: points[lastInIndex].timestamp,
                 center,
                 radius,
             });
@@ -274,8 +277,8 @@ function buildMoveSegment(points) {
     for (let i = 1; i < points.length; i += 1) {
         distance += haversineMeters(points[i - 1], points[i]);
     }
-    const start = points[0].ts;
-    const end = points[points.length - 1].ts;
+    const start = points[0].timestamp;
+    const end = points[points.length - 1].timestamp;
     return {
         type: "move",
         start,
@@ -608,8 +611,8 @@ class TimelineCard extends HTMLElement {
                 points: points.length,
                 zones: zones.length,
                 places: placeStates.length,
-                first: points[0]?.ts || null,
-                last: points[points.length - 1]?.ts || null,
+                first: points[0]?.timestamp || null,
+                last: points[points.length - 1]?.timestamp || null,
             };
             this._cache.set(key, {loading: false, segments, points, error: null, debug});
         } catch (err) {
@@ -741,7 +744,7 @@ class TimelineCard extends HTMLElement {
         this._syncHaMapPaths();
 
         if (this._fullDayPaths.length) {
-            haMap.fitBounds(this._fullDayPaths[0].points, {pad: 0.3});
+            haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0.3});
         }
     }
 
@@ -777,14 +780,15 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
+            const centerPoint = toLatLon(segment.center);
             this._highlightedStay = [{
-                points: [segment.center],
+                points: [centerPoint],
                 color: "var(--accent-color)",
                 weight: 16,
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([segment.center], {pad: 0.3});
+            haMap.fitBounds([centerPoint], {pad: 0.3});
             return;
         }
 
@@ -803,7 +807,7 @@ class TimelineCard extends HTMLElement {
             }];
             this._isTravelHighlightActive = true;
             this._syncHaMapPaths();
-            haMap.fitBounds(segmentPoints, {pad: 0.3});
+            haMap.fitBounds(segmentPoints.map(toLatLon), {pad: 0.3});
         }
     }
 
@@ -819,7 +823,7 @@ class TimelineCard extends HTMLElement {
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];
-        return points.filter((point) => point.ts >= segment.start && point.ts <= segment.end);
+        return points.filter((point) => point.timestamp >= segment.start && point.timestamp <= segment.end);
     }
 
     _getCurrentDayData() {

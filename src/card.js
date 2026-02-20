@@ -2,7 +2,7 @@ import css from "./card.css";
 import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
-import {formatDate, startOfDay, toDateKey} from "./utils.js";
+import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import "./editor.js";
 
 const DEFAULT_CONFIG = {
@@ -131,8 +131,8 @@ class TimelineCard extends HTMLElement {
                 points: points.length,
                 zones: zones.length,
                 places: placeStates.length,
-                first: points[0]?.ts || null,
-                last: points[points.length - 1]?.ts || null,
+                first: points[0]?.timestamp || null,
+                last: points[points.length - 1]?.timestamp || null,
             };
             this._cache.set(key, {loading: false, segments, points, error: null, debug});
         } catch (err) {
@@ -264,7 +264,7 @@ class TimelineCard extends HTMLElement {
         this._syncHaMapPaths();
 
         if (this._fullDayPaths.length) {
-            haMap.fitBounds(this._fullDayPaths[0].points, {pad: 0.3});
+            haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0.3});
         }
     }
 
@@ -300,14 +300,15 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
+            const centerPoint = toLatLon(segment.center);
             this._highlightedStay = [{
-                points: [segment.center],
+                points: [centerPoint],
                 color: "var(--accent-color)",
                 weight: 16,
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([segment.center], {pad: 0.3});
+            haMap.fitBounds([centerPoint], {pad: 0.3});
             return;
         }
 
@@ -326,7 +327,7 @@ class TimelineCard extends HTMLElement {
             }];
             this._isTravelHighlightActive = true;
             this._syncHaMapPaths();
-            haMap.fitBounds(segmentPoints, {pad: 0.3});
+            haMap.fitBounds(segmentPoints.map(toLatLon), {pad: 0.3});
         }
     }
 
@@ -342,7 +343,7 @@ class TimelineCard extends HTMLElement {
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];
-        return points.filter((point) => point.ts >= segment.start && point.ts <= segment.end);
+        return points.filter((point) => point.timestamp >= segment.start && point.timestamp <= segment.end);
     }
 
     _getCurrentDayData() {

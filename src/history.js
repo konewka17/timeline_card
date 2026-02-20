@@ -3,8 +3,7 @@ import {endOfDay, startOfDay} from "./utils.js";
 export async function fetchHistory(hass, entityId, date) {
     const states = await fetchEntityHistory(hass, entityId, date);
     return states
-        .map((state) => toPoint(state))
-        .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lon));
+        .map((state) => toPoint(state));
 }
 
 export async function fetchEntityHistory(hass, entityId, date) {
@@ -75,8 +74,7 @@ function toPoint(state) {
     }
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
     return {
-        lat,
-        lon,
-        ts: state.ts,
+        point: [lat, lon],
+        timestamp: state.ts,
     };
 }

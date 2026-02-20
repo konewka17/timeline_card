@@ -1,11 +1,11 @@
-import {haversineMeters} from "./utils.js";
+import {haversineMeters, toLatLon} from "./utils.js";
 
 export function segmentTimeline(points, options, zones) {
     if (!Array.isArray(points) || points.length === 0) return [];
     const stayRadius = Math.max(10, options.stayRadiusM || 75);
     const minStayMs = Math.max(1, options.minStayMinutes || 10) * 60000;
 
-    const sorted = [...points].sort((a, b) => a.ts - b.ts);
+    const sorted = [...points].sort((a, b) => a.timestamp - b.timestamp);
     const stays = detectStays(sorted, stayRadius, minStayMs);
 
     const segments = [];
@@ -32,15 +32,16 @@ function detectStays(points, stayRadius, minStayMs) {
     let i = 0;
 
     while (i < points.length - 1) {
-        const cluster = [points[i]];
-        let center = {lat: points[i].lat, lon: points[i].lon};
+        const cluster = [toLatLon(points[i])];
+        let center = toLatLon(points[i])
         let lastInIndex = i;
         let outlierUsed = false;
 
         for (let j = i + 1; j < points.length; j += 1) {
-            const distance = haversineMeters(center, points[j]);
+            const candidate = toLatLon(points[j]);
+            const distance = haversineMeters(center, candidate);
             if (distance <= stayRadius) {
-                cluster.push(points[j]);
+                cluster.push(candidate);
                 center = meanCenter(cluster);
                 lastInIndex = j;
                 outlierUsed = false;
@@ -55,14 +56,14 @@ function detectStays(points, stayRadius, minStayMs) {
             break;
         }
 
-        const duration = points[lastInIndex].ts - points[i].ts;
+        const duration = points[lastInIndex].timestamp - points[i].timestamp;
         if (duration >= minStayMs) {
             const radius = maxDistance(center, cluster);
             stays.push({
                 startIndex: i,
                 endIndex: lastInIndex,
-                start: points[i].ts,
-                end: points[lastInIndex].ts,
+                start: points[i].timestamp,
+                end: points[lastInIndex].timestamp,
                 center,
                 radius,
             });
@@ -119,8 +120,8 @@ function buildMoveSegment(points) {
     for (let i = 1; i < points.length; i += 1) {
         distance += haversineMeters(points[i - 1], points[i]);
     }
-    const start = points[0].ts;
-    const end = points[points.length - 1].ts;
+    const start = points[0].timestamp;
+    const end = points[points.length - 1].timestamp;
     return {
         type: "move",
         start,
