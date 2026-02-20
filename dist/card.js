@@ -702,7 +702,7 @@ class TimelineCard extends HTMLElement {
         }
     }
 
-    _fillMapCard() {
+    async _fillMapCard() {
         const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
         if (!haMap) return;
 
@@ -710,9 +710,14 @@ class TimelineCard extends HTMLElement {
         haMap.autoFit = false;
 
         this._mapCard._mapEntities = [];
-        this._fitMap();
+        this._mapCard.requestUpdate?.();
+        await this._mapCard.updateComplete;
+        this._refreshMapPaths();
+        this._fitMap(true);
+    }
 
-        if (!this._mapCard) return;
+    _refreshMapPaths() {
+        if (!this._config.show_map || !this._mapCard) return;
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
@@ -750,12 +755,15 @@ class TimelineCard extends HTMLElement {
         ];
     }
 
-    _fitMap(){
+    _fitMap(defer) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        if (!haMap) return;
+        if (!haMap || !this._fullDayPaths.length) return;
 
-        if (this._fullDayPaths.length) {
-            haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0});
+        const doFit = () => { haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0}); };
+        if (defer) {
+            requestAnimationFrame(() => requestAnimationFrame(doFit));
+        } else {
+            doFit();
         }
     }
 
