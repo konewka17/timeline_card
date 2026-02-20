@@ -505,7 +505,7 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._fullDayPaths = [];
         this._highlightedPath = [];
-        this._highlightedStay = [];
+        this._highlightedStay = null;
         this._isTravelHighlightActive = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
@@ -768,30 +768,73 @@ class TimelineCard extends HTMLElement {
             : [];
 
         this._highlightedPath = [];
-        this._highlightedStay = [];
+        this._highlightedStay = null;
         this._isTravelHighlightActive = false;
 
-        this._syncHaMapPaths();
+        this._drawMapPaths();
         this._fitMap();
     }
 
-    _syncHaMapPaths() {
+    _drawMapPaths() {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;
 
+        haMap._mapPaths.forEach((marker) => marker.remove());
+        haMap._mapPaths = [];
+
+        this._drawMapLines(haMap, Leaflet);
+        this._drawMapMarkers(haMap, Leaflet);
+        haMap._mapPaths.forEach((marker) => haMap.leafletMap.addLayer(marker));
+    }
+
+    _drawMapMarkers(haMap, Leaflet) {
+        const dayData = this._getCurrentDayData();
+        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
+        const stayMarkers = segments
+            .map((segment, index) => ({segment, index}))
+            .filter(({segment}) => segment?.type === "stay" && Number.isFinite(segment.center?.lat) && Number.isFinite(segment.center?.lon))
+            .map(({segment, index}) => ({
+                segmentIndex: index,
+                point: [segment.center.lat, segment.center.lon],
+            }));
+
+        stayMarkers.forEach((stay) => {
+            haMap._mapPaths.push(
+                Leaflet.circleMarker(stay.point, {
+                    radius: 6,
+                    color: "color-mix(in srgb, black 30%, var(--primary-color))",
+                    fillColor: "var(--primary-color)",
+                    fillOpacity: 1,
+                    weight: 2,
+                    interactive: false,
+                })
+            );
+        });
+
+        if (this._highlightedStay) {
+            haMap._mapPaths.push(
+                Leaflet.circleMarker(this._highlightedStay, {
+                    radius: 9,
+                    color: "color-mix(in srgb, black 30%, var(--accent-color))",
+                    fillColor: "var(--accent-color)",
+                    fillOpacity: 1,
+                    weight: 2,
+                    interactive: false,
+                })
+            );
+        }
+    }
+
+    _drawMapLines(haMap, Leaflet) {
         const basePaths = this._fullDayPaths.map((path) => ({
             ...path,
             gradualOpacity: this._isTravelHighlightActive ? 0.8 : path.gradualOpacity,
         }));
         const paths = [
             ...basePaths,
-            ...this._highlightedPath,
-            ...this._highlightedStay,
+            ...this._highlightedPath
         ];
-
-        haMap._mapPaths.forEach((marker) => marker.remove());
-        haMap._mapPaths = [];
 
         paths.forEach((path) => {
             haMap._mapPaths.push(
@@ -811,14 +854,14 @@ class TimelineCard extends HTMLElement {
                 })
             );
         });
-        haMap._mapPaths.forEach((marker) => haMap.leafletMap.addLayer(marker));
     }
 
     _fitMap(defer, bounds, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
-        if (!haMap || !Leaflet || !this._fullDayPaths.length) return;
+        if (!haMap || !Leaflet) return;
         if (bounds === undefined) {
+            if (!this._fullDayPaths.length) return;
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
         bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
@@ -843,21 +886,16 @@ class TimelineCard extends HTMLElement {
         if (!haMap) return;
 
         this._highlightedPath = [];
-        this._highlightedStay = [];
+        this._highlightedStay = null;
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
-            this._highlightedStay = [{
-                points: [{point: [segment.center.lat, segment.center.lon], timestamp: 0}],
-                color: "var(--accent-color)",
-                weight: 16,
-                gradualOpacity: 0,
-            }];
-            this._syncHaMapPaths();
+            this._highlightedStay = segment.center;
+            this._drawMapPaths();
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
             if (segmentPoints.length < 2) {
-                this._syncHaMapPaths();
+                this._drawMapPaths();
                 return;
             }
 
@@ -869,18 +907,18 @@ class TimelineCard extends HTMLElement {
                 gradualOpacity: 0,
             }];
             this._isTravelHighlightActive = true;
-            this._syncHaMapPaths();
+            this._drawMapPaths();
         }
     }
 
     _clearHoverHighlight() {
-        if (!this._highlightedPath.length && !this._highlightedStay.length && !this._isTravelHighlightActive) {
+        if (!this._highlightedPath.length && !this._highlightedStay && !this._isTravelHighlightActive) {
             return;
         }
         this._highlightedPath = [];
-        this._highlightedStay = [];
+        this._highlightedStay = null;
         this._isTravelHighlightActive = false;
-        this._syncHaMapPaths();
+        this._drawMapPaths();
     }
 
     _handleSegmentClick(segmentIndex) {
