@@ -1,11 +1,11 @@
-import { formatDistance, formatDuration, formatTimeRange } from "./utils.js";
+import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 
 export function renderTimeline(segments) {
-  if (!segments || segments.length === 0) {
-    return `<div class="empty">No location history for this day.</div>`;
-  }
+    if (!segments || segments.length === 0) {
+        return `<div class="empty">No location history for this day.</div>`;
+    }
 
-  return `
+    return `
     <div class="timeline">
       <div class="spine"></div>
       ${segments.map(renderSegment).join("")}
@@ -14,8 +14,8 @@ export function renderTimeline(segments) {
 }
 
 function renderSegment(segment) {
-  if (segment.type === "stay") {
-    return `
+    if (segment.type === "stay") {
+        return `
       <div class="entry stay">
         <div class="left-icon">
           <div class="icon-ring">
@@ -33,9 +33,9 @@ function renderSegment(segment) {
         </div>
       </div>
     `;
-  }
+    }
 
-  return `
+    return `
     <div class="entry move">
       <div class="left-icon"></div>
       <div class="line-slot"></div>
@@ -51,10 +51,10 @@ function renderSegment(segment) {
 }
 
 function escapeHtml(text) {
-  if (!text) return "";
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    if (!text) return "";
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;");
 }
