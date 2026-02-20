@@ -664,7 +664,7 @@ class TimelineCard extends HTMLElement {
       container.appendChild(this._mapCard);
     }
 
-    this._mapCard.updateComplete?.then(this._fillMapCard);
+    this._mapCard.updateComplete?.then(()=>{this._fillMapCard();});
   }
 
   async _createMapCard() {
