@@ -631,6 +631,9 @@ class TimelineCard extends HTMLElement {
             });
         }
         this._render();
+        requestAnimationFrame(() => {
+            this._refreshMapPaths();
+        });
     }
 
     _collectZones() {
@@ -713,18 +716,28 @@ class TimelineCard extends HTMLElement {
         const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
         if (!haMap) return;
 
+        this._mapCard._mapEntities = [];
+        this._mapCard.requestUpdate?.();
+        await this._mapCard.updateComplete;
+
+        await haMap.updateComplete?.catch(() => {});
+        if (!haMap.leafletMap) {
+            requestAnimationFrame(() => this._fillMapCard());
+            return;
+        }
         haMap.style.height = "200px";
         haMap.autoFit = false;
 
         this._mapCard._mapEntities = [];
         this._mapCard.requestUpdate?.();
         await this._mapCard.updateComplete;
+
         this._refreshMapPaths();
         this._fitMap(true);
     }
 
     _refreshMapPaths() {
-        if (!this._config.show_map || !this._mapCard) return;
+        if (!this._mapCard) return;
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
@@ -794,7 +807,7 @@ class TimelineCard extends HTMLElement {
         }
         bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
 
-        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {animate: true, duration: 1, maxZoom: 14}); };
+        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {maxZoom: 14}); };
         if (defer) {
             requestAnimationFrame(() => requestAnimationFrame(doFit));
         } else {
@@ -852,7 +865,6 @@ class TimelineCard extends HTMLElement {
         this._highlightedStay = [];
         this._isTravelHighlightActive = false;
         this._syncHaMapPaths();
-        this._fitMap();
     }
 
     _handleSegmentClick(segmentIndex) {
