@@ -671,9 +671,6 @@ class TimelineCard extends HTMLElement {
           </ha-card>
         `;
         this._attachMapCard();
-        if (!dayData.loading) {
-            this._refreshMapPaths();
-        }
     }
 
     async _attachMapCard() {
@@ -713,16 +710,10 @@ class TimelineCard extends HTMLElement {
         haMap.autoFit = false;
 
         this._mapCard._mapEntities = [];
-        this._refreshMapPaths();
-    }
 
-    _refreshMapPaths() {
         if (!this._config.show_map || !this._mapCard) return;
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
-
-        const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
-        if (!haMap) return;
 
         const points = Array.isArray(dayData.points) ? dayData.points : [];
         this._fullDayPaths = points.length > 1
@@ -739,10 +730,7 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         this._syncHaMapPaths();
-
-        if (this._fullDayPaths.length) {
-            haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0.3});
-        }
+        this._fitMap();
     }
 
     _syncHaMapPaths() {
@@ -759,6 +747,15 @@ class TimelineCard extends HTMLElement {
             ...this._highlightedPath,
             ...this._highlightedStay,
         ];
+    }
+
+    _fitMap(){
+        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
+        if (!haMap) return;
+
+        if (this._fullDayPaths.length) {
+            haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0});
+        }
     }
 
     _handleSegmentHoverStart(segmentIndex) {
@@ -815,6 +812,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedStay = [];
         this._isTravelHighlightActive = false;
         this._syncHaMapPaths();
+        this._fitMap();
     }
 
     _extractSegmentPoints(points, segment) {
