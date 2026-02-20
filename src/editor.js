@@ -3,7 +3,6 @@ const OPTIONS = {
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,
-    show_map: false,
 };
 
 class TimelineCardEditor extends HTMLElement {
