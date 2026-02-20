@@ -10,46 +10,28 @@ export function segmentTimeline(points, options, zones) {
 
     const segments = [];
     let cursor = 0;
+
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
-            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1));
+            const moveStartIndex = Math.max(0, cursor - 1);
+            const move = buildMoveSegment(sorted.slice(moveStartIndex, stay.startIndex + 1));
             if (move) segments.push(move);
+        } else if (cursor === stay.startIndex && stay.startIndex > 0) {
+            const bridge = buildMoveSegment(sorted.slice(stay.startIndex - 1, stay.startIndex + 1));
+            if (bridge && bridge.durationMs > 0) segments.push(bridge);
         }
+
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
     });
 
     if (cursor < sorted.length) {
-        const move = buildMoveSegment(sorted.slice(cursor));
+        const moveStartIndex = Math.max(0, cursor - 1);
+        const move = buildMoveSegment(sorted.slice(moveStartIndex));
         if (move) segments.push(move);
     }
 
-    return fillTimelineGaps(segments);
-}
-
-function fillTimelineGaps(segments) {
-    if (!Array.isArray(segments) || segments.length < 2) return segments;
-
-    const normalized = [segments[0]];
-    for (let i = 1; i < segments.length; i += 1) {
-        const previous = normalized[normalized.length - 1];
-        const current = segments[i];
-        const gapMs = current.start - previous.end;
-
-        if (gapMs > 0) {
-            normalized.push({
-                type: "move",
-                start: previous.end,
-                end: current.start,
-                durationMs: gapMs,
-                distanceM: 0,
-            });
-        }
-
-        normalized.push(current);
-    }
-
-    return normalized;
+    return segments;
 }
 
 function detectStays(points, stayRadius, minStayMs) {
