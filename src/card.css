@@ -232,8 +232,27 @@ ha-card {
   border-radius: 8px;
 }
 
+.map-wrap {
+  position: relative;
+}
+
 #overview-map {
   height: 200px;
+}
+
+.map-reset {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  --mdc-icon-button-size: 34px;
+  background: var(--card-background-color, #fff);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px #0003;
+}
+
+.map-reset[hidden] {
+  display: none;
 }
 
 .stay-marker{
