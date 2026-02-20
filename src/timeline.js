@@ -8,15 +8,15 @@ export function renderTimeline(segments) {
     return `
     <div class="timeline">
       <div class="spine"></div>
-      ${segments.map(renderSegment).join("")}
+      ${segments.map((segment, index) => renderSegment(segment, index)).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment) {
+function renderSegment(segment, index) {
     if (segment.type === "stay") {
         return `
-      <div class="entry stay">
+      <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
         <div class="left-icon">
           <div class="icon-ring">
             <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
@@ -36,7 +36,7 @@ function renderSegment(segment) {
     }
 
     return `
-    <div class="entry move">
+    <div class="entry move" data-segment-index="${index}" data-segment-type="move">
       <div class="left-icon"></div>
       <div class="line-slot"></div>
       <div class="content location travel">

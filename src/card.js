@@ -25,6 +25,10 @@ class TimelineCard extends HTMLElement {
         this._loading = false;
         this._error = null;
         this._rendered = false;
+        this._fullDayPaths = [];
+        this._highlightedPath = [];
+        this._highlightedStay = [];
+        this._isTravelHighlightActive = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -37,6 +41,20 @@ class TimelineCard extends HTMLElement {
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
             }
+        });
+
+        this.shadowRoot.addEventListener("mouseover", (event) => {
+            const entry = event.target.closest("[data-segment-index]");
+            if (!entry || !this.shadowRoot.contains(entry)) return;
+            if (entry.contains(event.relatedTarget)) return;
+            this._handleSegmentHoverStart(Number(entry.dataset.segmentIndex));
+        });
+
+        this.shadowRoot.addEventListener("mouseout", (event) => {
+            const entry = event.target.closest("[data-segment-index]");
+            if (!entry || !this.shadowRoot.contains(entry)) return;
+            if (entry.contains(event.relatedTarget)) return;
+            this._clearHoverHighlight();
         });
     }
 
@@ -93,7 +111,7 @@ class TimelineCard extends HTMLElement {
         const existing = this._cache.get(key);
         if (existing && (existing.segments || existing.loading)) return;
 
-        this._cache.set(key, {loading: true, segments: null, error: null, debug: null});
+        this._cache.set(key, {loading: true, segments: null, points: null, error: null, debug: null});
         this._render();
 
         try {
@@ -116,12 +134,13 @@ class TimelineCard extends HTMLElement {
                 first: points[0]?.ts || null,
                 last: points[points.length - 1]?.ts || null,
             };
-            this._cache.set(key, {loading: false, segments, error: null, debug});
+            this._cache.set(key, {loading: false, segments, points, error: null, debug});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
             this._cache.set(key, {
                 loading: false,
                 segments: null,
+                points: null,
                 error: this._formatErrorMessage(err),
                 debug: null,
             });
@@ -146,7 +165,7 @@ class TimelineCard extends HTMLElement {
     _render() {
         if (!this.shadowRoot) return;
         const dateKey = toDateKey(this._selectedDate);
-        const dayData = this._cache.get(dateKey) || {loading: false, segments: null, error: null, debug: null};
+        const dayData = this._cache.get(dateKey) || {loading: false, segments: null, points: null, error: null, debug: null};
         const isFuture = this._selectedDate >= startOfDay(new Date());
 
         this.shadowRoot.innerHTML = `
@@ -173,6 +192,10 @@ class TimelineCard extends HTMLElement {
     `;
         if (this._config.show_map) {
             this._attachMapCard();
+        }
+
+        if (!dayData.loading) {
+            this._refreshMapPaths();
         }
     }
 
@@ -207,9 +230,129 @@ class TimelineCard extends HTMLElement {
 
     _fillMapCard() {
         const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
-        haMap.style.height = "200px";
+        if (!haMap) return;
 
-        this._mapCard._mapEntities = []
+        haMap.style.height = "200px";
+        haMap.autoFit = false;
+
+        this._mapCard._mapEntities = [];
+        this._refreshMapPaths();
+    }
+
+    _refreshMapPaths() {
+        if (!this._config.show_map || !this._mapCard) return;
+        const dayData = this._getCurrentDayData();
+        if (!dayData || dayData.loading || dayData.error) return;
+
+        const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
+        if (!haMap) return;
+
+        const points = Array.isArray(dayData.points) ? dayData.points : [];
+        this._fullDayPaths = points.length > 1
+            ? [{
+                points: points.map(toHaMapPoint).filter(Boolean),
+                color: "var(--primary-color)",
+                weight: 4,
+                gradualOpacity: 0.2,
+            }]
+            : [];
+
+        this._highlightedPath = [];
+        this._highlightedStay = [];
+        this._isTravelHighlightActive = false;
+
+        this._syncHaMapPaths();
+
+        if (this._fullDayPaths.length) {
+            haMap.fitBounds(this._fullDayPaths[0].points, {pad: 0.3});
+        }
+    }
+
+    _syncHaMapPaths() {
+        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
+        if (!haMap) return;
+
+        const basePaths = this._fullDayPaths.map((path) => ({
+            ...path,
+            gradualOpacity: this._isTravelHighlightActive ? 0.8 : path.gradualOpacity,
+        }));
+
+        haMap.paths = [
+            ...basePaths,
+            ...this._highlightedPath,
+            ...this._highlightedStay,
+        ];
+    }
+
+    _handleSegmentHoverStart(segmentIndex) {
+        if (!this._config.show_map || !Number.isInteger(segmentIndex)) return;
+        const dayData = this._getCurrentDayData();
+        if (!dayData || !Array.isArray(dayData.segments)) return;
+
+        const segment = dayData.segments[segmentIndex];
+        if (!segment) return;
+
+        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
+        if (!haMap) return;
+
+        this._highlightedPath = [];
+        this._highlightedStay = [];
+        this._isTravelHighlightActive = false;
+
+        if (segment.type === "stay") {
+            const centerPoint = segment.center ? toHaMapPoint(segment.center) : null;
+            if (!centerPoint) return;
+
+            this._highlightedStay = [{
+                points: [centerPoint],
+                color: "var(--accent-color)",
+                weight: 16,
+                gradualOpacity: 0,
+            }];
+            this._syncHaMapPaths();
+            haMap.fitBounds([centerPoint], {pad: 0.3});
+            return;
+        }
+
+        if (segment.type === "move") {
+            const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
+            if (segmentPoints.length < 2) {
+                this._syncHaMapPaths();
+                return;
+            }
+
+            this._highlightedPath = [{
+                points: segmentPoints,
+                color: "var(--accent-color)",
+                weight: 6,
+                gradualOpacity: 0,
+            }];
+            this._isTravelHighlightActive = true;
+            this._syncHaMapPaths();
+            haMap.fitBounds(segmentPoints, {pad: 0.3});
+        }
+    }
+
+    _clearHoverHighlight() {
+        if (!this._highlightedPath.length && !this._highlightedStay.length && !this._isTravelHighlightActive) {
+            return;
+        }
+        this._highlightedPath = [];
+        this._highlightedStay = [];
+        this._isTravelHighlightActive = false;
+        this._syncHaMapPaths();
+    }
+
+    _extractSegmentPoints(points, segment) {
+        if (!Array.isArray(points)) return [];
+        return points
+            .filter((point) => point.ts >= segment.start && point.ts <= segment.end)
+            .map(toHaMapPoint)
+            .filter(Boolean);
+    }
+
+    _getCurrentDayData() {
+        return this._cache.get(toDateKey(this._selectedDate));
     }
 
     _renderDebug(dayData) {
@@ -231,6 +374,14 @@ class TimelineCard extends HTMLElement {
         }
         return message || "Unable to load history";
     }
+}
+
+function toHaMapPoint(point) {
+    if (!point) return null;
+    const latitude = Number(point.latitude ?? point.lat);
+    const longitude = Number(point.longitude ?? point.lon);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return {latitude, longitude};
 }
 
 function applyPlacesToStays(segments, placeStates, date) {
