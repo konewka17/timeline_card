@@ -207,9 +207,9 @@ class TimelineCard extends HTMLElement {
 
     _fillMapCard() {
         const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
-        if (haMap) {
-            haMap.style.height = "200px";
-        }
+        haMap.style.height = "200px";
+
+        this._mapCard._mapEntities = []
     }
 
     _renderDebug(dayData) {
