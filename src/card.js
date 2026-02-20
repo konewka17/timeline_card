@@ -231,8 +231,9 @@ class TimelineCard extends HTMLElement {
         haMap.autoFit = false;
 
         this._mapCard._mapEntities = [];
+        this._fitMap();
 
-        if (!this._config.show_map || !this._mapCard) return;
+        if (!this._mapCard) return;
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
@@ -438,6 +439,5 @@ export function getStubConfig() {
         stay_radius_m: 75,
         min_stay_minutes: 10,
         show_debug: false,
-        show_map: false,
     };
 }
