@@ -300,15 +300,14 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
-            const centerPoint = toLatLon(segment.center);
             this._highlightedStay = [{
-                points: [centerPoint],
+                points: [{point: [segment.center.lat, segment.center.lon], timestamp: 0}],
                 color: "var(--accent-color)",
                 weight: 16,
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([centerPoint], {pad: 0.3});
+            haMap.fitBounds([segment.center], {pad: 0.3});
             return;
         }
 
