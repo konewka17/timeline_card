@@ -535,11 +535,11 @@ class TimelineCard extends HTMLElement {
             this._clearHoverHighlight();
         });
 
-        this.shadowRoot.addEventListener("mouseclick", (event) => {
+        this.shadowRoot.addEventListener("click", (event) => {
             const entry = event.target.closest("[data-segment-index]");
             if (!entry || !this.shadowRoot.contains(entry)) return;
             if (entry.contains(event.relatedTarget)) return;
-            this._handleSegmentClick();
+            this._handleSegmentClick(Number(entry.dataset.segmentIndex));
         });
     }
 
@@ -794,7 +794,7 @@ class TimelineCard extends HTMLElement {
         }
         bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
 
-        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {animate: true, duration: 10, maxZoom: 14}); };
+        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {animate: true, duration: 1, maxZoom: 14}); };
         if (defer) {
             requestAnimationFrame(() => requestAnimationFrame(doFit));
         } else {
@@ -866,7 +866,7 @@ class TimelineCard extends HTMLElement {
         if (segment.type === "stay") {
             this._fitMap(false, [segment.center]);
         } else if (segment.type === "move") {
-            this._fitMap(false, this._highlightedPath.points.map(toLatLon));
+            this._fitMap(false, this._highlightedPath[0].points.map(toLatLon));
         }
     }
 
