@@ -55,6 +55,13 @@ class TimelineCard extends HTMLElement {
             if (entry.contains(event.relatedTarget)) return;
             this._clearHoverHighlight();
         });
+
+        this.shadowRoot.addEventListener("mouseclick", (event) => {
+            const entry = event.target.closest("[data-segment-index]");
+            if (!entry || !this.shadowRoot.contains(entry)) return;
+            if (entry.contains(event.relatedTarget)) return;
+            this._handleSegmentClick();
+        });
     }
 
     setConfig(config) {
@@ -262,25 +269,53 @@ class TimelineCard extends HTMLElement {
 
     _syncHaMapPaths() {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        if (!haMap) return;
+        const Leaflet = haMap?.Leaflet;
+        if (!haMap || ! Leaflet) return;
 
         const basePaths = this._fullDayPaths.map((path) => ({
             ...path,
             gradualOpacity: this._isTravelHighlightActive ? 0.8 : path.gradualOpacity,
         }));
-
-        haMap.paths = [
+        const paths = [
             ...basePaths,
             ...this._highlightedPath,
             ...this._highlightedStay,
         ];
+
+        haMap._mapPaths.forEach((marker) => marker.remove());
+        haMap._mapPaths = [];
+
+        paths.forEach((path) => {
+            haMap._mapPaths.push(
+                Leaflet.polyline(path.points.map(point => point.point), {
+                    color: `color-mix(in srgb, black 30%, ${path.color})`,
+                    opacity: 1,
+                    weight: path?.weight + 3,
+                    interactive: false,
+                })
+            );
+            haMap._mapPaths.push(
+                Leaflet.polyline(path.points.map(point => point.point), {
+                    color: path.color,
+                    opacity: 1,
+                    weight: path?.weight,
+                    interactive: false,
+                })
+            );
+        });
+        haMap._mapPaths.forEach((marker) => haMap.leafletMap.addLayer(marker));
     }
 
-    _fitMap(defer) {
+    _fitMap(defer, bounds, pad=0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        if (!haMap || !this._fullDayPaths.length) return;
+        const Leaflet = haMap?.Leaflet;
+        if (!haMap || ! Leaflet || !this._fullDayPaths.length) return;
+        if (bounds === undefined){
+            bounds = this._fullDayPaths[0].points.map(toLatLon);
+        }
+        bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
 
-        const doFit = () => { haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0.1}); };
+        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {animate: true, duration: 10, maxZoom: 14}); };
         if (defer) {
             requestAnimationFrame(() => requestAnimationFrame(doFit));
         } else {
@@ -311,11 +346,7 @@ class TimelineCard extends HTMLElement {
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([segment.center], {pad: 0.3});
-            return;
-        }
-
-        if (segment.type === "move") {
+        } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
             if (segmentPoints.length < 2) {
                 this._syncHaMapPaths();
@@ -325,12 +356,12 @@ class TimelineCard extends HTMLElement {
             this._highlightedPath = [{
                 points: segmentPoints,
                 color: "var(--accent-color)",
-                weight: 6,
+                weight: 7,
+                opacity: 1,
                 gradualOpacity: 0,
             }];
             this._isTravelHighlightActive = true;
             this._syncHaMapPaths();
-            haMap.fitBounds(segmentPoints.map(toLatLon), {pad: 0.1});
         }
     }
 
@@ -344,6 +375,22 @@ class TimelineCard extends HTMLElement {
         this._syncHaMapPaths();
         this._fitMap();
     }
+
+    _handleSegmentClick(segmentIndex) {
+        if (!Number.isInteger(segmentIndex)) return;
+        const dayData = this._getCurrentDayData();
+        if (!dayData || !Array.isArray(dayData.segments)) return;
+
+        const segment = dayData.segments[segmentIndex];
+        if (!segment) return;
+
+        if (segment.type === "stay") {
+            this._fitMap(false, [segment.center]);
+        } else if (segment.type === "move") {
+            this._fitMap(false, this._highlightedPath.points.map(toLatLon));
+        }
+    }
+
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];
