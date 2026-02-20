@@ -86,6 +86,14 @@ ha-card {
   border-radius: 999px;
 }
 
+.timeline.trim-spine-top .spine {
+  top: 36px;
+}
+
+.timeline.trim-spine-bottom .spine {
+  bottom: 36px;
+}
+
 .entry {
   position: relative;
   display: grid;
