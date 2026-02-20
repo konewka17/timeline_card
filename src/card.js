@@ -312,38 +312,35 @@ class TimelineCard extends HTMLElement {
     _drawMapMarkers(haMap, Leaflet) {
         const dayData = this._getCurrentDayData();
         const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        const stayMarkers = segments
-            .map((segment, index) => ({segment, index}))
-            .filter(({segment}) => segment?.type === "stay" && Number.isFinite(segment.center?.lat) && Number.isFinite(segment.center?.lon))
-            .map(({segment, index}) => ({
-                segmentIndex: index,
-                point: [segment.center.lat, segment.center.lon],
-            }));
+        const stayMarkers = segments.filter(segment => segment?.type === "stay");
 
         stayMarkers.forEach((stay) => {
-            haMap._mapPaths.push(
-                Leaflet.circleMarker(stay.point, {
-                    radius: 6,
-                    color: "color-mix(in srgb, black 30%, var(--primary-color))",
-                    fillColor: "var(--primary-color)",
-                    fillOpacity: 1,
-                    weight: 2,
-                    interactive: false,
-                })
-            );
+            let haIcon = document.createElement("ha-icon");
+            haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 18px;")
+
+            let iconDiv = document.createElement("div");
+            iconDiv.appendChild(haIcon);
+            iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))")
+
+            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
+            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon}))
         });
 
         if (this._highlightedStay) {
-            haMap._mapPaths.push(
-                Leaflet.circleMarker(this._highlightedStay, {
-                    radius: 9,
-                    color: "color-mix(in srgb, black 30%, var(--accent-color))",
-                    fillColor: "var(--accent-color)",
-                    fillOpacity: 1,
-                    weight: 2,
-                    interactive: false,
-                })
-            );
+            let haIcon = document.createElement("ha-icon");
+            haIcon.setAttribute("icon", this._highlightedStay.zoneIcon || "mdi:map-marker");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 22px;")
+
+            let iconDiv = document.createElement("div");
+            iconDiv.appendChild(haIcon);
+            iconDiv.setAttribute("style", "height: 22px; width: 22px; background-color: var(--accent-color); " +
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))")
+
+            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
+            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon}))
+
         }
     }
 
@@ -411,7 +408,7 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
-            this._highlightedStay = segment.center;
+            this._highlightedStay = segment;
             this._drawMapPaths();
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);

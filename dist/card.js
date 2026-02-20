@@ -1,4 +1,4 @@
-var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  flex: 1;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}";
+var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  flex: 1;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.stay-marker{\r\n  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))\r\n}";
 
 function toDateKey(date) {
     const y = date.getFullYear();
@@ -791,38 +791,35 @@ class TimelineCard extends HTMLElement {
     _drawMapMarkers(haMap, Leaflet) {
         const dayData = this._getCurrentDayData();
         const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        const stayMarkers = segments
-            .map((segment, index) => ({segment, index}))
-            .filter(({segment}) => segment?.type === "stay" && Number.isFinite(segment.center?.lat) && Number.isFinite(segment.center?.lon))
-            .map(({segment, index}) => ({
-                segmentIndex: index,
-                point: [segment.center.lat, segment.center.lon],
-            }));
+        const stayMarkers = segments.filter(segment => segment?.type === "stay");
 
         stayMarkers.forEach((stay) => {
-            haMap._mapPaths.push(
-                Leaflet.circleMarker(stay.point, {
-                    radius: 6,
-                    color: "color-mix(in srgb, black 30%, var(--primary-color))",
-                    fillColor: "var(--primary-color)",
-                    fillOpacity: 1,
-                    weight: 2,
-                    interactive: false,
-                })
-            );
+            let haIcon = document.createElement("ha-icon");
+            haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 18px;");
+
+            let iconDiv = document.createElement("div");
+            iconDiv.appendChild(haIcon);
+            iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))");
+
+            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
+            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon}));
         });
 
         if (this._highlightedStay) {
-            haMap._mapPaths.push(
-                Leaflet.circleMarker(this._highlightedStay, {
-                    radius: 9,
-                    color: "color-mix(in srgb, black 30%, var(--accent-color))",
-                    fillColor: "var(--accent-color)",
-                    fillOpacity: 1,
-                    weight: 2,
-                    interactive: false,
-                })
-            );
+            let haIcon = document.createElement("ha-icon");
+            haIcon.setAttribute("icon", this._highlightedStay.zoneIcon || "mdi:map-marker");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 22px;");
+
+            let iconDiv = document.createElement("div");
+            iconDiv.appendChild(haIcon);
+            iconDiv.setAttribute("style", "height: 22px; width: 22px; background-color: var(--accent-color); " +
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))");
+
+            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
+            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon}));
+
         }
     }
 
@@ -890,7 +887,7 @@ class TimelineCard extends HTMLElement {
         this._isTravelHighlightActive = false;
 
         if (segment.type === "stay") {
-            this._highlightedStay = segment.center;
+            this._highlightedStay = segment;
             this._drawMapPaths();
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
