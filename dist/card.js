@@ -44,7 +44,7 @@ function formatTimeRange(start, end) {
 }
 
 function formatDuration(ms) {
-    const totalMinutes = Math.max(0, Math.round(ms / 60000));
+    const totalMinutes = ms > 0 ? Math.max(1, Math.round(ms / 60000)) : 0;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
@@ -181,7 +181,32 @@ function segmentTimeline(points, options, zones) {
         if (move) segments.push(move);
     }
 
-    return segments;
+    return fillTimelineGaps(segments);
+}
+
+function fillTimelineGaps(segments) {
+    if (!Array.isArray(segments) || segments.length < 2) return segments;
+
+    const normalized = [segments[0]];
+    for (let i = 1; i < segments.length; i += 1) {
+        const previous = normalized[normalized.length - 1];
+        const current = segments[i];
+        const gapMs = current.start - previous.end;
+
+        if (gapMs > 0) {
+            normalized.push({
+                type: "move",
+                start: previous.end,
+                end: current.start,
+                durationMs: gapMs,
+                distanceM: 0,
+            });
+        }
+
+        normalized.push(current);
+    }
+
+    return normalized;
 }
 
 function detectStays(points, stayRadius, minStayMs) {
@@ -751,7 +776,7 @@ class TimelineCard extends HTMLElement {
             <div class="card">
               <div class="map-wrap">
                 <div id="overview-map"></div>
-                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:crosshairs-gps"></ha-icon></ha-icon-button>
+                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
               </div>
               <div class="header my-header">
                 <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>

@@ -24,7 +24,32 @@ export function segmentTimeline(points, options, zones) {
         if (move) segments.push(move);
     }
 
-    return segments;
+    return fillTimelineGaps(segments);
+}
+
+function fillTimelineGaps(segments) {
+    if (!Array.isArray(segments) || segments.length < 2) return segments;
+
+    const normalized = [segments[0]];
+    for (let i = 1; i < segments.length; i += 1) {
+        const previous = normalized[normalized.length - 1];
+        const current = segments[i];
+        const gapMs = current.start - previous.end;
+
+        if (gapMs > 0) {
+            normalized.push({
+                type: "move",
+                start: previous.end,
+                end: current.start,
+                durationMs: gapMs,
+                distanceM: 0,
+            });
+        }
+
+        normalized.push(current);
+    }
+
+    return normalized;
 }
 
 function detectStays(points, stayRadius, minStayMs) {

@@ -42,7 +42,7 @@ export function formatTimeRange(start, end) {
 }
 
 export function formatDuration(ms) {
-    const totalMinutes = Math.max(0, Math.round(ms / 60000));
+    const totalMinutes = ms > 0 ? Math.max(1, Math.round(ms / 60000)) : 0;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
