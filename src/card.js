@@ -310,7 +310,7 @@ class TimelineCard extends HTMLElement {
                 gradualOpacity: 0,
             }];
             this._syncHaMapPaths();
-            haMap.fitBounds([centerPoint], {pad: 0.3});
+            haMap.fitBounds([centerPoint, centerPoint], {pad: 0.3});
             return;
         }
 
@@ -378,10 +378,16 @@ class TimelineCard extends HTMLElement {
 
 function toHaMapPoint(point) {
     if (!point) return null;
-    const latitude = Number(point.latitude ?? point.lat);
-    const longitude = Number(point.longitude ?? point.lon);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-    return {latitude, longitude};
+    const lat = Number(point.lat ?? point.latitude);
+    const lon = Number(point.lon ?? point.lng ?? point.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+        lat,
+        lon,
+        lng: lon,
+        latitude: lat,
+        longitude: lon,
+    };
 }
 
 function applyPlacesToStays(segments, placeStates, date) {
