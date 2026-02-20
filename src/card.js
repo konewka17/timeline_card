@@ -280,7 +280,7 @@ class TimelineCard extends HTMLElement {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         if (!haMap || !this._fullDayPaths.length) return;
 
-        const doFit = () => { haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0}); };
+        const doFit = () => { haMap.fitBounds(this._fullDayPaths[0].points.map(toLatLon), {pad: 0.1}); };
         if (defer) {
             requestAnimationFrame(() => requestAnimationFrame(doFit));
         } else {
@@ -330,7 +330,7 @@ class TimelineCard extends HTMLElement {
             }];
             this._isTravelHighlightActive = true;
             this._syncHaMapPaths();
-            haMap.fitBounds(segmentPoints.map(toLatLon), {pad: 0.3});
+            haMap.fitBounds(segmentPoints.map(toLatLon), {pad: 0.1});
         }
     }
 
