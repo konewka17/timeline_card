@@ -213,10 +213,8 @@ class TimelineCard extends HTMLElement {
         dateEl.textContent = formatDate(this._selectedDate);
 
         const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
-        if (datePicker) {
-            datePicker.value = toDateKey(this._selectedDate);
-            datePicker.max = toDateKey(new Date());
-        }
+        datePicker.value = toDateKey(this._selectedDate);
+        datePicker.max = toDateKey(new Date());
 
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);

@@ -720,10 +720,8 @@ class TimelineCard extends HTMLElement {
         dateEl.textContent = formatDate(this._selectedDate);
 
         const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
-        if (datePicker) {
-            datePicker.value = toDateKey(this._selectedDate);
-            datePicker.max = toDateKey(new Date());
-        }
+        datePicker.value = toDateKey(this._selectedDate);
+        datePicker.max = toDateKey(new Date());
 
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);
@@ -874,9 +872,13 @@ class TimelineCard extends HTMLElement {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
-        const points = Array.isArray(dayData.points) ? dayData.points : [];
-        this._fullDayPaths = points.length > 1 ? [{points: points, color: "var(--primary-color)", weight: 4}] : [];
-
+        this._fullDayPaths = [];
+        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
+        if (segments.length > 1) {
+            this._fullDayPaths = segments
+                .filter(segment => segment?.type === "move")
+                .map(segment => ({points: segment.points, color: "var(--primary-color)", weight: 4}));
+        }
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
@@ -938,9 +940,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _drawMapLines(haMap, Leaflet) {
-        let fullDayPaths = this._fullDayPaths;
-        fullDayPaths = this._getCurrentDayData().segments.filter(segment => segment?.type === "move");
-        const paths = [fullDayPaths, ...this._highlightedPath];
+        const paths = [...this._fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
             haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
