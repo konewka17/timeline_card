@@ -223,14 +223,6 @@ ha-card {
   font-weight: normal;
 }
 
-.debug {
-  margin-top: 8px;
-  padding: 8px;
-  font-size: 0.75rem;
-  color: var(--secondary-text-color);
-  background: var(--secondary-background-color);
-  border-radius: 8px;
-}
 
 .map-wrap {
   position: relative;

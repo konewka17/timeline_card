@@ -35,7 +35,6 @@ type: custom:location-timeline-card
 entity: device_tracker.my_phone
 stay_radius_m: 75
 min_stay_minutes: 10
-show_debug: false
 ```
 
 ## Places integration (optional)
@@ -60,7 +59,6 @@ When available, Places data is used to provide an additional human-friendly loca
 | `places_entity` | string | `null` | Optional `sensor` from the Places integration to label unknown stays. |
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
-| `show_debug` | boolean | `false` | Show debug info (points/zones/first/last timestamps). |
 
 ## Lovelace UI editor
 The card includes a visual editor with:
@@ -68,7 +66,6 @@ The card includes a visual editor with:
 - Optional Places entity selector
 - Stay radius (meters)
 - Minimum stay duration (minutes)
-- Debug toggle
 
 ## Notes
 - The card reads raw GPS history from the tracked entity’s latitude/longitude attributes.

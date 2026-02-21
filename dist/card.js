@@ -1,4 +1,4 @@
-var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date-wrap {\r\n  display: flex;\r\n  justify-content: center;\r\n  flex: 1;\r\n  min-width: 0;\r\n}\r\n\r\n.date-trigger {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  border: 0;\r\n  background: transparent;\r\n  color: inherit;\r\n  font: inherit;\r\n  padding: 2px 4px;\r\n  margin: 0;\r\n  min-width: 0;\r\n  cursor: pointer;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.date-caret {\r\n  color: var(--secondary-text-color);\r\n  --mdc-icon-size: 20px;\r\n}\r\n\r\n.date-picker-input {\r\n  position: absolute;\r\n  opacity: 0;\r\n  pointer-events: none;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n  touch-action: pan-y;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.timeline.trim-spine-top .spine {\r\n  top: 32px;\r\n}\r\n\r\n.timeline.trim-spine-bottom .spine {\r\n  bottom: 32px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n.map-wrap {\r\n  position: relative;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.map-reset {\r\n  position: absolute;\r\n  top: 8px;\r\n  right: 8px;\r\n  z-index: 1000;\r\n  --mdc-icon-button-size: 34px;\r\n  background: var(--card-background-color, #fff);\r\n  border-radius: 50%;\r\n  box-shadow: 0 2px 6px #0003;\r\n}\r\n\r\n.map-reset[hidden] {\r\n  display: none;\r\n}\r\n";
+var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date-wrap {\r\n  display: flex;\r\n  justify-content: center;\r\n  flex: 1;\r\n  min-width: 0;\r\n}\r\n\r\n.date-trigger {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  border: 0;\r\n  background: transparent;\r\n  color: inherit;\r\n  font: inherit;\r\n  padding: 2px 4px;\r\n  margin: 0;\r\n  min-width: 0;\r\n  cursor: pointer;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.date-caret {\r\n  color: var(--secondary-text-color);\r\n  --mdc-icon-size: 20px;\r\n}\r\n\r\n.date-picker-input {\r\n  position: absolute;\r\n  opacity: 0;\r\n  pointer-events: none;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n  touch-action: pan-y;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.timeline.trim-spine-top .spine {\r\n  top: 32px;\r\n}\r\n\r\n.timeline.trim-spine-bottom .spine {\r\n  bottom: 32px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n\r\n.map-wrap {\r\n  position: relative;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.map-reset {\r\n  position: absolute;\r\n  top: 8px;\r\n  right: 8px;\r\n  z-index: 1000;\r\n  --mdc-icon-button-size: 34px;\r\n  background: var(--card-background-color, #fff);\r\n  border-radius: 50%;\r\n  box-shadow: 0 2px 6px #0003;\r\n}\r\n\r\n.map-reset[hidden] {\r\n  display: none;\r\n}\r\n";
 
 var leafletCss = "/* required styles */\r\n\r\n.leaflet-pane,\r\n.leaflet-tile,\r\n.leaflet-marker-icon,\r\n.leaflet-marker-shadow,\r\n.leaflet-tile-container,\r\n.leaflet-pane > svg,\r\n.leaflet-pane > canvas,\r\n.leaflet-zoom-box,\r\n.leaflet-image-layer,\r\n.leaflet-layer {\r\n\tposition: absolute;\r\n\tleft: 0;\r\n\ttop: 0;\r\n\t}\r\n.leaflet-container {\r\n\toverflow: hidden;\r\n\t}\r\n.leaflet-tile,\r\n.leaflet-marker-icon,\r\n.leaflet-marker-shadow {\r\n\t-webkit-user-select: none;\r\n\t   -moz-user-select: none;\r\n\t        user-select: none;\r\n\t  -webkit-user-drag: none;\r\n\t}\r\n/* Prevents IE11 from highlighting tiles in blue */\r\n.leaflet-tile::selection {\r\n\tbackground: transparent;\r\n}\r\n/* Safari renders non-retina tile on retina better with this, but Chrome is worse */\r\n.leaflet-safari .leaflet-tile {\r\n\timage-rendering: -webkit-optimize-contrast;\r\n\t}\r\n/* hack that prevents hw layers \"stretching\" when loading new tiles */\r\n.leaflet-safari .leaflet-tile-container {\r\n\twidth: 1600px;\r\n\theight: 1600px;\r\n\t-webkit-transform-origin: 0 0;\r\n\t}\r\n.leaflet-marker-icon,\r\n.leaflet-marker-shadow {\r\n\tdisplay: block;\r\n\t}\r\n/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */\r\n/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */\r\n.leaflet-container .leaflet-overlay-pane svg {\r\n\tmax-width: none !important;\r\n\tmax-height: none !important;\r\n\t}\r\n.leaflet-container .leaflet-marker-pane img,\r\n.leaflet-container .leaflet-shadow-pane img,\r\n.leaflet-container .leaflet-tile-pane img,\r\n.leaflet-container img.leaflet-image-layer,\r\n.leaflet-container .leaflet-tile {\r\n\tmax-width: none !important;\r\n\tmax-height: none !important;\r\n\twidth: auto;\r\n\tpadding: 0;\r\n\t}\r\n\r\n.leaflet-container img.leaflet-tile {\r\n\t/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */\r\n\tmix-blend-mode: plus-lighter;\r\n}\r\n\r\n.leaflet-container.leaflet-touch-zoom {\r\n\t-ms-touch-action: pan-x pan-y;\r\n\ttouch-action: pan-x pan-y;\r\n\t}\r\n.leaflet-container.leaflet-touch-drag {\r\n\t-ms-touch-action: pinch-zoom;\r\n\t/* Fallback for FF which doesn't support pinch-zoom */\r\n\ttouch-action: none;\r\n\ttouch-action: pinch-zoom;\r\n}\r\n.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {\r\n\t-ms-touch-action: none;\r\n\ttouch-action: none;\r\n}\r\n.leaflet-container {\r\n\t-webkit-tap-highlight-color: transparent;\r\n}\r\n.leaflet-container a {\r\n\t-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);\r\n}\r\n.leaflet-tile {\r\n\tfilter: inherit;\r\n\tvisibility: hidden;\r\n\t}\r\n.leaflet-tile-loaded {\r\n\tvisibility: inherit;\r\n\t}\r\n.leaflet-zoom-box {\r\n\twidth: 0;\r\n\theight: 0;\r\n\t-moz-box-sizing: border-box;\r\n\t     box-sizing: border-box;\r\n\tz-index: 800;\r\n\t}\r\n/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */\r\n.leaflet-overlay-pane svg {\r\n\t-moz-user-select: none;\r\n\t}\r\n\r\n.leaflet-pane         { z-index: 400; }\r\n\r\n.leaflet-tile-pane    { z-index: 200; }\r\n.leaflet-overlay-pane { z-index: 400; }\r\n.leaflet-shadow-pane  { z-index: 500; }\r\n.leaflet-marker-pane  { z-index: 600; }\r\n.leaflet-tooltip-pane   { z-index: 650; }\r\n.leaflet-popup-pane   { z-index: 700; }\r\n\r\n.leaflet-map-pane canvas { z-index: 100; }\r\n.leaflet-map-pane svg    { z-index: 200; }\r\n\r\n.leaflet-vml-shape {\r\n\twidth: 1px;\r\n\theight: 1px;\r\n\t}\r\n.lvml {\r\n\tbehavior: url(#default#VML);\r\n\tdisplay: inline-block;\r\n\tposition: absolute;\r\n\t}\r\n\r\n\r\n/* control positioning */\r\n\r\n.leaflet-control {\r\n\tposition: relative;\r\n\tz-index: 800;\r\n\tpointer-events: visiblePainted; /* IE 9-10 doesn't have auto */\r\n\tpointer-events: auto;\r\n\t}\r\n.leaflet-top,\r\n.leaflet-bottom {\r\n\tposition: absolute;\r\n\tz-index: 1000;\r\n\tpointer-events: none;\r\n\t}\r\n.leaflet-top {\r\n\ttop: 0;\r\n\t}\r\n.leaflet-right {\r\n\tright: 0;\r\n\t}\r\n.leaflet-bottom {\r\n\tbottom: 0;\r\n\t}\r\n.leaflet-left {\r\n\tleft: 0;\r\n\t}\r\n.leaflet-control {\r\n\tfloat: left;\r\n\tclear: both;\r\n\t}\r\n.leaflet-right .leaflet-control {\r\n\tfloat: right;\r\n\t}\r\n.leaflet-top .leaflet-control {\r\n\tmargin-top: 10px;\r\n\t}\r\n.leaflet-bottom .leaflet-control {\r\n\tmargin-bottom: 10px;\r\n\t}\r\n.leaflet-left .leaflet-control {\r\n\tmargin-left: 10px;\r\n\t}\r\n.leaflet-right .leaflet-control {\r\n\tmargin-right: 10px;\r\n\t}\r\n\r\n\r\n/* zoom and fade animations */\r\n\r\n.leaflet-fade-anim .leaflet-popup {\r\n\topacity: 0;\r\n\t-webkit-transition: opacity 0.2s linear;\r\n\t   -moz-transition: opacity 0.2s linear;\r\n\t        transition: opacity 0.2s linear;\r\n\t}\r\n.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {\r\n\topacity: 1;\r\n\t}\r\n.leaflet-zoom-animated {\r\n\t-webkit-transform-origin: 0 0;\r\n\t    -ms-transform-origin: 0 0;\r\n\t        transform-origin: 0 0;\r\n\t}\r\nsvg.leaflet-zoom-animated {\r\n\twill-change: transform;\r\n}\r\n\r\n.leaflet-zoom-anim .leaflet-zoom-animated {\r\n\t-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);\r\n\t   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);\r\n\t        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);\r\n\t}\r\n.leaflet-zoom-anim .leaflet-tile,\r\n.leaflet-pan-anim .leaflet-tile {\r\n\t-webkit-transition: none;\r\n\t   -moz-transition: none;\r\n\t        transition: none;\r\n\t}\r\n\r\n.leaflet-zoom-anim .leaflet-zoom-hide {\r\n\tvisibility: hidden;\r\n\t}\r\n\r\n\r\n/* cursors */\r\n\r\n.leaflet-interactive {\r\n\tcursor: pointer;\r\n\t}\r\n.leaflet-grab {\r\n\tcursor: -webkit-grab;\r\n\tcursor:    -moz-grab;\r\n\tcursor:         grab;\r\n\t}\r\n.leaflet-crosshair,\r\n.leaflet-crosshair .leaflet-interactive {\r\n\tcursor: crosshair;\r\n\t}\r\n.leaflet-popup-pane,\r\n.leaflet-control {\r\n\tcursor: auto;\r\n\t}\r\n.leaflet-dragging .leaflet-grab,\r\n.leaflet-dragging .leaflet-grab .leaflet-interactive,\r\n.leaflet-dragging .leaflet-marker-draggable {\r\n\tcursor: move;\r\n\tcursor: -webkit-grabbing;\r\n\tcursor:    -moz-grabbing;\r\n\tcursor:         grabbing;\r\n\t}\r\n\r\n/* marker & overlays interactivity */\r\n.leaflet-marker-icon,\r\n.leaflet-marker-shadow,\r\n.leaflet-image-layer,\r\n.leaflet-pane > svg path,\r\n.leaflet-tile-container {\r\n\tpointer-events: none;\r\n\t}\r\n\r\n.leaflet-marker-icon.leaflet-interactive,\r\n.leaflet-image-layer.leaflet-interactive,\r\n.leaflet-pane > svg path.leaflet-interactive,\r\nsvg.leaflet-image-layer.leaflet-interactive path {\r\n\tpointer-events: visiblePainted; /* IE 9-10 doesn't have auto */\r\n\tpointer-events: auto;\r\n\t}\r\n\r\n/* visual tweaks */\r\n\r\n.leaflet-container {\r\n\tbackground: #ddd;\r\n\toutline-offset: 1px;\r\n\t}\r\n.leaflet-container a {\r\n\tcolor: #0078A8;\r\n\t}\r\n.leaflet-zoom-box {\r\n\tborder: 2px dotted #38f;\r\n\tbackground: rgba(255,255,255,0.5);\r\n\t}\r\n\r\n\r\n/* general typography */\r\n.leaflet-container {\r\n\tfont-family: \"Helvetica Neue\", Arial, Helvetica, sans-serif;\r\n\tfont-size: 12px;\r\n\tfont-size: 0.75rem;\r\n\tline-height: 1.5;\r\n\t}\r\n\r\n\r\n/* general toolbar styles */\r\n\r\n.leaflet-bar {\r\n\tbox-shadow: 0 1px 5px rgba(0,0,0,0.65);\r\n\tborder-radius: 4px;\r\n\t}\r\n.leaflet-bar a {\r\n\tbackground-color: #fff;\r\n\tborder-bottom: 1px solid #ccc;\r\n\twidth: 26px;\r\n\theight: 26px;\r\n\tline-height: 26px;\r\n\tdisplay: block;\r\n\ttext-align: center;\r\n\ttext-decoration: none;\r\n\tcolor: black;\r\n\t}\r\n.leaflet-bar a,\r\n.leaflet-control-layers-toggle {\r\n\tbackground-position: 50% 50%;\r\n\tbackground-repeat: no-repeat;\r\n\tdisplay: block;\r\n\t}\r\n.leaflet-bar a:hover,\r\n.leaflet-bar a:focus {\r\n\tbackground-color: #f4f4f4;\r\n\t}\r\n.leaflet-bar a:first-child {\r\n\tborder-top-left-radius: 4px;\r\n\tborder-top-right-radius: 4px;\r\n\t}\r\n.leaflet-bar a:last-child {\r\n\tborder-bottom-left-radius: 4px;\r\n\tborder-bottom-right-radius: 4px;\r\n\tborder-bottom: none;\r\n\t}\r\n.leaflet-bar a.leaflet-disabled {\r\n\tcursor: default;\r\n\tbackground-color: #f4f4f4;\r\n\tcolor: #bbb;\r\n\t}\r\n\r\n.leaflet-touch .leaflet-bar a {\r\n\twidth: 30px;\r\n\theight: 30px;\r\n\tline-height: 30px;\r\n\t}\r\n.leaflet-touch .leaflet-bar a:first-child {\r\n\tborder-top-left-radius: 2px;\r\n\tborder-top-right-radius: 2px;\r\n\t}\r\n.leaflet-touch .leaflet-bar a:last-child {\r\n\tborder-bottom-left-radius: 2px;\r\n\tborder-bottom-right-radius: 2px;\r\n\t}\r\n\r\n/* zoom control */\r\n\r\n.leaflet-control-zoom-in,\r\n.leaflet-control-zoom-out {\r\n\tfont: bold 18px 'Lucida Console', Monaco, monospace;\r\n\ttext-indent: 1px;\r\n\t}\r\n\r\n.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {\r\n\tfont-size: 22px;\r\n\t}\r\n\r\n\r\n/* layers control */\r\n\r\n.leaflet-control-layers {\r\n\tbox-shadow: 0 1px 5px rgba(0,0,0,0.4);\r\n\tbackground: #fff;\r\n\tborder-radius: 5px;\r\n\t}\r\n.leaflet-control-layers-toggle {\r\n\tbackground-image: url(images/layers.png);\r\n\twidth: 36px;\r\n\theight: 36px;\r\n\t}\r\n.leaflet-retina .leaflet-control-layers-toggle {\r\n\tbackground-image: url(images/layers-2x.png);\r\n\tbackground-size: 26px 26px;\r\n\t}\r\n.leaflet-touch .leaflet-control-layers-toggle {\r\n\twidth: 44px;\r\n\theight: 44px;\r\n\t}\r\n.leaflet-control-layers .leaflet-control-layers-list,\r\n.leaflet-control-layers-expanded .leaflet-control-layers-toggle {\r\n\tdisplay: none;\r\n\t}\r\n.leaflet-control-layers-expanded .leaflet-control-layers-list {\r\n\tdisplay: block;\r\n\tposition: relative;\r\n\t}\r\n.leaflet-control-layers-expanded {\r\n\tpadding: 6px 10px 6px 6px;\r\n\tcolor: #333;\r\n\tbackground: #fff;\r\n\t}\r\n.leaflet-control-layers-scrollbar {\r\n\toverflow-y: scroll;\r\n\toverflow-x: hidden;\r\n\tpadding-right: 5px;\r\n\t}\r\n.leaflet-control-layers-selector {\r\n\tmargin-top: 2px;\r\n\tposition: relative;\r\n\ttop: 1px;\r\n\t}\r\n.leaflet-control-layers label {\r\n\tdisplay: block;\r\n\tfont-size: 13px;\r\n\tfont-size: 1.08333em;\r\n\t}\r\n.leaflet-control-layers-separator {\r\n\theight: 0;\r\n\tborder-top: 1px solid #ddd;\r\n\tmargin: 5px -10px 5px -6px;\r\n\t}\r\n\r\n/* Default icon URLs */\r\n.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */\r\n\tbackground-image: url(images/marker-icon.png);\r\n\t}\r\n\r\n\r\n/* attribution and scale controls */\r\n\r\n.leaflet-container .leaflet-control-attribution {\r\n\tbackground: #fff;\r\n\tbackground: rgba(255, 255, 255, 0.8);\r\n\tmargin: 0;\r\n\t}\r\n.leaflet-control-attribution,\r\n.leaflet-control-scale-line {\r\n\tpadding: 0 5px;\r\n\tcolor: #333;\r\n\tline-height: 1.4;\r\n\t}\r\n.leaflet-control-attribution a {\r\n\ttext-decoration: none;\r\n\t}\r\n.leaflet-control-attribution a:hover,\r\n.leaflet-control-attribution a:focus {\r\n\ttext-decoration: underline;\r\n\t}\r\n.leaflet-attribution-flag {\r\n\tdisplay: inline !important;\r\n\tvertical-align: baseline !important;\r\n\twidth: 1em;\r\n\theight: 0.6669em;\r\n\t}\r\n.leaflet-left .leaflet-control-scale {\r\n\tmargin-left: 5px;\r\n\t}\r\n.leaflet-bottom .leaflet-control-scale {\r\n\tmargin-bottom: 5px;\r\n\t}\r\n.leaflet-control-scale-line {\r\n\tborder: 2px solid #777;\r\n\tborder-top: none;\r\n\tline-height: 1.1;\r\n\tpadding: 2px 5px 1px;\r\n\twhite-space: nowrap;\r\n\t-moz-box-sizing: border-box;\r\n\t     box-sizing: border-box;\r\n\tbackground: rgba(255, 255, 255, 0.8);\r\n\ttext-shadow: 1px 1px #fff;\r\n\t}\r\n.leaflet-control-scale-line:not(:first-child) {\r\n\tborder-top: 2px solid #777;\r\n\tborder-bottom: none;\r\n\tmargin-top: -2px;\r\n\t}\r\n.leaflet-control-scale-line:not(:first-child):not(:last-child) {\r\n\tborder-bottom: 2px solid #777;\r\n\t}\r\n\r\n.leaflet-touch .leaflet-control-attribution,\r\n.leaflet-touch .leaflet-control-layers,\r\n.leaflet-touch .leaflet-bar {\r\n\tbox-shadow: none;\r\n\t}\r\n.leaflet-touch .leaflet-control-layers,\r\n.leaflet-touch .leaflet-bar {\r\n\tborder: 2px solid rgba(0,0,0,0.2);\r\n\tbackground-clip: padding-box;\r\n\t}\r\n\r\n\r\n/* popup */\r\n\r\n.leaflet-popup {\r\n\tposition: absolute;\r\n\ttext-align: center;\r\n\tmargin-bottom: 20px;\r\n\t}\r\n.leaflet-popup-content-wrapper {\r\n\tpadding: 1px;\r\n\ttext-align: left;\r\n\tborder-radius: 12px;\r\n\t}\r\n.leaflet-popup-content {\r\n\tmargin: 13px 24px 13px 20px;\r\n\tline-height: 1.3;\r\n\tfont-size: 13px;\r\n\tfont-size: 1.08333em;\r\n\tmin-height: 1px;\r\n\t}\r\n.leaflet-popup-content p {\r\n\tmargin: 17px 0;\r\n\tmargin: 1.3em 0;\r\n\t}\r\n.leaflet-popup-tip-container {\r\n\twidth: 40px;\r\n\theight: 20px;\r\n\tposition: absolute;\r\n\tleft: 50%;\r\n\tmargin-top: -1px;\r\n\tmargin-left: -20px;\r\n\toverflow: hidden;\r\n\tpointer-events: none;\r\n\t}\r\n.leaflet-popup-tip {\r\n\twidth: 17px;\r\n\theight: 17px;\r\n\tpadding: 1px;\r\n\r\n\tmargin: -10px auto 0;\r\n\tpointer-events: auto;\r\n\r\n\t-webkit-transform: rotate(45deg);\r\n\t   -moz-transform: rotate(45deg);\r\n\t    -ms-transform: rotate(45deg);\r\n\t        transform: rotate(45deg);\r\n\t}\r\n.leaflet-popup-content-wrapper,\r\n.leaflet-popup-tip {\r\n\tbackground: white;\r\n\tcolor: #333;\r\n\tbox-shadow: 0 3px 14px rgba(0,0,0,0.4);\r\n\t}\r\n.leaflet-container a.leaflet-popup-close-button {\r\n\tposition: absolute;\r\n\ttop: 0;\r\n\tright: 0;\r\n\tborder: none;\r\n\ttext-align: center;\r\n\twidth: 24px;\r\n\theight: 24px;\r\n\tfont: 16px/24px Tahoma, Verdana, sans-serif;\r\n\tcolor: #757575;\r\n\ttext-decoration: none;\r\n\tbackground: transparent;\r\n\t}\r\n.leaflet-container a.leaflet-popup-close-button:hover,\r\n.leaflet-container a.leaflet-popup-close-button:focus {\r\n\tcolor: #585858;\r\n\t}\r\n.leaflet-popup-scrolled {\r\n\toverflow: auto;\r\n\t}\r\n\r\n.leaflet-oldie .leaflet-popup-content-wrapper {\r\n\t-ms-zoom: 1;\r\n\t}\r\n.leaflet-oldie .leaflet-popup-tip {\r\n\twidth: 24px;\r\n\tmargin: 0 auto;\r\n\r\n\t-ms-filter: \"progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)\";\r\n\tfilter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);\r\n\t}\r\n\r\n.leaflet-oldie .leaflet-control-zoom,\r\n.leaflet-oldie .leaflet-control-layers,\r\n.leaflet-oldie .leaflet-popup-content-wrapper,\r\n.leaflet-oldie .leaflet-popup-tip {\r\n\tborder: 1px solid #999;\r\n\t}\r\n\r\n\r\n/* div icon */\r\n\r\n.leaflet-div-icon {\r\n\tbackground: #fff;\r\n\tborder: 1px solid #666;\r\n\t}\r\n\r\n\r\n/* Tooltip */\r\n/* Base styles for the element that has a tooltip */\r\n.leaflet-tooltip {\r\n\tposition: absolute;\r\n\tpadding: 6px;\r\n\tbackground-color: #fff;\r\n\tborder: 1px solid #fff;\r\n\tborder-radius: 3px;\r\n\tcolor: #222;\r\n\twhite-space: nowrap;\r\n\t-webkit-user-select: none;\r\n\t-moz-user-select: none;\r\n\t-ms-user-select: none;\r\n\tuser-select: none;\r\n\tpointer-events: none;\r\n\tbox-shadow: 0 1px 3px rgba(0,0,0,0.4);\r\n\t}\r\n.leaflet-tooltip.leaflet-interactive {\r\n\tcursor: pointer;\r\n\tpointer-events: auto;\r\n\t}\r\n.leaflet-tooltip-top:before,\r\n.leaflet-tooltip-bottom:before,\r\n.leaflet-tooltip-left:before,\r\n.leaflet-tooltip-right:before {\r\n\tposition: absolute;\r\n\tpointer-events: none;\r\n\tborder: 6px solid transparent;\r\n\tbackground: transparent;\r\n\tcontent: \"\";\r\n\t}\r\n\r\n/* Directions */\r\n\r\n.leaflet-tooltip-bottom {\r\n\tmargin-top: 6px;\r\n}\r\n.leaflet-tooltip-top {\r\n\tmargin-top: -6px;\r\n}\r\n.leaflet-tooltip-bottom:before,\r\n.leaflet-tooltip-top:before {\r\n\tleft: 50%;\r\n\tmargin-left: -6px;\r\n\t}\r\n.leaflet-tooltip-top:before {\r\n\tbottom: 0;\r\n\tmargin-bottom: -12px;\r\n\tborder-top-color: #fff;\r\n\t}\r\n.leaflet-tooltip-bottom:before {\r\n\ttop: 0;\r\n\tmargin-top: -12px;\r\n\tmargin-left: -6px;\r\n\tborder-bottom-color: #fff;\r\n\t}\r\n.leaflet-tooltip-left {\r\n\tmargin-left: -6px;\r\n}\r\n.leaflet-tooltip-right {\r\n\tmargin-left: 6px;\r\n}\r\n.leaflet-tooltip-left:before,\r\n.leaflet-tooltip-right:before {\r\n\ttop: 50%;\r\n\tmargin-top: -6px;\r\n\t}\r\n.leaflet-tooltip-left:before {\r\n\tright: 0;\r\n\tmargin-right: -12px;\r\n\tborder-left-color: #fff;\r\n\t}\r\n.leaflet-tooltip-right:before {\r\n\tleft: 0;\r\n\tmargin-left: -12px;\r\n\tborder-right-color: #fff;\r\n\t}\r\n\r\n/* Printing */\r\n\r\n@media print {\r\n\t/* Prevent printers from removing background-images of controls. */\r\n\t.leaflet-control {\r\n\t\t-webkit-print-color-adjust: exact;\r\n\t\tprint-color-adjust: exact;\r\n\t\t}\r\n\t}\r\n";
 
@@ -15138,136 +15138,11 @@ const normalizeLatLng = (point) => {
     return null;
 };
 
-const OPTIONS = {
-    places_entity: null,
-    stay_radius_m: 75,
-    min_stay_minutes: 10,
-    show_debug: false,
-};
-
-class TimelineCardEditor extends HTMLElement {
-    setConfig(config) {
-        this._config = {...OPTIONS, ...config};
-        this._render();
-    }
-
-    set hass(hass) {
-        this._hass = hass;
-        this._render();
-    }
-
-    _render() {
-        if (!this._config || !this._hass) return;
-        if (!this.shadowRoot) {
-            this.attachShadow({mode: "open"});
-        }
-
-        this.shadowRoot.innerHTML = "";
-
-        const style = document.createElement("style");
-        style.textContent = `
-      :host { display: block; }
-      .form { display: grid; gap: 12px; }
-      ha-textfield { display: block; }
-    `;
-        this.shadowRoot.appendChild(style);
-
-        const form = document.createElement("div");
-        form.className = "form";
-
-        const entityPicker = document.createElement("ha-entity-picker");
-        entityPicker.setAttribute("label", "Tracked entity");
-        entityPicker.hass = this._hass;
-        entityPicker.value = this._config.entity || "";
-        entityPicker.includeDomains = ["device_tracker", "person"];
-        entityPicker.addEventListener("value-changed", this._onEntityChanged.bind(this));
-
-        const stayRadius = document.createElement("ha-textfield");
-        stayRadius.setAttribute("label", "Stay radius (meters)");
-        stayRadius.setAttribute("type", "number");
-        stayRadius.setAttribute("min", "10");
-        stayRadius.setAttribute("step", "5");
-        stayRadius.value = String(this._config.stay_radius_m ?? OPTIONS.stay_radius_m);
-        stayRadius.addEventListener("input", (ev) => this._onNumberChanged("stay_radius_m", ev));
-
-        const minStay = document.createElement("ha-textfield");
-        minStay.setAttribute("label", "Minimum stay duration (minutes)");
-        minStay.setAttribute("type", "number");
-        minStay.setAttribute("min", "1");
-        minStay.setAttribute("step", "1");
-        minStay.value = String(this._config.min_stay_minutes ?? OPTIONS.min_stay_minutes);
-        minStay.addEventListener("input", (ev) => this._onNumberChanged("min_stay_minutes", ev));
-
-        const placesPicker = document.createElement("ha-entity-picker");
-        placesPicker.setAttribute("label", "Places entity (optional)");
-        placesPicker.hass = this._hass;
-        placesPicker.value = this._config.places_entity || "";
-        placesPicker.includeDomains = ["sensor"];
-        placesPicker.addEventListener("value-changed", (ev) => this._onEntityFieldChanged("places_entity", ev));
-
-        const debugRow = document.createElement("label");
-        debugRow.style.display = "flex";
-        debugRow.style.alignItems = "center";
-        debugRow.style.justifyContent = "space-between";
-        debugRow.style.gap = "12px";
-        debugRow.textContent = "Show debug";
-
-        const debugToggle = document.createElement("ha-switch");
-        debugToggle.checked = Boolean(this._config.show_debug ?? OPTIONS.show_debug);
-        debugToggle.addEventListener("change", (ev) => this._onToggleChanged("show_debug", ev));
-        debugRow.appendChild(debugToggle);
-
-        form.appendChild(entityPicker);
-        form.appendChild(placesPicker);
-        form.appendChild(stayRadius);
-        form.appendChild(minStay);
-        form.appendChild(debugRow);
-        this.shadowRoot.appendChild(form);
-    }
-
-    _onEntityChanged(ev) {
-        const value = ev?.detail?.value || "";
-        this._config = {...this._config, entity: value};
-        this._emitChange();
-    }
-
-    _onEntityFieldChanged(key, ev) {
-        const value = ev?.detail?.value || "";
-        this._config = {...this._config, [key]: value || null};
-        this._emitChange();
-    }
-
-    _onNumberChanged(key, ev) {
-        const value = Number(ev.target.value);
-        if (!Number.isFinite(value)) return;
-        this._config = {...this._config, [key]: value};
-        this._emitChange();
-    }
-
-    _onToggleChanged(key, ev) {
-        this._config = {...this._config, [key]: Boolean(ev.target.checked)};
-        this._emitChange();
-    }
-
-    _emitChange() {
-        this.dispatchEvent(
-            new CustomEvent("config-changed", {
-                detail: {config: this._config},
-                bubbles: true,
-                composed: true,
-            })
-        );
-    }
-}
-
-customElements.define("location-timeline-card-editor", TimelineCardEditor);
-
 const DEFAULT_CONFIG = {
     entity: null,
     places_entity: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
-    show_debug: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -15358,6 +15233,33 @@ class TimelineCard extends HTMLElement {
         }
     }
 
+    static getConfigForm() {
+        return {
+            schema: [
+                {name: "entity", required: true, selector: {entity: {}}},
+                {name: "places_entity", selector: {entity: {filter: [{domain: "sensor"}]}}},
+                {name: "stay_radius_m", selector: {number: {min: 1, step: 1, mode: "box"}}},
+                {name: "min_stay_minutes", selector: {number: {min: 1, step: 1, mode: "box"}}},
+            ],
+            computeLabel: (schema) => {
+                if (schema.name === "entity") return "Tracked entity";
+                if (schema.name === "places_entity") return "Places entity (optional)";
+                if (schema.name === "stay_radius_m") return "Stay radius (m)";
+                if (schema.name === "min_stay_minutes") return "Minimum stay (minutes)";
+                return undefined;
+            },
+        };
+    }
+
+    static getStubConfig() {
+        return {
+            entity: "device_tracker.your_device",
+            places_entity: null,
+            stay_radius_m: 75,
+            min_stay_minutes: 10,
+        };
+    }
+
     getCardSize() {
         return 6;
     }
@@ -15390,7 +15292,7 @@ class TimelineCard extends HTMLElement {
         const existing = this._cache.get(key);
         if (existing && (existing.segments || existing.loading)) return;
 
-        this._cache.set(key, {loading: true, segments: null, points: null, error: null, debug: null});
+        this._cache.set(key, {loading: true, segments: null, points: null, error: null});
 
         try {
             const points = await fetchHistory(this._hass, this._config.entity, date);
@@ -15405,18 +15307,11 @@ class TimelineCard extends HTMLElement {
             if (placeStates.length) {
                 segments = applyPlacesToStays(segments, placeStates, date);
             }
-            const debug = {
-                points: points.length,
-                zones: zones.length,
-                places: placeStates.length,
-                first: points[0]?.timestamp || null,
-                last: points[points.length - 1]?.timestamp || null,
-            };
-            this._cache.set(key, {loading: false, segments, points, error: null, debug});
+            this._cache.set(key, {loading: false, segments, points, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
             this._cache.set(key, {
-                loading: false, segments: null, points: null, error: this._formatErrorMessage(err), debug: null,
+                loading: false, segments: null, points: null, error: this._formatErrorMessage(err),
             });
         }
         this._render();
@@ -15445,7 +15340,7 @@ class TimelineCard extends HTMLElement {
 
         const dateKey = toDateKey(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {
-            loading: false, segments: null, points: null, error: null, debug: null
+            loading: false, segments: null, error: null
         };
         const isFuture = this._selectedDate >= startOfDay(new Date());
 
@@ -15466,7 +15361,6 @@ class TimelineCard extends HTMLElement {
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
               ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
-              ${this._config.show_debug ? this._renderDebug(dayData) : ""}
             `;
         this._attachMapCard();
         requestAnimationFrame(() => {
@@ -15637,18 +15531,6 @@ class TimelineCard extends HTMLElement {
         return this._cache.get(toDateKey(this._selectedDate));
     }
 
-    _renderDebug(dayData) {
-        const debug = dayData.debug;
-        if (!debug) return `<div class="debug">Debug: no data</div>`;
-        const first = debug.first ? new Date(debug.first).toLocaleString() : "n/a";
-        const last = debug.last ? new Date(debug.last).toLocaleString() : "n/a";
-        return `
-      <div class="debug">
-        Debug: points=${debug.points}, zones=${debug.zones}, places=${debug.places ?? 0}, first=${first}, last=${last}
-      </div>
-    `;
-    }
-
     _formatErrorMessage(err) {
         const message = err && err.message ? String(err.message) : "";
         if (message.toLowerCase().includes("unknown command")) {
@@ -15718,19 +15600,3 @@ window.customCards.push({
     name: "Location Timeline Card",
     description: "Daily location timeline from GPS history.",
 });
-
-function getConfigElement() {
-    return document.createElement("location-timeline-card-editor");
-}
-
-function getStubConfig() {
-    return {
-        entity: "device_tracker.your_device",
-        places_entity: null,
-        stay_radius_m: 75,
-        min_stay_minutes: 10,
-        show_debug: false,
-    };
-}
-
-export { getConfigElement, getStubConfig };

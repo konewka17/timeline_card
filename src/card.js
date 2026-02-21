@@ -5,14 +5,12 @@ import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import "./editor.js";
 
 const DEFAULT_CONFIG = {
     entity: null,
     places_entity: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
-    show_debug: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -103,6 +101,33 @@ class TimelineCard extends HTMLElement {
         }
     }
 
+    static getConfigForm() {
+        return {
+            schema: [
+                {name: "entity", required: true, selector: {entity: {}}},
+                {name: "places_entity", selector: {entity: {filter: [{domain: "sensor"}]}}},
+                {name: "stay_radius_m", selector: {number: {min: 1, step: 1, mode: "box"}}},
+                {name: "min_stay_minutes", selector: {number: {min: 1, step: 1, mode: "box"}}},
+            ],
+            computeLabel: (schema) => {
+                if (schema.name === "entity") return "Tracked entity";
+                if (schema.name === "places_entity") return "Places entity (optional)";
+                if (schema.name === "stay_radius_m") return "Stay radius (m)";
+                if (schema.name === "min_stay_minutes") return "Minimum stay (minutes)";
+                return undefined;
+            },
+        };
+    }
+
+    static getStubConfig() {
+        return {
+            entity: "device_tracker.your_device",
+            places_entity: null,
+            stay_radius_m: 75,
+            min_stay_minutes: 10,
+        };
+    }
+
     getCardSize() {
         return 6;
     }
@@ -135,7 +160,7 @@ class TimelineCard extends HTMLElement {
         const existing = this._cache.get(key);
         if (existing && (existing.segments || existing.loading)) return;
 
-        this._cache.set(key, {loading: true, segments: null, points: null, error: null, debug: null});
+        this._cache.set(key, {loading: true, segments: null, points: null, error: null});
 
         try {
             const points = await fetchHistory(this._hass, this._config.entity, date);
@@ -150,18 +175,11 @@ class TimelineCard extends HTMLElement {
             if (placeStates.length) {
                 segments = applyPlacesToStays(segments, placeStates, date);
             }
-            const debug = {
-                points: points.length,
-                zones: zones.length,
-                places: placeStates.length,
-                first: points[0]?.timestamp || null,
-                last: points[points.length - 1]?.timestamp || null,
-            };
-            this._cache.set(key, {loading: false, segments, points, error: null, debug});
+            this._cache.set(key, {loading: false, segments, points, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
             this._cache.set(key, {
-                loading: false, segments: null, points: null, error: this._formatErrorMessage(err), debug: null,
+                loading: false, segments: null, points: null, error: this._formatErrorMessage(err),
             });
         }
         this._render();
@@ -190,7 +208,7 @@ class TimelineCard extends HTMLElement {
 
         const dateKey = toDateKey(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {
-            loading: false, segments: null, points: null, error: null, debug: null
+            loading: false, segments: null, points: null, error: null
         };
         const isFuture = this._selectedDate >= startOfDay(new Date());
 
@@ -211,7 +229,6 @@ class TimelineCard extends HTMLElement {
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
               ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
-              ${this._config.show_debug ? this._renderDebug(dayData) : ""}
             `;
         this._attachMapCard();
         requestAnimationFrame(() => {
@@ -382,18 +399,6 @@ class TimelineCard extends HTMLElement {
         return this._cache.get(toDateKey(this._selectedDate));
     }
 
-    _renderDebug(dayData) {
-        const debug = dayData.debug;
-        if (!debug) return `<div class="debug">Debug: no data</div>`;
-        const first = debug.first ? new Date(debug.first).toLocaleString() : "n/a";
-        const last = debug.last ? new Date(debug.last).toLocaleString() : "n/a";
-        return `
-      <div class="debug">
-        Debug: points=${debug.points}, zones=${debug.zones}, places=${debug.places ?? 0}, first=${first}, last=${last}
-      </div>
-    `;
-    }
-
     _formatErrorMessage(err) {
         const message = err && err.message ? String(err.message) : "";
         if (message.toLowerCase().includes("unknown command")) {
@@ -464,16 +469,3 @@ window.customCards.push({
     description: "Daily location timeline from GPS history.",
 });
 
-export function getConfigElement() {
-    return document.createElement("location-timeline-card-editor");
-}
-
-export function getStubConfig() {
-    return {
-        entity: "device_tracker.your_device",
-        places_entity: null,
-        stay_radius_m: 75,
-        min_stay_minutes: 10,
-        show_debug: false,
-    };
-}
