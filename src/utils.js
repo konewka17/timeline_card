@@ -37,8 +37,19 @@ export function formatTime(date) {
     }
 }
 
-export function formatTimeRange(start, end) {
-    return `${formatTime(start)} - ${formatTime(end)}`;
+export function formatTimeRange(start, end, options={}) {
+    const hideStartTime = options.hideStartTime || false;
+    const hideEndTime = options.hideEndTime || false;
+
+    if (hideStartTime && hideEndTime) {
+        return "all day";
+    } else if (hideStartTime && !hideEndTime) {
+        return formatTime(end);
+    } else if (hideEndTime && !hideStartTime) {
+        return formatTime(start);
+    } else {
+        return `${formatTime(start)} - ${formatTime(end)}`;
+    }
 }
 
 export function formatDuration(ms) {

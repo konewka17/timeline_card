@@ -17,33 +17,33 @@ export function renderTimeline(segments) {
     <div class="${timelineClass}">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
-          hideStart: index === 0 && firstIsStay,
-          hideEnd: index === segments.length - 1 && lastIsStay,
-      })).join("")}
+        hideStartTime: index === 0 && firstIsStay,
+        hideEndTime: index === segments.length - 1 && lastIsStay,
+    })).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment, index, {hideStart = false, hideEnd = false} = {}) {
+function renderSegment(segment, index, options) {
     if (segment.type === "stay") {
         return `
-      <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
-        <div class="left-icon">
-          <div class="icon-ring">
-            <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+          <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
+            <div class="left-icon">
+              <div class="icon-ring">
+                <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+              </div>
+            </div>
+            <div class="line-slot">
+              <div class="line-dot"></div>
+            </div>
+            <div class="content location">
+              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
+            </div>
+            <div class="content time">
+              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+            </div>
           </div>
-        </div>
-        <div class="line-slot">
-          <div class="line-dot"></div>
-        </div>
-        <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
-        </div>
-        <div class="content time">
-          <div class="meta">${formatStayTime(segment.start, segment.end, {hideStart, hideEnd})}</div>
-        </div>
-      </div>
-    `;
+        `;
     }
 
     return `
@@ -59,22 +59,6 @@ function renderSegment(segment, index, {hideStart = false, hideEnd = false} = {}
       </div>
     </div>
   `;
-}
-
-function formatStayTime(start, end, {hideStart = false, hideEnd = false} = {}) {
-    if (hideStart && hideEnd) {
-        return "all day";
-    }
-
-    if (hideStart && !hideEnd) {
-        return formatTime(end);
-    }
-
-    if (hideEnd && !hideStart) {
-        return formatTime(start);
-    }
-
-    return formatTimeRange(start, end);
 }
 
 function escapeHtml(text) {
