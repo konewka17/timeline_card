@@ -367,9 +367,13 @@ class TimelineCard extends HTMLElement {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
-        const points = Array.isArray(dayData.points) ? dayData.points : [];
-        this._fullDayPaths = points.length > 1 ? [{points: points, color: "var(--primary-color)", weight: 4}] : [];
-
+        this._fullDayPaths = [];
+        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
+        if (segments.length > 1) {
+            this._fullDayPaths = segments
+                .filter(segment => segment?.type === "move")
+                .map(segment => ({points: segment.points, color: "var(--primary-color)", weight: 4}));
+        }
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
@@ -402,30 +406,30 @@ class TimelineCard extends HTMLElement {
         stayMarkers.forEach((stay) => {
             let haIcon = document.createElement("ha-icon");
             haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px")
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px");
 
             let iconDiv = document.createElement("div");
             iconDiv.appendChild(haIcon);
             iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
                 "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color)); " +
-                "display: flex;")
+                "display: flex;");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
-            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}))
+            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
         });
 
         if (this._highlightedStay) {
             let haIcon = document.createElement("ha-icon");
             haIcon.setAttribute("icon", this._highlightedStay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 22px;")
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 22px;");
 
             let iconDiv = document.createElement("div");
             iconDiv.appendChild(haIcon);
             iconDiv.setAttribute("style", "height: 22px; width: 22px; background-color: var(--accent-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))")
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
-            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}))
+            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}));
 
         }
     }
@@ -434,26 +438,16 @@ class TimelineCard extends HTMLElement {
         const paths = [...this._fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
-            haMap._mapPaths.push(
-                Leaflet.polyline(path.points.map(point => point.point), {
-                    color: `color-mix(in srgb, black 30%, ${path.color})`,
-                    opacity: 1,
-                    weight: path?.weight + 3,
-                    interactive: false,
-                })
-            );
-            haMap._mapPaths.push(
-                Leaflet.polyline(path.points.map(point => point.point), {
-                    color: path.color,
-                    opacity: 1,
-                    weight: path?.weight,
-                    interactive: false,
-                })
-            );
+            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+                color: `color-mix(in srgb, black 30%, ${path.color})`, opacity: 1, weight: path.weight + 3
+            }));
+            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+                color: path.color, opacity: 1, weight: path.weight
+            }));
         });
     }
 
-    _fitMap(defer=false, bounds=null, pad = 0.1) {
+    _fitMap(defer = false, bounds = null, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;

@@ -938,29 +938,21 @@ class TimelineCard extends HTMLElement {
     }
 
     _drawMapLines(haMap, Leaflet) {
-        const paths = [...this._fullDayPaths, ...this._highlightedPath];
+        let fullDayPaths = this._fullDayPaths;
+        fullDayPaths = this._getCurrentDayData().segments.filter(segment => segment?.type === "move");
+        const paths = [fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
-            haMap._mapPaths.push(
-                Leaflet.polyline(path.points.map(point => point.point), {
-                    color: `color-mix(in srgb, black 30%, ${path.color})`,
-                    opacity: 1,
-                    weight: path?.weight + 3,
-                    interactive: false,
-                })
-            );
-            haMap._mapPaths.push(
-                Leaflet.polyline(path.points.map(point => point.point), {
-                    color: path.color,
-                    opacity: 1,
-                    weight: path?.weight,
-                    interactive: false,
-                })
-            );
+            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+                color: `color-mix(in srgb, black 30%, ${path.color})`, opacity: 1, weight: path.weight + 3
+            }));
+            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+                color: path.color, opacity: 1, weight: path.weight
+            }));
         });
     }
 
-    _fitMap(defer=false, bounds=null, pad = 0.1) {
+    _fitMap(defer = false, bounds = null, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;
