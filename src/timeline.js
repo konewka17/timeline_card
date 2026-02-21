@@ -11,7 +11,7 @@ export function renderTimeline(segments) {
         "timeline",
         firstIsStay ? "trim-spine-top" : "",
         lastIsStay ? "trim-spine-bottom" : "",
-    ].filter(Boolean).join(" ");
+    ].join(" ");
 
     return `
     <div class="${timelineClass}">

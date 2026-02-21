@@ -29,7 +29,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
         this._touchStart = null;
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -130,9 +130,9 @@ class TimelineCard extends HTMLElement {
     }
 
     _resetMapZoom() {
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
         this._updateMapResetButton();
-        this._fitMap(false);
+        this._fitMap();
     }
 
     _refreshCurrentDay() {
@@ -282,7 +282,7 @@ class TimelineCard extends HTMLElement {
     _updateMapResetButton() {
         const resetBtn = this.shadowRoot?.getElementById("map-reset-zoom");
         if (!resetBtn) return;
-        resetBtn.toggleAttribute("hidden", !this._isMapFocused);
+        resetBtn.toggleAttribute("hidden", !this._isMapZoomedToSegment);
     }
 
     _bindTimelineTouch(body) {
@@ -385,7 +385,7 @@ class TimelineCard extends HTMLElement {
         this._touchStart = null;
 
         this._drawMapPaths();
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
         this._updateMapResetButton();
         this._fitMap();
     }
@@ -468,11 +468,11 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-    _fitMap(defer, bounds, pad = 0.1) {
+    _fitMap(defer=false, bounds=null, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;
-        if (bounds === undefined) {
+        if (bounds === null) {
             if (!this._fullDayPaths.length) return;
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
@@ -544,13 +544,13 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
-            this._isMapFocused = true;
+            this._isMapZoomedToSegment = true;
             this._updateMapResetButton();
             this._fitMap(false, [segment.center]);
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
             if (segmentPoints.length < 2) return;
-            this._isMapFocused = true;
+            this._isMapZoomedToSegment = true;
             this._updateMapResetButton();
             this._fitMap(false, segmentPoints.map(toLatLon));
         }
