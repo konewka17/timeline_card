@@ -1,33 +1,57 @@
-# Timeline Card (Home Assistant)
+# Location Timeline Card (Home Assistant)
 
-Custom Lovelace card that renders a Google Maps Timeline–style day view from GPS history.
+Location Timeline Card is a custom Lovelace card that builds a **Google Maps Timeline–style day view** from your Home Assistant location history. It turns raw GPS points into an easy-to-read daily story of where a person/device stayed and when they moved.
 
-## Features
-- Frontend-only custom card (no integration, no automations)
-- Uses Home Assistant WebSocket API (`history_during_period`)
-- Segments stays and moves with configurable thresholds
-- Optional zone labeling when inside HA zones
-- Sticky date header with day navigation
-- Per-day cache in memory for fast back/forward
+## What this card does
+- Reads location history from a `device_tracker` or `person` entity
+- Groups points into **stays** and **moves** using configurable thresholds
+- Shows zone names when points are inside Home Assistant `zone.*` entities
+- Supports optional enrichment from the Places integration
+- Keeps a per-day in-memory cache for snappy day-to-day navigation
+- Runs fully in the frontend (no extra backend integration required)
 
-## Installation
-1. Build the card:
-   ```bash
-   npm install
-   npm run build
-   ```
-2. Add `dist/card.js` to Lovelace resources.
+## Installation (HACS)
+1. Open **HACS → Frontend → ⋮ → Custom repositories**.
+2. Add this repository URL.
+3. Set category to **Dashboard**.
+4. Click **Add**.
+5. Find **Location Timeline Card** in HACS Frontend and click **Download**.
+6. Restart Home Assistant (or reload frontend resources if prompted).
+
+After installation, ensure the card resource is available in Lovelace (HACS normally registers this automatically).
 
 ## Usage
-Add a manual card or use the Lovelace UI editor.
+Add the card in the Lovelace UI editor or with manual YAML.
 
-### Example YAML
+### Minimal YAML
 ```yaml
-type: custom:timeline-card
+type: custom:location-timeline-card
+entity: device_tracker.my_phone
+```
+
+### Example with tuning
+```yaml
+type: custom:location-timeline-card
 entity: device_tracker.my_phone
 stay_radius_m: 75
 min_stay_minutes: 10
+show_debug: false
 ```
+
+## Places integration (optional)
+If you use the [Places integration](https://github.com/custom-components/places), Location Timeline Card can use it as extra location context for stays that are not clearly inside a Home Assistant zone.
+
+1. Set up the Places integration in Home Assistant.
+2. Add the Places sensor to this card with `places_entity`.
+
+Example:
+```yaml
+type: custom:location-timeline-card
+entity: device_tracker.my_phone
+places_entity: sensor.places_my_phone
+```
+
+When available, Places data is used to provide an additional human-friendly location label.
 
 ## Configuration options
 | Name | Type | Default | Description |
@@ -39,14 +63,14 @@ min_stay_minutes: 10
 | `show_debug` | boolean | `false` | Show debug info (points/zones/first/last timestamps). |
 
 ## Lovelace UI editor
-The card exposes a visual editor with:
+The card includes a visual editor with:
 - Tracked entity selector
-- Places entity (optional)
+- Optional Places entity selector
 - Stay radius (meters)
 - Minimum stay duration (minutes)
 - Debug toggle
 
 ## Notes
-- The card reads raw GPS history from the entity’s latitude/longitude attributes.
+- The card reads raw GPS history from the tracked entity’s latitude/longitude attributes.
 - Zone labels are resolved from `zone.*` entities.
-- All processing happens in the browser; no backend storage.
+- All timeline processing happens in the browser.

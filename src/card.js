@@ -455,17 +455,17 @@ function pickPlaceName(intervals, start, end) {
     return best;
 }
 
-customElements.define("timeline-card", TimelineCard);
+customElements.define("location-timeline-card", TimelineCard);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-    type: "timeline-card",
-    name: "Timeline Card",
+    type: "location-timeline-card",
+    name: "Location Timeline Card",
     description: "Daily location timeline from GPS history.",
 });
 
 export function getConfigElement() {
-    return document.createElement("timeline-card-editor");
+    return document.createElement("location-timeline-card-editor");
 }
 
 export function getStubConfig() {

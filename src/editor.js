@@ -120,4 +120,4 @@ class TimelineCardEditor extends HTMLElement {
     }
 }
 
-customElements.define("timeline-card-editor", TimelineCardEditor);
+customElements.define("location-timeline-card-editor", TimelineCardEditor);

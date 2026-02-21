@@ -15260,7 +15260,7 @@ class TimelineCardEditor extends HTMLElement {
     }
 }
 
-customElements.define("timeline-card-editor", TimelineCardEditor);
+customElements.define("location-timeline-card-editor", TimelineCardEditor);
 
 const DEFAULT_CONFIG = {
     entity: null,
@@ -15710,17 +15710,17 @@ function pickPlaceName(intervals, start, end) {
     return best;
 }
 
-customElements.define("timeline-card", TimelineCard);
+customElements.define("location-timeline-card", TimelineCard);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-    type: "timeline-card",
-    name: "Timeline Card",
+    type: "location-timeline-card",
+    name: "Location Timeline Card",
     description: "Daily location timeline from GPS history.",
 });
 
 function getConfigElement() {
-    return document.createElement("timeline-card-editor");
+    return document.createElement("location-timeline-card-editor");
 }
 
 function getStubConfig() {
