@@ -10,5 +10,8 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "rollup": "^4.34.6",
     "rollup-plugin-import-css": "^3.5.8"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }
