@@ -1,8 +1,10 @@
 import css from "./card.css";
+import leafletCss from "leaflet/dist/leaflet.css";
 import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
+import {setupLeafletMap} from "./leaflet-map.js";
 import "./editor.js";
 
 const DEFAULT_CONFIG = {
@@ -96,9 +98,6 @@ class TimelineCard extends HTMLElement {
 
     set hass(hass) {
         this._hass = hass;
-        if (this._mapCard) {
-            this._mapCard.hass = hass;
-        }
         if (!this._config.entity) return;
         const dateKey = toDateKey(this._selectedDate);
         if (!this._cache.has(dateKey)) {
@@ -236,7 +235,7 @@ class TimelineCard extends HTMLElement {
         this._baseLayoutReady = true;
 
         this.shadowRoot.innerHTML = `
-          <style>${css}</style>
+          <style>${css}\n${leafletCss}</style>
           <ha-card>
             <div class="card">
               <div class="map-wrap">
@@ -308,60 +307,32 @@ class TimelineCard extends HTMLElement {
     }
 
     async _attachMapCard() {
-        await this._createMapCard();
-
         const container = this.shadowRoot.getElementById("overview-map");
-        if (!container) return;
+        if (!container || this._leafletMap || this._isLoadingMap) return;
 
-        if (!container.contains(this._mapCard)) {
-            container.innerHTML = "";
-            container.appendChild(this._mapCard);
-        }
-
-        this._mapCard.updateComplete?.then(() => {this._fillMapCard();});
-    }
-
-    async _createMapCard() {
-        if (this._mapCard) return;
-
-        const helpers = await window.loadCardHelpers();
-
-        this._mapCard = await helpers.createCardElement({
-            type: "map",
-            entities: [this._config.entity]
-        });
-
-        if (this._hass) {
-            this._mapCard.hass = this._hass;
+        this._isLoadingMap = true;
+        try {
+            [this._leafletMap, this._Leaflet, this._tileLayer] = setupLeafletMap(container);
+            this._mapLayers = [];
+            this._refreshMapPaths();
+            this._fitMap(true);
+        } catch (err) {
+            console.warn("Timeline card: map setup failed", err);
+        } finally {
+            this._isLoadingMap = false;
         }
     }
 
-    async _fillMapCard() {
-        const haMap = this._mapCard.shadowRoot?.querySelector("ha-map");
-        if (!haMap) return;
-
-        this._mapCard._mapEntities = [];
-        this._mapCard.requestUpdate?.();
-        await this._mapCard.updateComplete;
-
-        await haMap.updateComplete?.catch(() => {});
-        if (!haMap.leafletMap) {
-            requestAnimationFrame(() => this._fillMapCard());
-            return;
-        }
-        haMap.style.height = "200px";
-        haMap.autoFit = false;
-
-        this._mapCard._mapEntities = [];
-        this._mapCard.requestUpdate?.();
-        await this._mapCard.updateComplete;
-
-        this._refreshMapPaths();
-        this._fitMap(true);
+    disconnectedCallback() {
+        if (!this._leafletMap) return;
+        this._leafletMap.remove();
+        this._leafletMap = null;
+        this._Leaflet = null;
+        this._tileLayer = null;
+        this._mapLayers = [];
     }
 
     _refreshMapPaths() {
-        if (!this._mapCard) return;
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error) return;
 
@@ -384,19 +355,19 @@ class TimelineCard extends HTMLElement {
     }
 
     _drawMapPaths() {
-        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        const Leaflet = haMap?.Leaflet;
-        if (!haMap || !Leaflet) return;
+        if (!this._leafletMap || !this._Leaflet) return;
 
-        haMap._mapPaths.forEach((marker) => marker.remove());
-        haMap._mapPaths = [];
+        this._mapLayers?.forEach((layer) => layer.remove());
+        this._mapLayers = [];
 
-        this._drawMapLines(haMap, Leaflet);
-        this._drawMapMarkers(haMap, Leaflet);
-        haMap._mapPaths.forEach((marker) => haMap.leafletMap.addLayer(marker));
+        this._drawMapLines();
+        this._drawMapMarkers();
+        this._mapLayers.forEach((layer) => this._leafletMap.addLayer(layer));
     }
 
-    _drawMapMarkers(haMap, Leaflet) {
+    _drawMapMarkers() {
+        const Leaflet = this._Leaflet;
+        if (!Leaflet) return;
         const dayData = this._getCurrentDayData();
         const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
         const stayMarkers = segments.filter(segment => segment?.type === "stay");
@@ -413,7 +384,7 @@ class TimelineCard extends HTMLElement {
                 "display: flex;");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
-            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
+            this._mapLayers.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
         });
 
         if (this._highlightedStay) {
@@ -427,35 +398,35 @@ class TimelineCard extends HTMLElement {
                 "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
-            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}));
+            this._mapLayers.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}));
 
         }
     }
 
-    _drawMapLines(haMap, Leaflet) {
+    _drawMapLines() {
+        const Leaflet = this._Leaflet;
+        if (!Leaflet) return;
         const paths = [...this._fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
-            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+            this._mapLayers.push(Leaflet.polyline(path.points.map(point => point.point), {
                 color: `color-mix(in srgb, black 30%, ${path.color})`, opacity: 1, weight: path.weight + 3
             }));
-            haMap._mapPaths.push(Leaflet.polyline(path.points.map(point => point.point), {
+            this._mapLayers.push(Leaflet.polyline(path.points.map(point => point.point), {
                 color: path.color, opacity: 1, weight: path.weight
             }));
         });
     }
 
     _fitMap(defer = false, bounds = null, pad = 0.1) {
-        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        const Leaflet = haMap?.Leaflet;
-        if (!haMap || !Leaflet) return;
+        if (!this._leafletMap || !this._Leaflet) return;
         if (bounds === null) {
             if (!this._fullDayPaths.length) return;
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
-        bounds = haMap.Leaflet.latLngBounds(bounds).pad(pad);
+        bounds = this._Leaflet.latLngBounds(bounds).pad(pad);
 
-        const doFit = () => { haMap.leafletMap.fitBounds(bounds, {maxZoom: 14}); };
+        const doFit = () => this._leafletMap.fitBounds(bounds, {maxZoom: 14});
         if (defer) {
             requestAnimationFrame(() => requestAnimationFrame(doFit));
         } else {
@@ -471,8 +442,7 @@ class TimelineCard extends HTMLElement {
         const segment = dayData.segments[segmentIndex];
         if (!segment) return;
 
-        const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
-        if (!haMap) return;
+        if (!this._leafletMap) return;
 
         this._highlightedPath = [];
         this._highlightedStay = null;
