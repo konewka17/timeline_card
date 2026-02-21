@@ -21,8 +21,6 @@ class TimelineCard extends HTMLElement {
         this._cache = new Map();
         this._selectedDate = startOfDay(new Date());
         this._hass = null;
-        this._loading = false;
-        this._error = null;
         this._rendered = false;
         this._fullDayPaths = [];
         this._highlightedPath = [];
@@ -370,14 +368,7 @@ class TimelineCard extends HTMLElement {
         if (!dayData || dayData.loading || dayData.error) return;
 
         const points = Array.isArray(dayData.points) ? dayData.points : [];
-        this._fullDayPaths = points.length > 1
-            ? [{
-                points: points,
-                color: "var(--primary-color)",
-                weight: 4,
-                gradualOpacity: 0.2,
-            }]
-            : [];
+        this._fullDayPaths = points.length > 1 ? [{points: points, color: "var(--primary-color)", weight: 4}] : [];
 
         this._highlightedPath = [];
         this._highlightedStay = null;
@@ -440,14 +431,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _drawMapLines(haMap, Leaflet) {
-        const basePaths = this._fullDayPaths.map((path) => ({
-            ...path,
-            gradualOpacity: this._isTravelHighlightActive ? 0.8 : path.gradualOpacity,
-        }));
-        const paths = [
-            ...basePaths,
-            ...this._highlightedPath
-        ];
+        const paths = [...this._fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
             haMap._mapPaths.push(
@@ -513,13 +497,7 @@ class TimelineCard extends HTMLElement {
                 return;
             }
 
-            this._highlightedPath = [{
-                points: segmentPoints,
-                color: "var(--accent-color)",
-                weight: 7,
-                opacity: 1,
-                gradualOpacity: 0,
-            }];
+            this._highlightedPath = [{points: segmentPoints, color: "var(--accent-color)", weight: 7, opacity: 1,}];
             this._isTravelHighlightActive = true;
             this._drawMapPaths();
         }
@@ -556,7 +534,6 @@ class TimelineCard extends HTMLElement {
             this._fitMap(false, segmentPoints.map(toLatLon));
         }
     }
-
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];

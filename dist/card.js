@@ -178,18 +178,20 @@ function segmentTimeline(points, options, zones) {
 
     const segments = [];
     let cursor = 0;
+    let lastStayEndpoint = null;
 
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
-            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1), stay.start);
+            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1), lastStayEndpoint);
             if (move) segments.push(move);
         }
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
+        lastStayEndpoint = sorted[stay.endIndex];
     });
 
     if (cursor < sorted.length) {
-        const move = buildMoveSegment(sorted.slice(cursor));
+        const move = buildMoveSegment(sorted.slice(cursor), lastStayEndpoint);
         if (move) segments.push(move);
     }
 
@@ -284,20 +286,22 @@ function buildStaySegment(stay, zones) {
     };
 }
 
-function buildMoveSegment(points, forcedEndTimestamp) {
+function buildMoveSegment(points, startPoint = null) {
     if (!points || points.length < 2) return null;
     let distance = 0;
+    if (startPoint) distance += haversineMeters(toLatLon(startPoint), toLatLon(points[0]));
     for (let i = 1; i < points.length; i += 1) {
         distance += haversineMeters(toLatLon(points[i - 1]), toLatLon(points[i]));
     }
     const start = points[0].timestamp;
-    const end = forcedEndTimestamp ?? points[points.length - 1].timestamp;
+    const end = points[points.length - 1].timestamp;
     return {
         type: "move",
         start,
         end,
         durationMs: end - start,
         distanceM: distance,
+        points: startPoint ? [startPoint, ...points] : points,
     };
 }
 
@@ -524,8 +528,6 @@ class TimelineCard extends HTMLElement {
         this._cache = new Map();
         this._selectedDate = startOfDay(new Date());
         this._hass = null;
-        this._loading = false;
-        this._error = null;
         this._rendered = false;
         this._fullDayPaths = [];
         this._highlightedPath = [];
@@ -873,14 +875,7 @@ class TimelineCard extends HTMLElement {
         if (!dayData || dayData.loading || dayData.error) return;
 
         const points = Array.isArray(dayData.points) ? dayData.points : [];
-        this._fullDayPaths = points.length > 1
-            ? [{
-                points: points,
-                color: "var(--primary-color)",
-                weight: 4,
-                gradualOpacity: 0.2,
-            }]
-            : [];
+        this._fullDayPaths = points.length > 1 ? [{points: points, color: "var(--primary-color)", weight: 4}] : [];
 
         this._highlightedPath = [];
         this._highlightedStay = null;
@@ -943,14 +938,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _drawMapLines(haMap, Leaflet) {
-        const basePaths = this._fullDayPaths.map((path) => ({
-            ...path,
-            gradualOpacity: this._isTravelHighlightActive ? 0.8 : path.gradualOpacity,
-        }));
-        const paths = [
-            ...basePaths,
-            ...this._highlightedPath
-        ];
+        const paths = [...this._fullDayPaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
             haMap._mapPaths.push(
@@ -1016,13 +1004,7 @@ class TimelineCard extends HTMLElement {
                 return;
             }
 
-            this._highlightedPath = [{
-                points: segmentPoints,
-                color: "var(--accent-color)",
-                weight: 7,
-                opacity: 1,
-                gradualOpacity: 0,
-            }];
+            this._highlightedPath = [{points: segmentPoints, color: "var(--accent-color)", weight: 7, opacity: 1,}];
             this._isTravelHighlightActive = true;
             this._drawMapPaths();
         }
@@ -1059,7 +1041,6 @@ class TimelineCard extends HTMLElement {
             this._fitMap(false, segmentPoints.map(toLatLon));
         }
     }
-
 
     _extractSegmentPoints(points, segment) {
         if (!Array.isArray(points)) return [];

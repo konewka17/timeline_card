@@ -10,18 +10,20 @@ export function segmentTimeline(points, options, zones) {
 
     const segments = [];
     let cursor = 0;
+    let lastStayEndpoint = null;
 
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
-            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1), stay.start);
+            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1), lastStayEndpoint);
             if (move) segments.push(move);
         }
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
+        lastStayEndpoint = sorted[stay.endIndex];
     });
 
     if (cursor < sorted.length) {
-        const move = buildMoveSegment(sorted.slice(cursor));
+        const move = buildMoveSegment(sorted.slice(cursor), lastStayEndpoint);
         if (move) segments.push(move);
     }
 
@@ -116,20 +118,22 @@ function buildStaySegment(stay, zones) {
     };
 }
 
-function buildMoveSegment(points, forcedEndTimestamp) {
+function buildMoveSegment(points, startPoint = null) {
     if (!points || points.length < 2) return null;
     let distance = 0;
+    if (startPoint) distance += haversineMeters(toLatLon(startPoint), toLatLon(points[0]));
     for (let i = 1; i < points.length; i += 1) {
         distance += haversineMeters(toLatLon(points[i - 1]), toLatLon(points[i]));
     }
     const start = points[0].timestamp;
-    const end = forcedEndTimestamp ?? points[points.length - 1].timestamp;
+    const end = points[points.length - 1].timestamp;
     return {
         type: "move",
         start,
         end,
         durationMs: end - start,
         distanceM: distance,
+        points: startPoint ? [startPoint, ...points] : points,
     };
 }
 
