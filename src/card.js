@@ -491,13 +491,7 @@ class TimelineCard extends HTMLElement {
             this._highlightedStay = segment;
             this._drawMapPaths();
         } else if (segment.type === "move") {
-            const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
-            if (segmentPoints.length < 2) {
-                this._drawMapPaths();
-                return;
-            }
-
-            this._highlightedPath = [{points: segmentPoints, color: "var(--accent-color)", weight: 7, opacity: 1,}];
+            this._highlightedPath = [{points: segment.points, color: "var(--accent-color)", weight: 7, opacity: 1,}];
             this._isTravelHighlightActive = true;
             this._drawMapPaths();
         }
