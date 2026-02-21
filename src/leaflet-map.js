@@ -105,7 +105,12 @@ export class TimelineLeafletMap {
             bounds = this._fullDayPaths[0].points.map((point) => point.point);
         }
 
-        const paddedBounds = this._Leaflet.latLngBounds(bounds).pad(pad);
+        const normalizedBounds = bounds
+            .map(normalizeLatLng)
+            .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lng));
+        if (!normalizedBounds.length) return;
+
+        const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(pad);
         const doFit = () => this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
 
         if (defer) {
@@ -193,3 +198,17 @@ const createTileLayer = (leaflet) => leaflet.tileLayer(
         maxZoom: 20,
     }
 );
+
+const normalizeLatLng = (point) => {
+    if (Array.isArray(point) && point.length >= 2) {
+        return {lat: Number(point[0]), lng: Number(point[1])};
+    }
+    if (!point || typeof point !== "object") return null;
+    if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+        return {lat: Number(point.lat), lng: Number(point.lng)};
+    }
+    if (Number.isFinite(point.lat) && Number.isFinite(point.lon)) {
+        return {lat: Number(point.lat), lng: Number(point.lon)};
+    }
+    return null;
+};

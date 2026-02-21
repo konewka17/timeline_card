@@ -244,7 +244,7 @@ ha-card {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 3;
+  z-index: 1000;
   --mdc-icon-button-size: 34px;
   background: var(--card-background-color, #fff);
   border-radius: 50%;

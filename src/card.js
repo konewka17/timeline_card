@@ -303,6 +303,10 @@ class TimelineCard extends HTMLElement {
     async _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
         if (!container || this._mapView || this._isLoadingMap) return;
+        if (!this.isConnected || !container.isConnected) {
+            requestAnimationFrame(() => this._attachMapCard());
+            return;
+        }
 
         this._isLoadingMap = true;
         try {
