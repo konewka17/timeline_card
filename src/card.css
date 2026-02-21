@@ -27,14 +27,46 @@ ha-card {
   flex-wrap: nowrap;
 }
 
+.date-wrap {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.date-trigger {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 2px 4px;
+  margin: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+
 .date {
   font-size: 1rem;
   font-weight: 600;
   text-align: center;
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.date-caret {
+  color: var(--secondary-text-color);
+  --mdc-icon-size: 20px;
+}
+
+.date-picker-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 
 .nav-button {
@@ -57,6 +89,7 @@ ha-card {
   padding: 8px 16px 16px;
   max-height: 420px;
   overflow: auto;
+  touch-action: pan-y;
 }
 
 .loading,
@@ -84,6 +117,14 @@ ha-card {
   width: 12px;
   background: var(--primary-color);
   border-radius: 999px;
+}
+
+.timeline.trim-spine-top .spine {
+  top: 32px;
+}
+
+.timeline.trim-spine-bottom .spine {
+  bottom: 32px;
 }
 
 .entry {
@@ -191,10 +232,25 @@ ha-card {
   border-radius: 8px;
 }
 
+.map-wrap {
+  position: relative;
+}
+
 #overview-map {
   height: 200px;
 }
 
-.stay-marker{
-  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))
+.map-reset {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  --mdc-icon-button-size: 34px;
+  background: var(--card-background-color, #fff);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px #0003;
+}
+
+.map-reset[hidden] {
+  display: none;
 }

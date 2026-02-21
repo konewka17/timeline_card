@@ -1,38 +1,49 @@
-import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {formatDistance, formatDuration, formatTime, formatTimeRange} from "./utils.js";
 
 export function renderTimeline(segments) {
     if (!segments || segments.length === 0) {
         return `<div class="empty">No location history for this day.</div>`;
     }
 
+    const firstIsStay = segments[0]?.type === "stay";
+    const lastIsStay = segments[segments.length - 1]?.type === "stay";
+    const timelineClass = [
+        "timeline",
+        firstIsStay ? "trim-spine-top" : "",
+        lastIsStay ? "trim-spine-bottom" : "",
+    ].join(" ");
+
     return `
-    <div class="timeline">
+    <div class="${timelineClass}">
       <div class="spine"></div>
-      ${segments.map((segment, index) => renderSegment(segment, index)).join("")}
+      ${segments.map((segment, index) => renderSegment(segment, index, {
+        hideStartTime: index === 0 && firstIsStay,
+        hideEndTime: index === segments.length - 1 && lastIsStay,
+    })).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment, index) {
+function renderSegment(segment, index, options) {
     if (segment.type === "stay") {
         return `
-      <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
-        <div class="left-icon">
-          <div class="icon-ring">
-            <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+          <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
+            <div class="left-icon">
+              <div class="icon-ring">
+                <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+              </div>
+            </div>
+            <div class="line-slot">
+              <div class="line-dot"></div>
+            </div>
+            <div class="content location">
+              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
+            </div>
+            <div class="content time">
+              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+            </div>
           </div>
-        </div>
-        <div class="line-slot">
-          <div class="line-dot"></div>
-        </div>
-        <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
-        </div>
-        <div class="content time">
-          <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
-        </div>
-      </div>
-    `;
+        `;
     }
 
     return `

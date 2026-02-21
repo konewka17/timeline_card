@@ -1,4 +1,4 @@
-var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  flex: 1;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.stay-marker{\r\n  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))\r\n}";
+var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date-wrap {\r\n  display: flex;\r\n  justify-content: center;\r\n  flex: 1;\r\n  min-width: 0;\r\n}\r\n\r\n.date-trigger {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  border: 0;\r\n  background: transparent;\r\n  color: inherit;\r\n  font: inherit;\r\n  padding: 2px 4px;\r\n  margin: 0;\r\n  min-width: 0;\r\n  cursor: pointer;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.date-caret {\r\n  color: var(--secondary-text-color);\r\n  --mdc-icon-size: 20px;\r\n}\r\n\r\n.date-picker-input {\r\n  position: absolute;\r\n  opacity: 0;\r\n  pointer-events: none;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n  touch-action: pan-y;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.timeline.trim-spine-top .spine {\r\n  top: 32px;\r\n}\r\n\r\n.timeline.trim-spine-bottom .spine {\r\n  bottom: 32px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n.map-wrap {\r\n  position: relative;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.map-reset {\r\n  position: absolute;\r\n  top: 8px;\r\n  right: 8px;\r\n  z-index: 3;\r\n  --mdc-icon-button-size: 34px;\r\n  background: var(--card-background-color, #fff);\r\n  border-radius: 50%;\r\n  box-shadow: 0 2px 6px #0003;\r\n}\r\n\r\n.map-reset[hidden] {\r\n  display: none;\r\n}\r\n";
 
 function toDateKey(date) {
     const y = date.getFullYear();
@@ -39,12 +39,23 @@ function formatTime(date) {
     }
 }
 
-function formatTimeRange(start, end) {
-    return `${formatTime(start)} - ${formatTime(end)}`;
+function formatTimeRange(start, end, options={}) {
+    const hideStartTime = options.hideStartTime || false;
+    const hideEndTime = options.hideEndTime || false;
+
+    if (hideStartTime && hideEndTime) {
+        return "all day";
+    } else if (hideStartTime && !hideEndTime) {
+        return formatTime(end);
+    } else if (hideEndTime && !hideStartTime) {
+        return formatTime(start);
+    } else {
+        return `${formatTime(start)} - ${formatTime(end)}`;
+    }
 }
 
 function formatDuration(ms) {
-    const totalMinutes = Math.max(0, Math.round(ms / 60000));
+    const totalMinutes = ms > 0 ? Math.max(1, Math.round(ms / 60000)) : 0;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
@@ -169,15 +180,21 @@ function segmentTimeline(points, options, zones) {
     let cursor = 0;
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
-            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1));
+            const moveStartIndex = Math.max(0, cursor - 1);
+            const move = buildMoveSegment(sorted.slice(moveStartIndex, stay.startIndex + 1));
             if (move) segments.push(move);
+        } else if (cursor === stay.startIndex && stay.startIndex > 0) {
+            // TODO check if bridge is wanted or not
+            const bridge = buildMoveSegment(sorted.slice(stay.startIndex - 1, stay.startIndex + 1));
+            if (bridge && bridge.durationMs > 0) segments.push(bridge);
         }
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
     });
 
     if (cursor < sorted.length) {
-        const move = buildMoveSegment(sorted.slice(cursor));
+        const moveStartIndex = Math.max(0, cursor - 1);
+        const move = buildMoveSegment(sorted.slice(moveStartIndex));
         if (move) segments.push(move);
     }
 
@@ -307,34 +324,45 @@ function renderTimeline(segments) {
         return `<div class="empty">No location history for this day.</div>`;
     }
 
+    const firstIsStay = segments[0]?.type === "stay";
+    const lastIsStay = segments[segments.length - 1]?.type === "stay";
+    const timelineClass = [
+        "timeline",
+        firstIsStay ? "trim-spine-top" : "",
+        lastIsStay ? "trim-spine-bottom" : "",
+    ].join(" ");
+
     return `
-    <div class="timeline">
+    <div class="${timelineClass}">
       <div class="spine"></div>
-      ${segments.map((segment, index) => renderSegment(segment, index)).join("")}
+      ${segments.map((segment, index) => renderSegment(segment, index, {
+        hideStartTime: index === 0 && firstIsStay,
+        hideEndTime: index === segments.length - 1 && lastIsStay,
+    })).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment, index) {
+function renderSegment(segment, index, options) {
     if (segment.type === "stay") {
         return `
-      <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
-        <div class="left-icon">
-          <div class="icon-ring">
-            <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+          <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
+            <div class="left-icon">
+              <div class="icon-ring">
+                <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+              </div>
+            </div>
+            <div class="line-slot">
+              <div class="line-dot"></div>
+            </div>
+            <div class="content location">
+              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
+            </div>
+            <div class="content time">
+              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+            </div>
           </div>
-        </div>
-        <div class="line-slot">
-          <div class="line-dot"></div>
-        </div>
-        <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
-        </div>
-        <div class="content time">
-          <div class="meta">${formatTimeRange(segment.start, segment.end)}</div>
-        </div>
-      </div>
-    `;
+        `;
     }
 
     return `
@@ -507,6 +535,8 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
+        this._isMapZoomedToSegment = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -518,6 +548,23 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "open-date-picker") {
+                this._openDatePicker();
+            } else if (action === "reset-map-zoom") {
+                this._resetMapZoom();
+            }
+        });
+
+
+        this.shadowRoot.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker") return;
+            if (!target.value) return;
+            const next = new Date(`${target.value}T00:00:00`);
+            if (!Number.isNaN(next.getTime())) {
+                this._selectedDate = startOfDay(next);
+                this._ensureDay(this._selectedDate);
+                this._render();
             }
         });
 
@@ -577,11 +624,22 @@ class TimelineCard extends HTMLElement {
     }
 
     _shiftDate(direction) {
+        const today = startOfDay(new Date());
+        if (direction > 0 && this._selectedDate >= today) {
+            return;
+        }
+
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
         this._ensureDay(this._selectedDate);
         this._render();
+    }
+
+    _resetMapZoom() {
+        this._isMapZoomedToSegment = false;
+        this._updateMapResetButton();
+        this._fitMap();
     }
 
     _refreshCurrentDay() {
@@ -663,10 +721,18 @@ class TimelineCard extends HTMLElement {
         const dateEl = this.shadowRoot.getElementById("timeline-date");
         dateEl.textContent = formatDate(this._selectedDate);
 
+        const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
+        if (datePicker) {
+            datePicker.value = toDateKey(this._selectedDate);
+            datePicker.max = toDateKey(new Date());
+        }
+
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);
 
         const body = this.shadowRoot.getElementById("timeline-body");
+        this._bindTimelineTouch(body);
+        this._updateMapResetButton();
         body.innerHTML = `
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
@@ -684,10 +750,19 @@ class TimelineCard extends HTMLElement {
           <style>${css}</style>
           <ha-card>
             <div class="card">
-              <div id="overview-map"></div>
+              <div class="map-wrap">
+                <div id="overview-map"></div>
+                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
+              </div>
               <div class="header my-header">
                 <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                <div id="timeline-date" class="date"></div>
+                <div class="date-wrap">
+                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
+                    <span id="timeline-date" class="date"></span>
+                    <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
+                  </button>
+                  <input id="timeline-date-picker" class="date-picker-input" type="date">
+                </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
@@ -697,6 +772,50 @@ class TimelineCard extends HTMLElement {
             </div>
           </ha-card>
         `;
+    }
+
+
+    _openDatePicker() {
+        const input = this.shadowRoot?.getElementById("timeline-date-picker");
+        if (!input) return;
+        if (typeof input.showPicker === "function") {
+            input.showPicker();
+            return;
+        }
+        input.focus();
+        input.click();
+    }
+
+    _updateMapResetButton() {
+        const resetBtn = this.shadowRoot?.getElementById("map-reset-zoom");
+        if (!resetBtn) return;
+        resetBtn.toggleAttribute("hidden", !this._isMapZoomedToSegment);
+    }
+
+    _bindTimelineTouch(body) {
+        if (!body || body.dataset.swipeBound === "true") return;
+        body.dataset.swipeBound = "true";
+
+        body.addEventListener("touchstart", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            this._touchStart = {x: touch.clientX, y: touch.clientY};
+        }, {passive: true});
+
+        body.addEventListener("touchend", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch || !this._touchStart) return;
+
+            const deltaX = touch.clientX - this._touchStart.x;
+            const deltaY = touch.clientY - this._touchStart.y;
+            this._touchStart = null;
+
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
+                return;
+            }
+
+            this._shiftDate(deltaX > 0 ? -1 : 1);
+        }, {passive: true});
     }
 
     async _attachMapCard() {
@@ -770,8 +889,11 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         this._drawMapPaths();
+        this._isMapZoomedToSegment = false;
+        this._updateMapResetButton();
         this._fitMap();
     }
 
@@ -796,15 +918,16 @@ class TimelineCard extends HTMLElement {
         stayMarkers.forEach((stay) => {
             let haIcon = document.createElement("ha-icon");
             haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 18px;");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px");
 
             let iconDiv = document.createElement("div");
             iconDiv.appendChild(haIcon);
             iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))");
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color)); " +
+                "display: flex;");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
-            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon}));
+            haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
         });
 
         if (this._highlightedStay) {
@@ -818,7 +941,7 @@ class TimelineCard extends HTMLElement {
                 "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
-            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon}));
+            haMap._mapPaths.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}));
 
         }
     }
@@ -853,11 +976,11 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-    _fitMap(defer, bounds, pad = 0.1) {
+    _fitMap(defer=false, bounds=null, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;
-        if (bounds === undefined) {
+        if (bounds === null) {
             if (!this._fullDayPaths.length) return;
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
@@ -885,6 +1008,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
 
         if (segment.type === "stay") {
             this._highlightedStay = segment;
@@ -915,6 +1039,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
+        this._touchStart = null;
         this._drawMapPaths();
     }
 
@@ -927,9 +1052,15 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
+            this._isMapZoomedToSegment = true;
+            this._updateMapResetButton();
             this._fitMap(false, [segment.center]);
         } else if (segment.type === "move") {
-            this._fitMap(false, this._highlightedPath[0].points.map(toLatLon));
+            const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
+            if (segmentPoints.length < 2) return;
+            this._isMapZoomedToSegment = true;
+            this._updateMapResetButton();
+            this._fitMap(false, segmentPoints.map(toLatLon));
         }
     }
 
