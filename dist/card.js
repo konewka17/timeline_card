@@ -15471,6 +15471,9 @@ class TimelineCard extends HTMLElement {
               ${this._config.show_debug ? this._renderDebug(dayData) : ""}
             `;
         this._attachMapCard();
+        requestAnimationFrame(() => {
+            this._refreshMapPaths();
+        });
     }
 
     _ensureBaseLayout() {
