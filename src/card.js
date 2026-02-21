@@ -4,7 +4,7 @@ import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
-import {setupLeafletMap} from "./leaflet-map.js";
+import {TimelineLeafletMap} from "./leaflet-map.js";
 import "./editor.js";
 
 const DEFAULT_CONFIG = {
@@ -24,12 +24,7 @@ class TimelineCard extends HTMLElement {
         this._selectedDate = startOfDay(new Date());
         this._hass = null;
         this._rendered = false;
-        this._fullDayPaths = [];
-        this._highlightedPath = [];
-        this._highlightedStay = null;
-        this._isTravelHighlightActive = false;
         this._touchStart = null;
-        this._isMapZoomedToSegment = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -127,9 +122,8 @@ class TimelineCard extends HTMLElement {
     }
 
     _resetMapZoom() {
-        this._isMapZoomedToSegment = false;
+        this._mapView?.resetMapZoom();
         this._updateMapResetButton();
-        this._fitMap();
     }
 
     _refreshCurrentDay() {
@@ -277,7 +271,7 @@ class TimelineCard extends HTMLElement {
     _updateMapResetButton() {
         const resetBtn = this.shadowRoot?.getElementById("map-reset-zoom");
         if (!resetBtn) return;
-        resetBtn.toggleAttribute("hidden", !this._isMapZoomedToSegment);
+        resetBtn.toggleAttribute("hidden", !this._mapView?.isMapZoomedToSegment);
     }
 
     _bindTimelineTouch(body) {
@@ -308,14 +302,13 @@ class TimelineCard extends HTMLElement {
 
     async _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
-        if (!container || this._leafletMap || this._isLoadingMap) return;
+        if (!container || this._mapView || this._isLoadingMap) return;
 
         this._isLoadingMap = true;
         try {
-            [this._leafletMap, this._Leaflet, this._tileLayer] = setupLeafletMap(container);
-            this._mapLayers = [];
+            this._mapView = new TimelineLeafletMap(container);
             this._refreshMapPaths();
-            this._fitMap(true);
+            this._mapView.fitMap({defer: true});
         } catch (err) {
             console.warn("Timeline card: map setup failed", err);
         } finally {
@@ -324,114 +317,21 @@ class TimelineCard extends HTMLElement {
     }
 
     disconnectedCallback() {
-        if (!this._leafletMap) return;
-        this._leafletMap.remove();
-        this._leafletMap = null;
-        this._Leaflet = null;
-        this._tileLayer = null;
-        this._mapLayers = [];
+        if (!this._mapView) return;
+        this._mapView.destroy();
+        this._mapView = null;
     }
 
     _refreshMapPaths() {
         const dayData = this._getCurrentDayData();
-        if (!dayData || dayData.loading || dayData.error) return;
+        if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
 
-        this._fullDayPaths = [];
         const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        if (segments.length > 1) {
-            this._fullDayPaths = segments
-                .filter(segment => segment?.type === "move")
-                .map(segment => ({points: segment.points, color: "var(--primary-color)", weight: 4}));
-        }
-        this._highlightedPath = [];
-        this._highlightedStay = null;
-        this._isTravelHighlightActive = false;
+        this._mapView.setDaySegments(segments);
         this._touchStart = null;
 
-        this._drawMapPaths();
-        this._isMapZoomedToSegment = false;
         this._updateMapResetButton();
-        this._fitMap();
-    }
-
-    _drawMapPaths() {
-        if (!this._leafletMap || !this._Leaflet) return;
-
-        this._mapLayers?.forEach((layer) => layer.remove());
-        this._mapLayers = [];
-
-        this._drawMapLines();
-        this._drawMapMarkers();
-        this._mapLayers.forEach((layer) => this._leafletMap.addLayer(layer));
-    }
-
-    _drawMapMarkers() {
-        const Leaflet = this._Leaflet;
-        if (!Leaflet) return;
-        const dayData = this._getCurrentDayData();
-        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        const stayMarkers = segments.filter(segment => segment?.type === "stay");
-
-        stayMarkers.forEach((stay) => {
-            let haIcon = document.createElement("ha-icon");
-            haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px");
-
-            let iconDiv = document.createElement("div");
-            iconDiv.appendChild(haIcon);
-            iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color)); " +
-                "display: flex;");
-
-            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
-            this._mapLayers.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
-        });
-
-        if (this._highlightedStay) {
-            let haIcon = document.createElement("ha-icon");
-            haIcon.setAttribute("icon", this._highlightedStay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 22px;");
-
-            let iconDiv = document.createElement("div");
-            iconDiv.appendChild(haIcon);
-            iconDiv.setAttribute("style", "height: 22px; width: 22px; background-color: var(--accent-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--accent-color))");
-
-            let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [26, 26]});
-            this._mapLayers.push(Leaflet.marker(this._highlightedStay.center, {icon, zIndexOffset: 1000}));
-
-        }
-    }
-
-    _drawMapLines() {
-        const Leaflet = this._Leaflet;
-        if (!Leaflet) return;
-        const paths = [...this._fullDayPaths, ...this._highlightedPath];
-
-        paths.forEach((path) => {
-            this._mapLayers.push(Leaflet.polyline(path.points.map(point => point.point), {
-                color: `color-mix(in srgb, black 30%, ${path.color})`, opacity: 1, weight: path.weight + 3
-            }));
-            this._mapLayers.push(Leaflet.polyline(path.points.map(point => point.point), {
-                color: path.color, opacity: 1, weight: path.weight
-            }));
-        });
-    }
-
-    _fitMap(defer = false, bounds = null, pad = 0.1) {
-        if (!this._leafletMap || !this._Leaflet) return;
-        if (bounds === null) {
-            if (!this._fullDayPaths.length) return;
-            bounds = this._fullDayPaths[0].points.map(toLatLon);
-        }
-        bounds = this._Leaflet.latLngBounds(bounds).pad(pad);
-
-        const doFit = () => this._leafletMap.fitBounds(bounds, {maxZoom: 14});
-        if (defer) {
-            requestAnimationFrame(() => requestAnimationFrame(doFit));
-        } else {
-            doFit();
-        }
+        this._mapView.fitMap();
     }
 
     _handleSegmentHoverStart(segmentIndex) {
@@ -440,34 +340,19 @@ class TimelineCard extends HTMLElement {
         if (!dayData || !Array.isArray(dayData.segments)) return;
 
         const segment = dayData.segments[segmentIndex];
-        if (!segment) return;
+        if (!segment || !this._mapView) return;
 
-        if (!this._leafletMap) return;
-
-        this._highlightedPath = [];
-        this._highlightedStay = null;
-        this._isTravelHighlightActive = false;
+        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
         this._touchStart = null;
-
-        if (segment.type === "stay") {
-            this._highlightedStay = segment;
-            this._drawMapPaths();
-        } else if (segment.type === "move") {
-            this._highlightedPath = [{points: segment.points, color: "var(--accent-color)", weight: 7, opacity: 1,}];
-            this._isTravelHighlightActive = true;
-            this._drawMapPaths();
-        }
+        this._mapView.highlightSegment(segment, segments);
     }
 
     _clearHoverHighlight() {
-        if (!this._highlightedPath.length && !this._highlightedStay && !this._isTravelHighlightActive) {
-            return;
-        }
-        this._highlightedPath = [];
-        this._highlightedStay = null;
-        this._isTravelHighlightActive = false;
+        if (!this._mapView) return;
+        const dayData = this._getCurrentDayData();
+        const segments = Array.isArray(dayData?.segments) ? dayData.segments : [];
         this._touchStart = null;
-        this._drawMapPaths();
+        this._mapView.clearHighlight(segments);
     }
 
     _handleSegmentClick(segmentIndex) {
@@ -479,15 +364,13 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
-            this._isMapZoomedToSegment = true;
+            this._mapView?.zoomToStay(segment);
             this._updateMapResetButton();
-            this._fitMap(false, [segment.center]);
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
             if (segmentPoints.length < 2) return;
-            this._isMapZoomedToSegment = true;
+            this._mapView?.zoomToPoints(segmentPoints.map(toLatLon));
             this._updateMapResetButton();
-            this._fitMap(false, segmentPoints.map(toLatLon));
         }
     }
 
