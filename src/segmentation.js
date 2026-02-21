@@ -10,23 +10,18 @@ export function segmentTimeline(points, options, zones) {
 
     const segments = [];
     let cursor = 0;
+
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
-            const moveStartIndex = Math.max(0, cursor - 1);
-            const move = buildMoveSegment(sorted.slice(moveStartIndex, stay.startIndex + 1));
+            const move = buildMoveSegment(sorted.slice(cursor, stay.startIndex + 1));
             if (move) segments.push(move);
-        } else if (cursor === stay.startIndex && stay.startIndex > 0) {
-            // TODO check if bridge is wanted or not
-            const bridge = buildMoveSegment(sorted.slice(stay.startIndex - 1, stay.startIndex + 1));
-            if (bridge && bridge.durationMs > 0) segments.push(bridge);
         }
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
     });
 
     if (cursor < sorted.length) {
-        const moveStartIndex = Math.max(0, cursor - 1);
-        const move = buildMoveSegment(sorted.slice(moveStartIndex));
+        const move = buildMoveSegment(sorted.slice(cursor));
         if (move) segments.push(move);
     }
 
