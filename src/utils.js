@@ -1,3 +1,5 @@
+import {t} from "./localization.js";
+
 export function toDateKey(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -13,9 +15,9 @@ export function endOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 }
 
-export function formatDate(date) {
+export function formatDate(date, localeContext) {
     try {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(localeContext?.language, {
             weekday: "short",
             year: "numeric",
             month: "short",
@@ -26,40 +28,47 @@ export function formatDate(date) {
     }
 }
 
-export function formatTime(date) {
+function resolveHour12(timeDisplay) {
+    if (timeDisplay === "12h") return true;
+    if (timeDisplay === "24h") return false;
+    return undefined;
+}
+
+export function formatTime(date, localeContext) {
     try {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(localeContext?.language, {
             hour: "2-digit",
             minute: "2-digit",
+            hour12: resolveHour12(localeContext?.timeDisplay),
         }).format(date);
     } catch {
         return date.toLocaleTimeString();
     }
 }
 
-export function formatTimeRange(start, end, options={}) {
+export function formatTimeRange(start, end, options = {}, localeContext) {
     const hideStartTime = options.hideStartTime || false;
     const hideEndTime = options.hideEndTime || false;
 
     if (hideStartTime && hideEndTime) {
-        return "all day";
+        return t(localeContext, "allDay");
     } else if (hideStartTime && !hideEndTime) {
-        return formatTime(end);
+        return formatTime(end, localeContext);
     } else if (hideEndTime && !hideStartTime) {
-        return formatTime(start);
+        return formatTime(start, localeContext);
     } else {
-        return `${formatTime(start)} - ${formatTime(end)}`;
+        return `${formatTime(start, localeContext)} - ${formatTime(end, localeContext)}`;
     }
 }
 
-export function formatDuration(ms) {
+export function formatDuration(ms, localeContext) {
     const totalMinutes = ms > 0 ? Math.max(1, Math.round(ms / 60000)) : 0;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
-        return `${hours} h ${minutes} min`;
+        return `${hours} ${t(localeContext, "hourShort")} ${minutes} ${t(localeContext, "minuteShort")}`;
     }
-    return `${minutes} min`;
+    return `${minutes} ${t(localeContext, "minuteShort")}`;
 }
 
 export function formatDistance(meters) {

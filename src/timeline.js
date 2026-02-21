@@ -1,8 +1,9 @@
-import {formatDistance, formatDuration, formatTime, formatTimeRange} from "./utils.js";
+import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {t} from "./localization.js";
 
-export function renderTimeline(segments) {
+export function renderTimeline(segments, localeContext) {
     if (!segments || segments.length === 0) {
-        return `<div class="empty">No location history for this day.</div>`;
+        return `<div class="empty">${t(localeContext, "noHistory")}</div>`;
     }
 
     const firstIsStay = segments[0]?.type === "stay";
@@ -19,12 +20,12 @@ export function renderTimeline(segments) {
       ${segments.map((segment, index) => renderSegment(segment, index, {
         hideStartTime: index === 0 && firstIsStay,
         hideEndTime: index === segments.length - 1 && lastIsStay,
-    })).join("")}
+    }, localeContext)).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment, index, options) {
+function renderSegment(segment, index, options, localeContext) {
     if (segment.type === "stay") {
         return `
           <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
@@ -40,7 +41,7 @@ function renderSegment(segment, index, options) {
               <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
             </div>
             <div class="content time">
-              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+              <div class="meta">${formatTimeRange(segment.start, segment.end, options, localeContext)}</div>
             </div>
           </div>
         `;
@@ -52,10 +53,10 @@ function renderSegment(segment, index, options) {
       <div class="line-slot"></div>
       <div class="content location travel">
         <ha-icon class="move-icon" icon="mdi:chart-line-variant"></ha-icon>
-        <div class="title">Moving<span class="meta"> - ${formatDistance(segment.distanceM)}</span></div>
+        <div class="title">${t(localeContext, "moving")}<span class="meta"> - ${formatDistance(segment.distanceM)}</span></div>
       </div>
       <div class="content time">
-        <div class="meta">${formatDuration(segment.durationMs)}</div>
+        <div class="meta">${formatDuration(segment.durationMs, localeContext)}</div>
       </div>
     </div>
   `;

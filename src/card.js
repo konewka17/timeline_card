@@ -3,6 +3,7 @@ import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
+import {createLocalizationContext, t} from "./localization.js";
 import "./editor.js";
 
 const DEFAULT_CONFIG = {
@@ -11,6 +12,8 @@ const DEFAULT_CONFIG = {
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,
+    locale: null,
+    time_display: "auto",
 };
 
 class TimelineCard extends HTMLElement {
@@ -205,6 +208,7 @@ class TimelineCard extends HTMLElement {
         if (!this.shadowRoot) return;
         this._ensureBaseLayout();
 
+        const localeContext = createLocalizationContext(this._config, this._hass);
         const dateKey = toDateKey(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {
             loading: false, segments: null, points: null, error: null, debug: null
@@ -212,7 +216,7 @@ class TimelineCard extends HTMLElement {
         const isFuture = this._selectedDate >= startOfDay(new Date());
 
         const dateEl = this.shadowRoot.getElementById("timeline-date");
-        dateEl.textContent = formatDate(this._selectedDate);
+        dateEl.textContent = formatDate(this._selectedDate, localeContext);
 
         const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
         if (datePicker) {
@@ -228,8 +232,8 @@ class TimelineCard extends HTMLElement {
         this._updateMapResetButton();
         body.innerHTML = `
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
-              ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
-              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
+              ${dayData.loading ? `<div class="loading">${t(localeContext, "loading")}</div>` : ""}
+              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments, localeContext) : ""}
               ${this._config.show_debug ? this._renderDebug(dayData) : ""}
             `;
         this._attachMapCard();

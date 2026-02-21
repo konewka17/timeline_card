@@ -3,6 +3,8 @@ const OPTIONS = {
     stay_radius_m: 75,
     min_stay_minutes: 10,
     show_debug: false,
+    locale: null,
+    time_display: "auto",
 };
 
 class TimelineCardEditor extends HTMLElement {
@@ -65,6 +67,28 @@ class TimelineCardEditor extends HTMLElement {
         placesPicker.includeDomains = ["sensor"];
         placesPicker.addEventListener("value-changed", (ev) => this._onEntityFieldChanged("places_entity", ev));
 
+
+
+        const localeInput = document.createElement("ha-textfield");
+        localeInput.setAttribute("label", "Locale override (optional, e.g. en, de, nl)");
+        localeInput.value = this._config.locale || "";
+        localeInput.addEventListener("input", (ev) => this._onTextChanged("locale", ev));
+
+        const timeDisplay = document.createElement("ha-select");
+        timeDisplay.setAttribute("label", "Time display");
+        timeDisplay.value = this._config.time_display || OPTIONS.time_display;
+        [
+            { value: "auto", label: "Automatic (Home Assistant / browser)" },
+            { value: "24h", label: "24-hour" },
+            { value: "12h", label: "12-hour" },
+        ].forEach((optionDef) => {
+            const option = document.createElement("mwc-list-item");
+            option.value = optionDef.value;
+            option.textContent = optionDef.label;
+            timeDisplay.appendChild(option);
+        });
+        timeDisplay.addEventListener("change", (ev) => this._onSelectChanged("time_display", ev));
+
         const debugRow = document.createElement("label");
         debugRow.style.display = "flex";
         debugRow.style.alignItems = "center";
@@ -81,6 +105,8 @@ class TimelineCardEditor extends HTMLElement {
         form.appendChild(placesPicker);
         form.appendChild(stayRadius);
         form.appendChild(minStay);
+        form.appendChild(localeInput);
+        form.appendChild(timeDisplay);
         form.appendChild(debugRow);
         this.shadowRoot.appendChild(form);
     }
@@ -106,6 +132,18 @@ class TimelineCardEditor extends HTMLElement {
 
     _onToggleChanged(key, ev) {
         this._config = {...this._config, [key]: Boolean(ev.target.checked)};
+        this._emitChange();
+    }
+
+    _onTextChanged(key, ev) {
+        const value = (ev?.target?.value || "").trim();
+        this._config = {...this._config, [key]: value || null};
+        this._emitChange();
+    }
+
+    _onSelectChanged(key, ev) {
+        const value = ev?.target?.value || ev?.detail?.value || OPTIONS[key];
+        this._config = {...this._config, [key]: value};
         this._emitChange();
     }
 
