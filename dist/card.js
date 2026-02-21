@@ -1,4 +1,4 @@
-var css = ":host {\n  display: block;\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\n}\n\nha-card {\n  overflow: hidden;\n}\n\n.card {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  z-index: 2;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  padding: 12px 16px;\n  background: var(--card-background-color, var(--ha-card-background, #fff));\n  border-bottom: 1px solid var(--divider-color);\n  flex-wrap: nowrap;\n}\n\n.date-wrap {\n  display: flex;\n  justify-content: center;\n  flex: 1;\n  min-width: 0;\n}\n\n.date-trigger {\n  display: inline-flex;\n  align-items: center;\n  border: 0;\n  background: transparent;\n  color: inherit;\n  font: inherit;\n  padding: 2px 4px;\n  margin: 0;\n  min-width: 0;\n  cursor: pointer;\n}\n\n.date {\n  font-size: 1rem;\n  font-weight: 600;\n  text-align: center;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.date-caret {\n  color: var(--secondary-text-color);\n  --mdc-icon-size: 20px;\n}\n\n.date-picker-input {\n  position: absolute;\n  opacity: 0;\n  pointer-events: none;\n  width: 0;\n  height: 0;\n}\n\n.nav-button {\n  --mdc-icon-button-size: 36px;\n  color: var(--primary-text-color);\n}\n\n.header-actions {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.nav-button[disabled] {\n  opacity: 0.4;\n  cursor: default;\n}\n\n.body {\n  padding: 8px 16px 16px;\n  max-height: 420px;\n  overflow: auto;\n  touch-action: pan-y;\n}\n\n.loading,\n.error,\n.empty {\n  padding: 16px 0;\n  color: var(--secondary-text-color);\n  text-align: center;\n}\n\n.error {\n  color: var(--error-color, #c62828);\n}\n\n.timeline {\n  position: relative;\n  padding: 8px 0;\n}\n\n.spine {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 72px;\n  width: 12px;\n  background: var(--primary-color);\n  border-radius: 999px;\n}\n\n.timeline.trim-spine-top .spine {\n  top: 32px;\n}\n\n.timeline.trim-spine-bottom .spine {\n  bottom: 32px;\n}\n\n.entry {\n  position: relative;\n  display: grid;\n  grid-template-columns: 50px 32px 1fr auto;\n  align-items: center;\n  column-gap: 12px;\n  padding: 12px 0;\n}\n\n.left-icon {\n  display: flex;\n  justify-content: flex-end;\n  padding-right: 4px;\n}\n\n.icon-ring {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--card-background-color, #fff);\n  border: 3px solid var(--primary-color);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\n}\n\n.line-slot {\n  position: relative;\n  width: 32px;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.line-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background: color-mix(in srgb, white 45%, transparent);\n}\n\n.stay-icon {\n  color: var(--primary-color);\n}\n\n.move-icon {\n  color: var(--secondary-text-color);\n}\n\n.content {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.content.location {\n  align-items: flex-start;\n}\n\n.content.location.travel {\n  flex-direction: row;\n  align-items: center;\n  gap: 6px;\n  color: var(--secondary-text-color);\n}\n\n.content.time {\n  justify-self: end;\n  text-align: right;\n}\n\n.entry.move .title {\n  margin-left: 10px;\n  color: var(--secondary-text-color);\n}\n\n.entry.stay .title{\n  background-color: #0001;\n  padding: 3px 10px;\n  border-radius: 20px;\n}\n\n.title {\n  font-size: 0.95rem;\n  font-weight: 600;\n  color: var(--primary-text-color);\n}\n\n.meta {\n  font-size: 0.85rem;\n  color: var(--secondary-text-color);\n  font-weight: normal;\n}\n\n.debug {\n  margin-top: 8px;\n  padding: 8px;\n  font-size: 0.75rem;\n  color: var(--secondary-text-color);\n  background: var(--secondary-background-color);\n  border-radius: 8px;\n}\n\n.map-wrap {\n  position: relative;\n}\n\n#overview-map {\n  height: 200px;\n}\n\n.map-reset {\n  position: absolute;\n  top: 8px;\n  right: 8px;\n  z-index: 3;\n  --mdc-icon-button-size: 34px;\n  background: var(--card-background-color, #fff);\n  border-radius: 50%;\n  box-shadow: 0 2px 6px #0003;\n}\n\n.map-reset[hidden] {\n  display: none;\n}\n\n.stay-marker{\n  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))\n}\n";
+var css = ":host {\r\n  display: block;\r\n  font-family: var(--ha-card-header-font-family, \"Helvetica Neue\", Arial, sans-serif);\r\n}\r\n\r\nha-card {\r\n  overflow: hidden;\r\n}\r\n\r\n.card {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.header {\r\n  position: sticky;\r\n  top: 0;\r\n  z-index: 2;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n  padding: 12px 16px;\r\n  background: var(--card-background-color, var(--ha-card-background, #fff));\r\n  border-bottom: 1px solid var(--divider-color);\r\n  flex-wrap: nowrap;\r\n}\r\n\r\n.date-wrap {\r\n  display: flex;\r\n  justify-content: center;\r\n  flex: 1;\r\n  min-width: 0;\r\n}\r\n\r\n.date-trigger {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  border: 0;\r\n  background: transparent;\r\n  color: inherit;\r\n  font: inherit;\r\n  padding: 2px 4px;\r\n  margin: 0;\r\n  min-width: 0;\r\n  cursor: pointer;\r\n}\r\n\r\n.date {\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  text-align: center;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n\r\n.date-caret {\r\n  color: var(--secondary-text-color);\r\n  --mdc-icon-size: 20px;\r\n}\r\n\r\n.date-picker-input {\r\n  position: absolute;\r\n  opacity: 0;\r\n  pointer-events: none;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.nav-button {\r\n  --mdc-icon-button-size: 36px;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.header-actions {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n}\r\n\r\n.nav-button[disabled] {\r\n  opacity: 0.4;\r\n  cursor: default;\r\n}\r\n\r\n.body {\r\n  padding: 8px 16px 16px;\r\n  max-height: 420px;\r\n  overflow: auto;\r\n  touch-action: pan-y;\r\n}\r\n\r\n.loading,\r\n.error,\r\n.empty {\r\n  padding: 16px 0;\r\n  color: var(--secondary-text-color);\r\n  text-align: center;\r\n}\r\n\r\n.error {\r\n  color: var(--error-color, #c62828);\r\n}\r\n\r\n.timeline {\r\n  position: relative;\r\n  padding: 8px 0;\r\n}\r\n\r\n.spine {\r\n  position: absolute;\r\n  top: 0;\r\n  bottom: 0;\r\n  left: 72px;\r\n  width: 12px;\r\n  background: var(--primary-color);\r\n  border-radius: 999px;\r\n}\r\n\r\n.timeline.trim-spine-top .spine {\r\n  top: 32px;\r\n}\r\n\r\n.timeline.trim-spine-bottom .spine {\r\n  bottom: 32px;\r\n}\r\n\r\n.entry {\r\n  position: relative;\r\n  display: grid;\r\n  grid-template-columns: 50px 32px 1fr auto;\r\n  align-items: center;\r\n  column-gap: 12px;\r\n  padding: 12px 0;\r\n}\r\n\r\n.left-icon {\r\n  display: flex;\r\n  justify-content: flex-end;\r\n  padding-right: 4px;\r\n}\r\n\r\n.icon-ring {\r\n  width: 32px;\r\n  height: 32px;\r\n  border-radius: 50%;\r\n  background: var(--card-background-color, #fff);\r\n  border: 3px solid var(--primary-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  box-shadow: 0 0 0 4px var(--card-background-color, #fff);\r\n}\r\n\r\n.line-slot {\r\n  position: relative;\r\n  width: 32px;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n}\r\n\r\n.line-dot {\r\n  width: 10px;\r\n  height: 10px;\r\n  border-radius: 50%;\r\n  background: color-mix(in srgb, white 45%, transparent);\r\n}\r\n\r\n.stay-icon {\r\n  color: var(--primary-color);\r\n}\r\n\r\n.move-icon {\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 4px;\r\n}\r\n\r\n.content.location {\r\n  align-items: flex-start;\r\n}\r\n\r\n.content.location.travel {\r\n  flex-direction: row;\r\n  align-items: center;\r\n  gap: 6px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.content.time {\r\n  justify-self: end;\r\n  text-align: right;\r\n}\r\n\r\n.entry.move .title {\r\n  margin-left: 10px;\r\n  color: var(--secondary-text-color);\r\n}\r\n\r\n.entry.stay .title{\r\n  background-color: #0001;\r\n  padding: 3px 10px;\r\n  border-radius: 20px;\r\n}\r\n\r\n.title {\r\n  font-size: 0.95rem;\r\n  font-weight: 600;\r\n  color: var(--primary-text-color);\r\n}\r\n\r\n.meta {\r\n  font-size: 0.85rem;\r\n  color: var(--secondary-text-color);\r\n  font-weight: normal;\r\n}\r\n\r\n.debug {\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  font-size: 0.75rem;\r\n  color: var(--secondary-text-color);\r\n  background: var(--secondary-background-color);\r\n  border-radius: 8px;\r\n}\r\n\r\n.map-wrap {\r\n  position: relative;\r\n}\r\n\r\n#overview-map {\r\n  height: 200px;\r\n}\r\n\r\n.map-reset {\r\n  position: absolute;\r\n  top: 8px;\r\n  right: 8px;\r\n  z-index: 3;\r\n  --mdc-icon-button-size: 34px;\r\n  background: var(--card-background-color, #fff);\r\n  border-radius: 50%;\r\n  box-shadow: 0 2px 6px #0003;\r\n}\r\n\r\n.map-reset[hidden] {\r\n  display: none;\r\n}\r\n";
 
 function toDateKey(date) {
     const y = date.getFullYear();
@@ -39,8 +39,19 @@ function formatTime(date) {
     }
 }
 
-function formatTimeRange(start, end) {
-    return `${formatTime(start)} - ${formatTime(end)}`;
+function formatTimeRange(start, end, options={}) {
+    const hideStartTime = options.hideStartTime || false;
+    const hideEndTime = options.hideEndTime || false;
+
+    if (hideStartTime && hideEndTime) {
+        return "all day";
+    } else if (hideStartTime && !hideEndTime) {
+        return formatTime(end);
+    } else if (hideEndTime && !hideStartTime) {
+        return formatTime(start);
+    } else {
+        return `${formatTime(start)} - ${formatTime(end)}`;
+    }
 }
 
 function formatDuration(ms) {
@@ -167,17 +178,16 @@ function segmentTimeline(points, options, zones) {
 
     const segments = [];
     let cursor = 0;
-
     stays.forEach((stay) => {
         if (cursor < stay.startIndex) {
             const moveStartIndex = Math.max(0, cursor - 1);
             const move = buildMoveSegment(sorted.slice(moveStartIndex, stay.startIndex + 1));
             if (move) segments.push(move);
         } else if (cursor === stay.startIndex && stay.startIndex > 0) {
+            // TODO check if bridge is wanted or not
             const bridge = buildMoveSegment(sorted.slice(stay.startIndex - 1, stay.startIndex + 1));
             if (bridge && bridge.durationMs > 0) segments.push(bridge);
         }
-
         segments.push(buildStaySegment(stay, zones));
         cursor = stay.endIndex + 1;
     });
@@ -320,39 +330,39 @@ function renderTimeline(segments) {
         "timeline",
         firstIsStay ? "trim-spine-top" : "",
         lastIsStay ? "trim-spine-bottom" : "",
-    ].filter(Boolean).join(" ");
+    ].join(" ");
 
     return `
     <div class="${timelineClass}">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
-          hideStart: index === 0 && firstIsStay,
-          hideEnd: index === segments.length - 1 && lastIsStay,
-      })).join("")}
+        hideStartTime: index === 0 && firstIsStay,
+        hideEndTime: index === segments.length - 1 && lastIsStay,
+    })).join("")}
     </div>
   `;
 }
 
-function renderSegment(segment, index, {hideStart = false, hideEnd = false} = {}) {
+function renderSegment(segment, index, options) {
     if (segment.type === "stay") {
         return `
-      <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
-        <div class="left-icon">
-          <div class="icon-ring">
-            <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+          <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
+            <div class="left-icon">
+              <div class="icon-ring">
+                <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
+              </div>
+            </div>
+            <div class="line-slot">
+              <div class="line-dot"></div>
+            </div>
+            <div class="content location">
+              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
+            </div>
+            <div class="content time">
+              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+            </div>
           </div>
-        </div>
-        <div class="line-slot">
-          <div class="line-dot"></div>
-        </div>
-        <div class="content location">
-          <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
-        </div>
-        <div class="content time">
-          <div class="meta">${formatStayTime(segment.start, segment.end, {hideStart, hideEnd})}</div>
-        </div>
-      </div>
-    `;
+        `;
     }
 
     return `
@@ -368,22 +378,6 @@ function renderSegment(segment, index, {hideStart = false, hideEnd = false} = {}
       </div>
     </div>
   `;
-}
-
-function formatStayTime(start, end, {hideStart = false, hideEnd = false} = {}) {
-    if (hideStart && hideEnd) {
-        return "all day";
-    }
-
-    if (hideStart && !hideEnd) {
-        return formatTime(end);
-    }
-
-    if (hideEnd && !hideStart) {
-        return formatTime(start);
-    }
-
-    return formatTimeRange(start, end);
 }
 
 function escapeHtml(text) {
@@ -542,7 +536,7 @@ class TimelineCard extends HTMLElement {
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
         this._touchStart = null;
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -643,9 +637,9 @@ class TimelineCard extends HTMLElement {
     }
 
     _resetMapZoom() {
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
         this._updateMapResetButton();
-        this._fitMap(false);
+        this._fitMap();
     }
 
     _refreshCurrentDay() {
@@ -795,7 +789,7 @@ class TimelineCard extends HTMLElement {
     _updateMapResetButton() {
         const resetBtn = this.shadowRoot?.getElementById("map-reset-zoom");
         if (!resetBtn) return;
-        resetBtn.toggleAttribute("hidden", !this._isMapFocused);
+        resetBtn.toggleAttribute("hidden", !this._isMapZoomedToSegment);
     }
 
     _bindTimelineTouch(body) {
@@ -898,7 +892,7 @@ class TimelineCard extends HTMLElement {
         this._touchStart = null;
 
         this._drawMapPaths();
-        this._isMapFocused = false;
+        this._isMapZoomedToSegment = false;
         this._updateMapResetButton();
         this._fitMap();
     }
@@ -924,12 +918,13 @@ class TimelineCard extends HTMLElement {
         stayMarkers.forEach((stay) => {
             let haIcon = document.createElement("ha-icon");
             haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 18px;");
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px");
 
             let iconDiv = document.createElement("div");
             iconDiv.appendChild(haIcon);
             iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))");
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color)); " +
+                "padding: 2px; display: flex;");
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
             haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}));
@@ -981,11 +976,11 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-    _fitMap(defer, bounds, pad = 0.1) {
+    _fitMap(defer=false, bounds=null, pad = 0.1) {
         const haMap = this._mapCard?.shadowRoot?.querySelector("ha-map");
         const Leaflet = haMap?.Leaflet;
         if (!haMap || !Leaflet) return;
-        if (bounds === undefined) {
+        if (bounds === null) {
             if (!this._fullDayPaths.length) return;
             bounds = this._fullDayPaths[0].points.map(toLatLon);
         }
@@ -1057,13 +1052,13 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
-            this._isMapFocused = true;
+            this._isMapZoomedToSegment = true;
             this._updateMapResetButton();
             this._fitMap(false, [segment.center]);
         } else if (segment.type === "move") {
             const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
             if (segmentPoints.length < 2) return;
-            this._isMapFocused = true;
+            this._isMapZoomedToSegment = true;
             this._updateMapResetButton();
             this._fitMap(false, segmentPoints.map(toLatLon));
         }

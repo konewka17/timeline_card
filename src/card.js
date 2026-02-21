@@ -411,12 +411,13 @@ class TimelineCard extends HTMLElement {
         stayMarkers.forEach((stay) => {
             let haIcon = document.createElement("ha-icon");
             haIcon.setAttribute("icon", stay.zoneIcon || "mdi:map-marker");
-            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 18px;")
+            haIcon.setAttribute("style", "color: white; --mdc-icon-size: 14px; padding: 2px")
 
             let iconDiv = document.createElement("div");
             iconDiv.appendChild(haIcon);
             iconDiv.setAttribute("style", "height: 18px; width: 18px; background-color: var(--primary-color); " +
-                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))")
+                "border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color)); " +
+                "padding: 2px; display: flex;")
 
             let icon = Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [22, 22]});
             haMap._mapPaths.push(Leaflet.marker(stay.center, {icon, zIndexOffset: 100}))

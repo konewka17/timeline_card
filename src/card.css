@@ -254,7 +254,3 @@ ha-card {
 .map-reset[hidden] {
   display: none;
 }
-
-.stay-marker{
-  height: 18px; width: 18px; background-color: var(--accent-color); border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, var(--primary-color))
-}
