@@ -18,7 +18,8 @@ export class TimelineLeafletMap {
         this._leafletMap.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
         this._mapLayers = [];
-        this._fullDayPaths = [];
+        this._fullDayPath = [];
+        this._dayMovePaths = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
@@ -30,7 +31,8 @@ export class TimelineLeafletMap {
     destroy() {
         this._leafletMap.remove();
         this._mapLayers = [];
-        this._fullDayPaths = [];
+        this._fullDayPath = [];
+        this._dayMovePaths = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
     }
@@ -39,13 +41,17 @@ export class TimelineLeafletMap {
         return this._isMapZoomedToSegment;
     }
 
-    setDaySegments(segments) {
-        this._fullDayPaths = [];
+    setDaySegments(dayData) {
+        this._dayMovePaths = [];
+        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
         if (Array.isArray(segments) && segments.length > 1) {
-            this._fullDayPaths = segments
+            this._dayMovePaths = segments
                 .filter((segment) => segment?.type === "move")
                 .map((segment) => ({points: segment.points, color: "var(--primary-color)", weight: 4}));
         }
+
+        const points = Array.isArray(dayData.points) ? dayData.points : [];
+        this._fullDayPath = points.length > 1 ? {points: points, color: "var(--primary-color)", weight: 4} : [];
 
         this._highlightedPath = [];
         this._highlightedStay = null;
@@ -101,8 +107,8 @@ export class TimelineLeafletMap {
 
     fitMap({defer = false, bounds = null, pad = 0.1} = {}) {
         if (bounds === null) {
-            if (!this._fullDayPaths.length) return;
-            bounds = this._fullDayPaths[0].points.map((point) => point.point);
+            if (!this._fullDayPath?.points.length) return;
+            bounds = this._fullDayPath.points.map((point) => point.point);
         }
 
         const normalizedBounds = bounds
@@ -163,7 +169,7 @@ export class TimelineLeafletMap {
     }
 
     _drawMapLines() {
-        const paths = [...this._fullDayPaths, ...this._highlightedPath];
+        const paths = [...this._dayMovePaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
             this._mapLayers.push(this._Leaflet.polyline(path.points.map((point) => point.point), {

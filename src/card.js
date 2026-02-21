@@ -51,8 +51,7 @@ class TimelineCard extends HTMLElement {
             const next = new Date(`${target.value}T00:00:00`);
             if (!Number.isNaN(next.getTime())) {
                 this._selectedDate = startOfDay(next);
-                this._ensureDay(this._selectedDate);
-                this._render();
+                this._ensureDay(this._selectedDate).then(() => this._render());
             }
         });
 
@@ -117,8 +116,7 @@ class TimelineCard extends HTMLElement {
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
-        this._ensureDay(this._selectedDate);
-        this._render();
+        this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
     _resetMapZoom() {
@@ -129,8 +127,7 @@ class TimelineCard extends HTMLElement {
     _refreshCurrentDay() {
         const key = toDateKey(this._selectedDate);
         this._cache.delete(key);
-        this._ensureDay(this._selectedDate);
-        this._render();
+        this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
     async _ensureDay(date) {
@@ -139,7 +136,6 @@ class TimelineCard extends HTMLElement {
         if (existing && (existing.segments || existing.loading)) return;
 
         this._cache.set(key, {loading: true, segments: null, points: null, error: null, debug: null});
-        this._render();
 
         try {
             const points = await fetchHistory(this._hass, this._config.entity, date);
@@ -165,11 +161,7 @@ class TimelineCard extends HTMLElement {
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
             this._cache.set(key, {
-                loading: false,
-                segments: null,
-                points: null,
-                error: this._formatErrorMessage(err),
-                debug: null,
+                loading: false, segments: null, points: null, error: this._formatErrorMessage(err), debug: null,
             });
         }
         this._render();
@@ -225,6 +217,7 @@ class TimelineCard extends HTMLElement {
         requestAnimationFrame(() => {
             this._refreshMapPaths();
         });
+        this._rendered = true;
     }
 
     _ensureBaseLayout() {
@@ -333,8 +326,7 @@ class TimelineCard extends HTMLElement {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
 
-        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        this._mapView.setDaySegments(segments);
+        this._mapView.setDaySegments(dayData);
         this._touchStart = null;
 
         this._updateMapResetButton();
