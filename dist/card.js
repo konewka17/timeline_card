@@ -15268,12 +15268,10 @@ async function resolveQueuedRequest(request, sessionAtStart) {
         url.searchParams.set("lon", String(segment.center.lon));
         url.searchParams.set("email", osmApiKey);
 
-        const response = await fetch(url.toString(), {
-            headers: {Accept: "application/json"},
-        });
+        const response = await fetch(url.toString());
 
         if (!response.ok) {
-            if (retriesLeft > 0) {
+            if (isRetryableStatus(response.status) && retriesLeft > 0) {
                 queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
                 return;
             }
@@ -15332,6 +15330,10 @@ function pickPlaceName(intervals, start, end) {
         }
     }
     return best;
+}
+
+function isRetryableStatus(status) {
+    return status === 425 || status === 429 || status >= 500;
 }
 
 function sleep(ms) {
