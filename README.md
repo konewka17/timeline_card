@@ -1,5 +1,4 @@
 # Location Timeline Card (Home Assistant)
-
 Location Timeline Card is a custom Lovelace card that builds a **timeline–style day view** from your Home Assistant location history. It turns raw GPS points into an easy-to-read daily story of where a person/device stayed and when they moved.
 
 ## What this card does
@@ -79,3 +78,7 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 - Zone labels are resolved from `zone.*` entities.
 - All timeline processing happens in the browser.
 - [Discussion post](https://community.home-assistant.io/t/location-timeline-card-to-easily-show-location-history/989513) on the Community
+
+<a href="[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QT54MSJR6QU7Y](https://www.paypal.com/donate/?hosted_button_id=BSHRJPQYD7MQ2)">
+  <img src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" style='width:150px' />
+</a>
