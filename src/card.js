@@ -2,7 +2,7 @@ import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
 import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
-import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
+import {formatDate, getTrackColor, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
 import {getConfigFormSchema} from "./config-flow.js";
@@ -537,7 +537,7 @@ class TimelineCard extends HTMLElement {
             const name = state?.attributes?.friendly_name || entityId;
             const escapedName = this._escapeHtml(name);
             const escapedPicture = this._escapeHtml(picture || "");
-            const trackColor = `var(--color-${(index % 12) + 1})`;
+            const trackColor = getTrackColor(index)
             return `
               <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
                 ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}

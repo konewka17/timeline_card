@@ -1,4 +1,5 @@
 import Leaflet from "leaflet";
+import {getTrackColor} from "./utils.js";
 
 const DEFAULT_CENTER = [52.3731339, 4.8903147];
 const DEFAULT_ZOOM = 13;
@@ -66,9 +67,9 @@ export class TimelineLeafletMap {
                 isActive: index === activeEntityIndex,
                 points,
                 color: getTrackColor(index),
-                opacity: index === activeEntityIndex ? 1 : 0.55,
-                weight: index === activeEntityIndex ? 4 : 3,
-                borderWeight: index === activeEntityIndex ? 7 : 6,
+                opacity: index === activeEntityIndex ? 1 : 0.8,
+                weight: 4,
+                borderWeight: 7,
             };
         });
 
@@ -260,4 +261,3 @@ const normalizeLatLng = (point) => {
     return null;
 };
 
-const getTrackColor = (index) => `var(--color-${(index % 12) + 1})`;
