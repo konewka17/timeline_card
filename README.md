@@ -32,24 +32,34 @@ entity: device_tracker.my_phone
 The entity must expose latitude/longitude attributes.
 
 ## Reverse Geocoding
-For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name.
+For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name. This process is called **reverse geocoding**: converting latitude/longitude coordinates into an address or place label.
+
+By default, Home Assistant only stores raw GPS coordinates in history. If you want meaningful labels like "Starbucks" or "Main Street 12" instead of just coordinates, you need to configure one of the following options.
 
 1. **Preferred:** configure the [Places integration](https://github.com/custom-components/places) and set `places_entity`.
-   - This is recommended because Places writes location labels to Home Assistant history, which gives excellent caching over time.
-   - Under the hood, Places uses the OpenStreetMap API to resolve coordinates to addresses or labels
+   - Install the Places integration (via HACS) and configure it for your tracked entity.
+   - This integration creates a `sensor.places_*` entity that stores resolved place names.
+   - Set the card’s `places_entity` option to that sensor.
+   - This is recommended because Places writes location labels into Home Assistant history. That means:
+     - Labels are stored persistently.
+     - Historic days load instantly without repeated API calls.
+     - You get consistent naming over time.
+   - Under the hood, Places uses the OpenStreetMap API to resolve coordinates into readable addresses or place names.
+
 2. **Fallback:** configure `osm_api_key` with your **email address**.
-   - The card will only call OSM Nominatim when a Places label is not available.
-   - Requests are rate-limited to at most one request per second.
-   - Nominatim responses are cached by the card, including unknown results.
-   - As the Places integration will not reevaluate historic stays, OSM can be added as a backup to the Places entity for evaluating historic visits.
+   - Set `osm_api_key` to your email address (required by OpenStreetMap Nominatim usage policy).
+   - The card will call OSM Nominatim directly from the frontend when no Places label is available.
+   - Requests are rate-limited to at most one request per second to stay within OSM guidelines.
+   - Responses are cached by the card (including "unknown" results) to avoid repeated lookups.
+   - This is especially useful for resolving older historic stays if you have set up the Places entity later.
+   - Note: Unlike Places, these labels are not written back into Home Assistant history.
 
 Example:
 ```yaml
 type: custom:location-timeline-card
 entity: device_tracker.my_phone
 places_entity: sensor.places_my_phone
-osm_api_key: me@example.com
-```
+osm_api_key: me@example.com```
 
 If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 
