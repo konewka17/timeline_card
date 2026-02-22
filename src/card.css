@@ -85,6 +85,49 @@ ha-card {
   cursor: default;
 }
 
+
+.entity-selector {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.entity-selector[hidden] {
+  display: none;
+}
+
+.entity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--primary-text-color);
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.entity-chip.active {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.entity-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.entity-chip ha-icon {
+  --mdc-icon-size: 24px;
+  color: var(--secondary-text-color);
+}
+
 .body {
   padding: 8px 16px 16px;
   max-height: 420px;

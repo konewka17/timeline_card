@@ -30,6 +30,18 @@ entity: device_tracker.my_phone
 ```
 The entity must expose latitude/longitude attributes.
 
+### Multiple tracked entities
+```yaml
+type: custom:location-timeline-card
+entity:
+  - person.alice
+  - person.bob
+places_entity:
+  - sensor.places_alice
+  - sensor.places_bob
+```
+When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
+
 ## Reverse Geocoding
 For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name. This process is called **reverse geocoding**: converting latitude/longitude coordinates into an address or place label.
 
@@ -66,8 +78,8 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 ## Configuration options
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| `entity` | string | **required** | `device_tracker` or `person` entity to pull GPS history from. |
-| `places_entity` | string | `null` | Optional `sensor` from the Places integration used first for reverse geocoding. |
+| `entity` | string or string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from. |
+| `places_entity` | string or string[] | `null` | Optional `sensor` entity (or list) from Places integration used first for reverse geocoding. Lists must match `entity` order/count when provided. |
 | `osm_api_key` | string | `null` | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback. |
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
