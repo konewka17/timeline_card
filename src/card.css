@@ -230,6 +230,26 @@ ha-card {
 
 #overview-map {
   height: 200px;
+  --map-filter: invert(0);
+}
+
+#overview-map.dark {
+  background: #090909;
+  --map-filter: invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2)
+    saturate(0.3);
+}
+
+.leaflet-tile-pane {
+  filter: var(--map-filter);
+}
+
+#overview-map.dark .leaflet-bar a {
+  background-color: #1c1c1c;
+  color: #ffffff;
+}
+
+#overview-map.dark .leaflet-bar a:hover {
+  background-color: #313131;
 }
 
 .map-reset {

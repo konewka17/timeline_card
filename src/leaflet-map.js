@@ -10,6 +10,7 @@ export class TimelineLeafletMap {
         }
 
         this._Leaflet = Leaflet;
+        this._mapElement = mapElement;
         this._leafletMap = Leaflet.map(mapElement, {
             zoomControl: true,
         });
@@ -24,7 +25,13 @@ export class TimelineLeafletMap {
         this._isTravelHighlightActive = false;
         this._isMapZoomedToSegment = false;
 
+        this.setDarkMode(false);
+
         requestAnimationFrame(() => this._leafletMap.invalidateSize());
+    }
+
+    setDarkMode(isDarkMode) {
+        this._mapElement?.classList.toggle("dark", Boolean(isDarkMode));
     }
 
     destroy() {

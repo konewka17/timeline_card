@@ -92,6 +92,7 @@ class TimelineCard extends HTMLElement {
 
     set hass(hass) {
         this._hass = hass;
+        this._mapView?.setDarkMode(Boolean(this._hass?.themes?.darkMode));
         if (!this._config.entity) return;
         const dateKey = toDateKey(this._selectedDate);
         if (!this._cache.has(dateKey)) {
@@ -338,6 +339,7 @@ class TimelineCard extends HTMLElement {
         this._isLoadingMap = true;
         try {
             this._mapView = new TimelineLeafletMap(container);
+            this._mapView.setDarkMode(Boolean(this._hass?.themes?.darkMode));
             this._refreshMapPaths();
             this._mapView.fitMap({defer: true});
         } catch (err) {
