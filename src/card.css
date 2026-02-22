@@ -266,3 +266,13 @@ ha-card {
 .map-reset[hidden] {
   display: none;
 }
+
+.leaflet-pane {
+  z-index: 0 !important;
+}
+
+.leaflet-control,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1 !important;
+}
