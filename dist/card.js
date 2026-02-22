@@ -15227,6 +15227,7 @@ async function processQueue() {
             if (waitMs > 0) await sleep(waitMs);
 
             const request = queuedRequests.shift();
+            if (!request) continue;
             lastRequestAt = Date.now();
             await resolveQueuedRequest(request, sessionAtStart);
         }
@@ -15254,6 +15255,7 @@ async function ensureReverseGeocodingConfig() {
 }
 
 async function resolveQueuedRequest(request, sessionAtStart) {
+    if (!request) return;
     const {segment, osmApiKey, onUpdate, retriesLeft} = request;
     if (sessionAtStart !== queueSession) return;
     let name = UNKNOWN_LOCATION;
