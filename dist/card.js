@@ -15141,7 +15141,6 @@ const normalizeLatLng = (point) => {
 const UNKNOWN_LOCATION = "Unknown location";
 const LOADING_LOCATION = "Loading address...";
 
-const geocodeCache = new Map();
 const defaultReverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
     request_interval_ms: 1000,
@@ -15154,7 +15153,13 @@ let queueRunning = false;
 let lastRequestAt = 0;
 
 function resolveStaySegments(segments, options) {
-    const {placeStates = [], date, osmApiKey = null, onUpdate = () => {}} = options;
+    const {
+        placeStates = [],
+        date,
+        osmApiKey = null,
+        onUpdate = () => {},
+        lookupCachedResult = () => null,
+    } = options;
     const placeIntervals = placeStates.length
         ? buildPlaceIntervals([...placeStates].sort((a, b) => a.ts - b.ts), date)
         : [];
@@ -15163,9 +15168,8 @@ function resolveStaySegments(segments, options) {
         if (segment.type !== "stay" || segment.zoneName) continue;
 
         const key = toCacheKey(segment.center);
-        const cached = geocodeCache.get(key);
-
-        if (cached?.status === "ready") {
+        const cached = lookupCachedResult(key);
+        if (cached) {
             segment.placeName = cached.name;
             segment.reverseGeocoding = cached.result;
             continue;
@@ -15175,15 +15179,12 @@ function resolveStaySegments(segments, options) {
             ? pickPlaceName(placeIntervals, segment.start, segment.end)
             : null;
         if (placeName) {
-            const result = {source: "places", name: placeName};
-            geocodeCache.set(key, {status: "ready", name: placeName, result});
             segment.placeName = placeName;
-            segment.reverseGeocoding = result;
+            segment.reverseGeocoding = {source: "places", name: placeName};
             continue;
         }
 
         if (!osmApiKey) {
-            cacheUnknown(key);
             segment.placeName = UNKNOWN_LOCATION;
             segment.reverseGeocoding = null;
             continue;
@@ -15198,17 +15199,17 @@ function resolveStaySegments(segments, options) {
 function enqueueReverseLookup(segment, key, osmApiKey, onUpdate) {
     let pending = pendingByKey.get(key);
     if (!pending) {
-        pending = {segments: new Set(), callbacks: new Set()};
+        pending = {segments: new Set(), callbacks: new Set(), status: "idle"};
         pendingByKey.set(key, pending);
     }
     pending.segments.add(segment);
     pending.callbacks.add(onUpdate);
 
-    if (geocodeCache.get(key)?.status === "loading") {
+    if (pending.status === "loading") {
         return;
     }
 
-    geocodeCache.set(key, {status: "loading", name: LOADING_LOCATION, result: null});
+    pending.status = "loading";
     queuedRequests.push({
         key,
         lat: segment.center.lat,
@@ -15238,7 +15239,6 @@ async function processQueue() {
         queueRunning = false;
     }
 }
-
 
 async function ensureReverseGeocodingConfig() {
     if (configLoaded) return;
@@ -15283,12 +15283,6 @@ async function resolveQueuedRequest({key, lat, lon, osmApiKey}) {
         console.warn("Timeline card: reverse geocoding failed", error);
     }
 
-    geocodeCache.set(key, {
-        status: "ready",
-        name,
-        result,
-    });
-
     for (const segment of pending.segments) {
         segment.placeName = name;
         segment.reverseGeocoding = result;
@@ -15298,14 +15292,6 @@ async function resolveQueuedRequest({key, lat, lon, osmApiKey}) {
     }
 
     pendingByKey.delete(key);
-}
-
-function cacheUnknown(key) {
-    geocodeCache.set(key, {
-        status: "ready",
-        name: UNKNOWN_LOCATION,
-        result: null,
-    });
 }
 
 function buildPlaceIntervals(placeStates, date) {
@@ -15529,6 +15515,7 @@ class TimelineCard extends HTMLElement {
                 placeStates,
                 date,
                 osmApiKey: this._config.osm_api_key,
+                lookupCachedResult: (stayKey) => this._findCachedStayReverseGeocode(stayKey),
                 onUpdate: () => {
                     const day = this._cache.get(key);
                     if (!day || !day.segments) return;
@@ -15546,6 +15533,29 @@ class TimelineCard extends HTMLElement {
         requestAnimationFrame(() => {
             this._refreshMapPaths();
         });
+    }
+
+
+    _findCachedStayReverseGeocode(stayKey) {
+        for (const dayData of this._cache.values()) {
+            if (!dayData?.segments) continue;
+            for (const segment of dayData.segments) {
+                if (segment.type !== "stay" || segment.zoneName) continue;
+                if (this._stayCacheKey(segment.center) !== stayKey) continue;
+                if (segment.placeName === "Loading address...") continue;
+                if (!segment.placeName) continue;
+                return {
+                    name: segment.placeName,
+                    result: segment.reverseGeocoding ?? null,
+                };
+            }
+        }
+        return null;
+    }
+
+    _stayCacheKey(center) {
+        if (!center) return "unknown";
+        return `${center.lat.toFixed(5)},${center.lon.toFixed(5)}`;
     }
 
     _collectZones() {
