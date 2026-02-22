@@ -202,7 +202,6 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-
     _collectZones() {
         if (!this._hass || !this._hass.states) return [];
         return Object.values(this._hass.states)
@@ -395,6 +394,7 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
+            this._copyStayCoordinatesToClipboard(segment);
             this._mapView?.zoomToStay(segment);
             this._updateMapResetButton();
         } else if (segment.type === "move") {
@@ -402,6 +402,17 @@ class TimelineCard extends HTMLElement {
             if (segmentPoints.length < 2) return;
             this._mapView?.zoomToPoints(segmentPoints.map(toLatLon));
             this._updateMapResetButton();
+        }
+    }
+
+    _copyStayCoordinatesToClipboard(segment) {
+        const lat = Number(segment?.center?.lat);
+        const lon = Number(segment?.center?.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
+        if (navigator?.clipboard?.writeText) {
+            navigator.clipboard.writeText(value).catch(() => {});
         }
     }
 

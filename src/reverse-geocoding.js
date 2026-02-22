@@ -3,12 +3,10 @@ const LOADING_LOCATION = "Loading address...";
 const PERSISTENT_CACHE_KEY = "location_timeline_reverse_geocode_cache_v1";
 const MAX_PERSISTENT_CACHE_ENTRIES = 300;
 
-const defaultReverseGeocodingConfig = {
+let reverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
     request_interval_ms: 1000,
 };
-let reverseGeocodingConfig = defaultReverseGeocodingConfig;
-let configLoaded = false;
 const queuedRequests = [];
 let queuedSegments = new WeakSet();
 let queueRunning = false;
@@ -58,9 +56,7 @@ export function resolveStaySegments(segments, options) {
             continue;
         }
 
-        const placeName = placeIntervals.length
-            ? pickPlaceName(placeIntervals, segment.start, segment.end)
-            : null;
+        const placeName = pickPlaceName(placeIntervals, segment.start, segment.end);
         if (placeName) {
             segment.placeName = placeName;
             segment.reverseGeocoding = {source: "places", name: placeName};
@@ -94,7 +90,6 @@ async function processQueue() {
     const sessionAtStart = queueSession;
 
     try {
-        await ensureReverseGeocodingConfig();
         while (queuedRequests.length && sessionAtStart === queueSession) {
             const waitMs = reverseGeocodingConfig.request_interval_ms - (Date.now() - lastRequestAt);
             if (waitMs > 0) await sleep(waitMs);
@@ -109,24 +104,6 @@ async function processQueue() {
     }
 }
 
-async function ensureReverseGeocodingConfig() {
-    if (configLoaded) return;
-    configLoaded = true;
-
-    try {
-        const configUrl = new URL("../reverse_geocoding.json", import.meta.url);
-        const response = await fetch(configUrl.toString(), {headers: {Accept: "application/json"}});
-        if (!response.ok) return;
-        const parsed = await response.json();
-        reverseGeocodingConfig = {
-            ...defaultReverseGeocodingConfig,
-            ...parsed,
-        };
-    } catch (error) {
-        console.warn("Timeline card: reverse geocoding config fallback", error);
-    }
-}
-
 async function resolveQueuedRequest(request, sessionAtStart) {
     if (!request) return;
     const {segment, segmentKey, osmApiKey, onUpdate, retriesLeft} = request;
@@ -136,7 +113,7 @@ async function resolveQueuedRequest(request, sessionAtStart) {
 
     try {
         const url = new URL(reverseGeocodingConfig.nominatim_reverse_url);
-        url.searchParams.set("format", "json");
+        url.searchParams.set("format", "geocodejson");
         url.searchParams.set("lat", String(segment.center.lat));
         url.searchParams.set("lon", String(segment.center.lon));
         url.searchParams.set("email", osmApiKey);
@@ -150,7 +127,11 @@ async function resolveQueuedRequest(request, sessionAtStart) {
             }
         } else {
             result = await response.json();
-            name = result.display_name || result.name || UNKNOWN_LOCATION;
+            const features = result.features?.[0]?.properties?.geocoding || {};
+            const houseNumber = features.housenumber ? ` ${features.housenumber}` : "";
+            const formatted_address = features.street ? `${features.street}${houseNumber}, ${features.city}` : null
+            const formatted_locality = features.locality ? `${features.locality}, ${features.city}` : null
+            name = features.name || formatted_address || formatted_locality || features.label || UNKNOWN_LOCATION;
         }
     } catch (error) {
         if (retriesLeft > 0) {
@@ -184,7 +165,8 @@ function buildPlaceIntervals(placeStates, date) {
 
 function placeDisplayName(state) {
     const attrs = state.attributes || {};
-    return attrs.formatted_place || attrs.formatted_address || state.state || null;
+    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ''}, ${attrs.city}` : null
+    return attrs.place_name || formatted_address || state.state || attrs.formatted_address || null;
 }
 
 function pickPlaceName(intervals, start, end) {
