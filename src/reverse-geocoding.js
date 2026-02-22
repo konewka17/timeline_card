@@ -8,9 +8,29 @@ const defaultReverseGeocodingConfig = {
 let reverseGeocodingConfig = defaultReverseGeocodingConfig;
 let configLoaded = false;
 const queuedRequests = [];
-const queuedSegments = new WeakSet();
+let queuedSegments = new WeakSet();
 let queueRunning = false;
 let lastRequestAt = 0;
+let queueSession = 0;
+
+
+export function clearReverseGeocodingQueue() {
+    queueSession += 1;
+
+    const callbacks = new Set();
+    for (const request of queuedRequests) {
+        request.segment.placeName = UNKNOWN_LOCATION;
+        request.segment.reverseGeocoding = null;
+        callbacks.add(request.onUpdate);
+    }
+
+    queuedRequests.length = 0;
+    queuedSegments = new WeakSet();
+
+    for (const callback of callbacks) {
+        callback();
+    }
+}
 
 export function resolveStaySegments(segments, options) {
     const {
@@ -58,16 +78,17 @@ function enqueueReverseLookup(segment, osmApiKey, onUpdate) {
 async function processQueue() {
     if (queueRunning) return;
     queueRunning = true;
+    const sessionAtStart = queueSession;
 
     try {
         await ensureReverseGeocodingConfig();
-        while (queuedRequests.length) {
+        while (queuedRequests.length && sessionAtStart === queueSession) {
             const waitMs = reverseGeocodingConfig.request_interval_ms - (Date.now() - lastRequestAt);
             if (waitMs > 0) await sleep(waitMs);
 
             const request = queuedRequests.shift();
             lastRequestAt = Date.now();
-            await resolveQueuedRequest(request);
+            await resolveQueuedRequest(request, sessionAtStart);
         }
     } finally {
         queueRunning = false;
@@ -92,8 +113,9 @@ async function ensureReverseGeocodingConfig() {
     }
 }
 
-async function resolveQueuedRequest(request) {
+async function resolveQueuedRequest(request, sessionAtStart) {
     const {segment, osmApiKey, onUpdate, retriesLeft} = request;
+    if (sessionAtStart !== queueSession) return;
     let name = UNKNOWN_LOCATION;
     let result = null;
 
@@ -113,7 +135,6 @@ async function resolveQueuedRequest(request) {
                 queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
                 return;
             }
-            console.warn(`Timeline card: reverse geocoding failed with status ${response.status}`);
         } else {
             result = await response.json();
             name = result.display_name || result.name || UNKNOWN_LOCATION;
@@ -123,8 +144,9 @@ async function resolveQueuedRequest(request) {
             queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
             return;
         }
-        console.warn("Timeline card: reverse geocoding failed", error);
     }
+
+    if (sessionAtStart !== queueSession) return;
 
     queuedSegments.delete(segment);
     segment.placeName = name;

@@ -5,7 +5,7 @@ import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import {resolveStaySegments} from "./reverse-geocoding.js";
+import {clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
 
 const DEFAULT_CONFIG = {
     entity: null,
@@ -138,6 +138,8 @@ class TimelineCard extends HTMLElement {
     }
 
     _shiftDate(direction) {
+        clearReverseGeocodingQueue();
+
         const today = startOfDay(new Date());
         if (direction > 0 && this._selectedDate >= today) {
             return;
