@@ -78,3 +78,4 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 - The card reads raw GPS history from the tracked entity’s latitude/longitude attributes.
 - Zone labels are resolved from `zone.*` entities.
 - All timeline processing happens in the browser.
+- [Discussion post](https://community.home-assistant.io/t/location-timeline-card-to-easily-show-location-history/989513) on the Community
