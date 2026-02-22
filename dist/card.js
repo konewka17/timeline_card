@@ -15191,7 +15191,7 @@ function resolveStaySegments(segments, options) {
 function enqueueReverseLookup(segment, osmApiKey, onUpdate) {
     if (queuedSegments.has(segment)) return;
     queuedSegments.add(segment);
-    queuedRequests.push({segment, osmApiKey, onUpdate});
+    queuedRequests.push({segment, osmApiKey, onUpdate, retriesLeft: 3});
     processQueue();
 }
 
@@ -15232,7 +15232,8 @@ async function ensureReverseGeocodingConfig() {
     }
 }
 
-async function resolveQueuedRequest({segment, osmApiKey, onUpdate}) {
+async function resolveQueuedRequest(request) {
+    const {segment, osmApiKey, onUpdate, retriesLeft} = request;
     let name = UNKNOWN_LOCATION;
     let result = null;
 
@@ -15246,14 +15247,26 @@ async function resolveQueuedRequest({segment, osmApiKey, onUpdate}) {
         const response = await fetch(url.toString(), {
             headers: {Accept: "application/json"},
         });
-        if (response.ok) {
+
+        if (!response.ok) {
+            if (retriesLeft > 0) {
+                queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
+                return;
+            }
+            console.warn(`Timeline card: reverse geocoding failed with status ${response.status}`);
+        } else {
             result = await response.json();
             name = result.display_name || result.name || UNKNOWN_LOCATION;
         }
     } catch (error) {
+        if (retriesLeft > 0) {
+            queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
+            return;
+        }
         console.warn("Timeline card: reverse geocoding failed", error);
     }
 
+    queuedSegments.delete(segment);
     segment.placeName = name;
     segment.reverseGeocoding = result;
     onUpdate();
