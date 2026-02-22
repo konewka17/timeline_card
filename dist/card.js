@@ -14938,7 +14938,6 @@ class TimelineLeafletMap {
 
         this._mapLayers = [];
         this._fullDayPath = [];
-        this._dayMovePaths = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
@@ -14951,7 +14950,6 @@ class TimelineLeafletMap {
         this._leafletMap.remove();
         this._mapLayers = [];
         this._fullDayPath = [];
-        this._dayMovePaths = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
     }
@@ -14961,16 +14959,16 @@ class TimelineLeafletMap {
     }
 
     setDaySegments(dayData) {
-        this._dayMovePaths = [];
+        this._fullDayPath = {points: [], color: "var(--primary-color)", weight: 4};
         const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
-        if (Array.isArray(segments) && segments.length > 1) {
-            this._dayMovePaths = segments
-                .filter((segment) => segment?.type === "move")
-                .map((segment) => ({points: segment.points, color: "var(--primary-color)", weight: 4}));
-        }
-
-        const points = Array.isArray(dayData.points) ? dayData.points : [];
-        this._fullDayPath = points.length > 1 ? {points: points, color: "var(--primary-color)", weight: 4} : [];
+        segments.forEach((segment) => {
+            if (segment?.type === "stay" && segment.center) {
+                this._fullDayPath.points.push({point: [segment.center.lat, segment.center.lon], timestamp: segment.start});
+            }
+            if (segment?.type === "move" && Array.isArray(segment.points)) {
+                this._fullDayPath.points.push(...segment.points);
+            }
+        });
 
         this._highlightedPath = [];
         this._highlightedStay = null;
@@ -15026,7 +15024,7 @@ class TimelineLeafletMap {
 
     fitMap({defer = false, bounds = null, pad = 0.1} = {}) {
         if (bounds === null) {
-            if (!this._fullDayPath?.points.length) return;
+            if (!this._fullDayPath?.points?.length) return;
             bounds = this._fullDayPath.points.map((point) => point.point);
         }
 
@@ -15088,7 +15086,7 @@ class TimelineLeafletMap {
     }
 
     _drawMapLines() {
-        const paths = [...this._dayMovePaths, ...this._highlightedPath];
+        const paths = [this._fullDayPath, ...this._highlightedPath];
 
         paths.forEach((path) => {
             this._mapLayers.push(this._Leaflet.polyline(path.points.map((point) => point.point), {
