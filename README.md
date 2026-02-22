@@ -42,10 +42,12 @@ For stays that are not clearly inside a Home Assistant zone, the card can resolv
 
 1. **Preferred:** configure the [Places integration](https://github.com/custom-components/places) and set `places_entity`.
    - This is recommended because Places writes location labels to Home Assistant history, which gives excellent caching over time.
+   - Under the hood, Places uses the OpenStreetMap API to resolve coordinates to addresses or labels
 2. **Fallback:** configure `osm_api_key` with your **email address**.
    - The card will only call OSM Nominatim when a Places label is not available.
    - Requests are rate-limited to at most one request per second.
    - Nominatim responses are cached by the card, including unknown results.
+   - As the Places integration will not reevaluate historic stays, OSM can be added as a backup to the Places entity for evaluating historic visits.
 
 Example:
 ```yaml
