@@ -5,6 +5,7 @@ import {segmentTimeline} from "./segmentation.js";
 import {formatDate, getTrackColor, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
+import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
 const DEFAULT_CONFIG = {

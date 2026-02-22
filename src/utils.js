@@ -101,8 +101,8 @@ export function toLatLon(point) {
 }
 
 export function getTrackColor(index) {
-    if (index > 0) {
-        index++;
+    if (index === 0) {
+        return "var(--primary-color)";
     }
-    return `var(--color-${(index % 12) + 1})`;
+    return `var(--color-${((index + 1) % 12) + 1})`;
 }
