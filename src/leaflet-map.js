@@ -73,6 +73,7 @@ export class TimelineLeafletMap {
         });
 
         this._fullDayPath = this._fullDayPaths[activeEntityIndex] || {points: []};
+        this._activeTrackColor = this._fullDayPaths[activeEntityIndex]?.color || "var(--primary-color)";
         this._onTrackClick = typeof onTrackClick === "function" ? onTrackClick : null;
 
         this._highlightedPath = [];
@@ -168,8 +169,8 @@ export class TimelineLeafletMap {
                 iconName: stay.zoneIcon || "mdi:map-marker",
                 markerSize: 18,
                 iconSize: 14,
-                backgroundColor: "var(--primary-color)",
-                borderColor: "color-mix(in srgb, black 30%, var(--primary-color))",
+                backgroundColor: this._activeTrackColor,
+                borderColor: `color-mix(in srgb, black 30%, ${this._activeTrackColor})`,
                 iconPadding: "2px",
                 leafletIconSize: [22, 22],
             });
@@ -192,16 +193,22 @@ export class TimelineLeafletMap {
     }
 
     _drawMapLines() {
-        const paths = [...this._fullDayPaths, ...this._highlightedPath];
+        const inactivePaths = this._fullDayPaths.filter((path) => !path.isActive);
+        const activePaths = this._fullDayPaths.filter((path) => path.isActive);
+        const paths = [...inactivePaths, ...activePaths, ...this._highlightedPath];
 
         paths.forEach((path) => {
             if (!Array.isArray(path.points) || path.points.length < 2) return;
             const latLngs = path.points.map((point) => point.point);
-            this._mapLayers.push(this._Leaflet.polyline(latLngs, {
-                color: `color-mix(in srgb, black 30%, ${path.color})`,
-                opacity: path.opacity ?? 1,
-                weight: path.borderWeight ?? (path.weight + 3),
-            }));
+
+            if (path.isActive || path.entityIndex === undefined) {
+                this._mapLayers.push(this._Leaflet.polyline(latLngs, {
+                    color: `color-mix(in srgb, black 30%, ${path.color})`,
+                    opacity: path.opacity ?? 1,
+                    weight: path.borderWeight ?? (path.weight + 3),
+                }));
+            }
+
             const line = this._Leaflet.polyline(latLngs, {
                 color: path.color,
                 opacity: path.opacity ?? 1,

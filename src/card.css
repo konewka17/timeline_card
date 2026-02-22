@@ -88,9 +88,10 @@ ha-card {
 
 .entity-selector {
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 12px 4px;
-  overflow-x: auto;
+  padding: 10px 12px 6px;
   border-bottom: 1px solid var(--divider-color);
 }
 
@@ -102,18 +103,22 @@ ha-card {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--divider-color);
+  border: 1px solid color-mix(in srgb, var(--entity-track-color, var(--divider-color)) 40%, var(--divider-color));
   border-radius: 999px;
-  background: transparent;
+  background: color-mix(in srgb, var(--entity-track-color, var(--primary-color)) 12%, transparent);
   color: var(--primary-text-color);
-  padding: 4px 10px 4px 4px;
+  padding: 4px 12px 4px 4px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .entity-chip.active {
-  border-color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border-color: var(--entity-track-color, var(--primary-color));
+  background: color-mix(in srgb, var(--entity-track-color, var(--primary-color)) 22%, transparent);
+}
+
+.entity-chip.active span {
+  font-weight: 700;
 }
 
 .entity-chip img {
@@ -125,7 +130,11 @@ ha-card {
 
 .entity-chip ha-icon {
   --mdc-icon-size: 24px;
-  color: var(--secondary-text-color);
+  color: color-mix(in srgb, var(--entity-track-color, var(--secondary-text-color)) 70%, var(--secondary-text-color));
+}
+
+.entity-avatar-icon {
+  color: var(--entity-track-color, var(--secondary-text-color));
 }
 
 .body {

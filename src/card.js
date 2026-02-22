@@ -192,11 +192,11 @@ class TimelineCard extends HTMLElement {
 
         try {
             const entities = this._getEntities();
-            const placesEntities = this._getPlacesEntities();
+            const placesByEntity = this._getPlacesEntityMap();
             const zones = this._collectZones();
             const tracks = await Promise.all(entities.map(async (entityId, index) => {
                 const points = await fetchHistory(this._hass, entityId, date);
-                const placeEntityId = placesEntities[index] || null;
+                const placeEntityId = placesByEntity.get(entityId) || null;
                 const placeStates = placeEntityId
                     ? await fetchEntityHistory(this._hass, placeEntityId, date)
                     : [];
@@ -500,17 +500,20 @@ class TimelineCard extends HTMLElement {
         return entities;
     }
 
-    _getPlacesEntities() {
-        const places = this._normalizeEntityList(this._config.places_entity);
-        if (places.length > 0 && places.length !== this._getEntities().length) {
-            throw new Error("places_entity should either be empty or match entity count");
-        }
-        return places;
-    }
+    _getPlacesEntityMap() {
+        const placeEntityIds = this._normalizeEntityList(this._config.places_entity);
+        const trackedEntities = new Set(this._getEntities());
+        const map = new Map();
 
-    _validateConfig() {
-        this._getEntities();
-        this._getPlacesEntities();
+        placeEntityIds.forEach((placeEntityId) => {
+            const trackerEntityId = this._hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
+            if (!trackerEntityId || !trackedEntities.has(trackerEntityId) || map.has(trackerEntityId)) {
+                return;
+            }
+            map.set(trackerEntityId, placeEntityId);
+        });
+
+        return map;
         if (config.distance_unit === undefined) {
             this._config.distance_unit = "metric";
         } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
@@ -534,9 +537,10 @@ class TimelineCard extends HTMLElement {
             const name = state?.attributes?.friendly_name || entityId;
             const escapedName = this._escapeHtml(name);
             const escapedPicture = this._escapeHtml(picture || "");
+            const trackColor = `var(--color-${(index % 12) + 1})`;
             return `
-              <button type="button" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
-                ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon icon=\"mdi:account-circle\"></ha-icon>"}
+              <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
+                ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}
                 <span>${escapedName}</span>
               </button>
             `;
