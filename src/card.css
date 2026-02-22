@@ -103,18 +103,18 @@ ha-card {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid color-mix(in srgb, var(--entity-track-color, var(--divider-color)) 40%, var(--divider-color));
+  border: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--entity-track-color, var(--primary-color)) 12%, transparent);
-  color: var(--primary-text-color);
-  padding: 4px 12px 4px 4px;
+  background: color-mix(in srgb, var(--entity-track-color) 55%, white);
+  color: color-mix(in srgb, var(--entity-track-color) 60%, black);
+  padding: 2px 10px 2px 4px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .entity-chip.active {
-  border-color: var(--entity-track-color, var(--primary-color));
-  background: color-mix(in srgb, var(--entity-track-color, var(--primary-color)) 22%, transparent);
+  border: 2px solid;
+  padding-left: 2px;
 }
 
 .entity-chip.active span {
