@@ -46,7 +46,6 @@ For stays that are not clearly inside a Home Assistant zone, the card can resolv
    - The card will only call OSM Nominatim when a Places label is not available.
    - Requests are rate-limited to at most one request per second.
    - Nominatim responses are cached by the card, including unknown results.
-   - Note: direct browser calls to Nominatim depend on Nominatim CORS response headers. If your browser blocks the request due to CORS, use Places or a backend proxy.
 
 Example:
 ```yaml

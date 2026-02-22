@@ -15140,6 +15140,8 @@ const normalizeLatLng = (point) => {
 
 const UNKNOWN_LOCATION = "Unknown location";
 const LOADING_LOCATION = "Loading address...";
+const PERSISTENT_CACHE_KEY = "location_timeline_reverse_geocode_cache_v1";
+const MAX_PERSISTENT_CACHE_ENTRIES = 300;
 
 const defaultReverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
@@ -15152,6 +15154,7 @@ let queuedSegments = new WeakSet();
 let queueRunning = false;
 let lastRequestAt = 0;
 let queueSession = 0;
+const persistentCache = loadPersistentCache();
 
 
 function clearReverseGeocodingQueue() {
@@ -15187,31 +15190,41 @@ function resolveStaySegments(segments, options) {
         if (segment.type !== "stay" || segment.zoneName) continue;
         if (segment.placeName && segment.placeName !== LOADING_LOCATION) continue;
 
+        const segmentKey = toPersistentCacheKey(segment);
+        const cached = persistentCache.get(segmentKey);
+        if (cached) {
+            segment.placeName = cached.placeName;
+            segment.reverseGeocoding = cached.reverseGeocoding;
+            continue;
+        }
+
         const placeName = placeIntervals.length
             ? pickPlaceName(placeIntervals, segment.start, segment.end)
             : null;
         if (placeName) {
             segment.placeName = placeName;
             segment.reverseGeocoding = {source: "places", name: placeName};
+            setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
             continue;
         }
 
         if (!osmApiKey) {
             segment.placeName = UNKNOWN_LOCATION;
             segment.reverseGeocoding = null;
+            setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
             continue;
         }
 
         segment.placeName = LOADING_LOCATION;
         segment.reverseGeocoding = null;
-        enqueueReverseLookup(segment, osmApiKey, onUpdate);
+        enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate);
     }
 }
 
-function enqueueReverseLookup(segment, osmApiKey, onUpdate) {
+function enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate) {
     if (queuedSegments.has(segment)) return;
     queuedSegments.add(segment);
-    queuedRequests.push({segment, osmApiKey, onUpdate, retriesLeft: 3});
+    queuedRequests.push({segment, segmentKey, osmApiKey, onUpdate, retriesLeft: 3});
     processQueue();
 }
 
@@ -15256,7 +15269,7 @@ async function ensureReverseGeocodingConfig() {
 
 async function resolveQueuedRequest(request, sessionAtStart) {
     if (!request) return;
-    const {segment, osmApiKey, onUpdate, retriesLeft} = request;
+    const {segment, segmentKey, osmApiKey, onUpdate, retriesLeft} = request;
     if (sessionAtStart !== queueSession) return;
     let name = UNKNOWN_LOCATION;
     let result = null;
@@ -15271,7 +15284,7 @@ async function resolveQueuedRequest(request, sessionAtStart) {
         const response = await fetch(url.toString());
 
         if (!response.ok) {
-            if (isRetryableStatus(response.status) && retriesLeft > 0) {
+            if (retriesLeft > 0) {
                 queuedRequests.push({...request, retriesLeft: retriesLeft - 1});
                 return;
             }
@@ -15291,6 +15304,7 @@ async function resolveQueuedRequest(request, sessionAtStart) {
     queuedSegments.delete(segment);
     segment.placeName = name;
     segment.reverseGeocoding = result;
+    setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
     onUpdate();
 }
 
@@ -15332,8 +15346,41 @@ function pickPlaceName(intervals, start, end) {
     return best;
 }
 
-function isRetryableStatus(status) {
-    return status === 425 || status === 429 || status >= 500;
+
+function toPersistentCacheKey(segment) {
+    const lat = Number(segment?.center?.lat);
+    const lon = Number(segment?.center?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return `${lat.toFixed(5)},${lon.toFixed(5)}`;
+}
+
+function loadPersistentCache() {
+    try {
+        const raw = localStorage.getItem(PERSISTENT_CACHE_KEY);
+        if (!raw) return new Map();
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Map();
+        return new Map(parsed);
+    } catch {
+        return new Map();
+    }
+}
+
+function setPersistentCache(key, placeName, reverseGeocoding) {
+    if (!key) return;
+    persistentCache.set(key, {placeName, reverseGeocoding});
+
+    while (persistentCache.size > MAX_PERSISTENT_CACHE_ENTRIES) {
+        const firstKey = persistentCache.keys().next().value;
+        if (firstKey === undefined) break;
+        persistentCache.delete(firstKey);
+    }
+
+    try {
+        localStorage.setItem(PERSISTENT_CACHE_KEY, JSON.stringify([...persistentCache.entries()]));
+    } catch {
+        // ignore storage errors
+    }
 }
 
 function sleep(ms) {
