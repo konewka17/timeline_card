@@ -15148,7 +15148,7 @@ const defaultReverseGeocodingConfig = {
 let reverseGeocodingConfig = defaultReverseGeocodingConfig;
 let configLoaded = false;
 const queuedRequests = [];
-const pendingByKey = new Map();
+const queuedSegments = new WeakSet();
 let queueRunning = false;
 let lastRequestAt = 0;
 
@@ -15158,7 +15158,6 @@ function resolveStaySegments(segments, options) {
         date,
         osmApiKey = null,
         onUpdate = () => {},
-        lookupCachedResult = () => null,
     } = options;
     const placeIntervals = placeStates.length
         ? buildPlaceIntervals([...placeStates].sort((a, b) => a.ts - b.ts), date)
@@ -15166,14 +15165,7 @@ function resolveStaySegments(segments, options) {
 
     for (const segment of segments) {
         if (segment.type !== "stay" || segment.zoneName) continue;
-
-        const key = toCacheKey(segment.center);
-        const cached = lookupCachedResult(key);
-        if (cached) {
-            segment.placeName = cached.name;
-            segment.reverseGeocoding = cached.result;
-            continue;
-        }
+        if (segment.placeName && segment.placeName !== LOADING_LOCATION) continue;
 
         const placeName = placeIntervals.length
             ? pickPlaceName(placeIntervals, segment.start, segment.end)
@@ -15192,30 +15184,14 @@ function resolveStaySegments(segments, options) {
 
         segment.placeName = LOADING_LOCATION;
         segment.reverseGeocoding = null;
-        enqueueReverseLookup(segment, key, osmApiKey, onUpdate);
+        enqueueReverseLookup(segment, osmApiKey, onUpdate);
     }
 }
 
-function enqueueReverseLookup(segment, key, osmApiKey, onUpdate) {
-    let pending = pendingByKey.get(key);
-    if (!pending) {
-        pending = {segments: new Set(), callbacks: new Set(), status: "idle"};
-        pendingByKey.set(key, pending);
-    }
-    pending.segments.add(segment);
-    pending.callbacks.add(onUpdate);
-
-    if (pending.status === "loading") {
-        return;
-    }
-
-    pending.status = "loading";
-    queuedRequests.push({
-        key,
-        lat: segment.center.lat,
-        lon: segment.center.lon,
-        osmApiKey,
-    });
+function enqueueReverseLookup(segment, osmApiKey, onUpdate) {
+    if (queuedSegments.has(segment)) return;
+    queuedSegments.add(segment);
+    queuedRequests.push({segment, osmApiKey, onUpdate});
     processQueue();
 }
 
@@ -15227,9 +15203,7 @@ async function processQueue() {
         await ensureReverseGeocodingConfig();
         while (queuedRequests.length) {
             const waitMs = reverseGeocodingConfig.request_interval_ms - (Date.now() - lastRequestAt);
-            if (waitMs > 0) {
-                await sleep(waitMs);
-            }
+            if (waitMs > 0) await sleep(waitMs);
 
             const request = queuedRequests.shift();
             lastRequestAt = Date.now();
@@ -15258,18 +15232,15 @@ async function ensureReverseGeocodingConfig() {
     }
 }
 
-async function resolveQueuedRequest({key, lat, lon, osmApiKey}) {
-    const pending = pendingByKey.get(key);
-    if (!pending) return;
-
+async function resolveQueuedRequest({segment, osmApiKey, onUpdate}) {
     let name = UNKNOWN_LOCATION;
     let result = null;
 
     try {
         const url = new URL(reverseGeocodingConfig.nominatim_reverse_url);
         url.searchParams.set("format", "json");
-        url.searchParams.set("lat", String(lat));
-        url.searchParams.set("lon", String(lon));
+        url.searchParams.set("lat", String(segment.center.lat));
+        url.searchParams.set("lon", String(segment.center.lon));
         url.searchParams.set("email", osmApiKey);
 
         const response = await fetch(url.toString(), {
@@ -15283,15 +15254,9 @@ async function resolveQueuedRequest({key, lat, lon, osmApiKey}) {
         console.warn("Timeline card: reverse geocoding failed", error);
     }
 
-    for (const segment of pending.segments) {
-        segment.placeName = name;
-        segment.reverseGeocoding = result;
-    }
-    for (const callback of pending.callbacks) {
-        callback();
-    }
-
-    pendingByKey.delete(key);
+    segment.placeName = name;
+    segment.reverseGeocoding = result;
+    onUpdate();
 }
 
 function buildPlaceIntervals(placeStates, date) {
@@ -15330,11 +15295,6 @@ function pickPlaceName(intervals, start, end) {
         }
     }
     return best;
-}
-
-function toCacheKey(center) {
-    if (!center) return "unknown";
-    return `${center.lat.toFixed(5)},${center.lon.toFixed(5)}`;
 }
 
 function sleep(ms) {
@@ -15515,7 +15475,6 @@ class TimelineCard extends HTMLElement {
                 placeStates,
                 date,
                 osmApiKey: this._config.osm_api_key,
-                lookupCachedResult: (stayKey) => this._findCachedStayReverseGeocode(stayKey),
                 onUpdate: () => {
                     const day = this._cache.get(key);
                     if (!day || !day.segments) return;
@@ -15535,28 +15494,6 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-
-    _findCachedStayReverseGeocode(stayKey) {
-        for (const dayData of this._cache.values()) {
-            if (!dayData?.segments) continue;
-            for (const segment of dayData.segments) {
-                if (segment.type !== "stay" || segment.zoneName) continue;
-                if (this._stayCacheKey(segment.center) !== stayKey) continue;
-                if (segment.placeName === "Loading address...") continue;
-                if (!segment.placeName) continue;
-                return {
-                    name: segment.placeName,
-                    result: segment.reverseGeocoding ?? null,
-                };
-            }
-        }
-        return null;
-    }
-
-    _stayCacheKey(center) {
-        if (!center) return "unknown";
-        return `${center.lat.toFixed(5)},${center.lon.toFixed(5)}`;
-    }
 
     _collectZones() {
         if (!this._hass || !this._hass.states) return [];

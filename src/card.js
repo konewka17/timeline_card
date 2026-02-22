@@ -181,7 +181,6 @@ class TimelineCard extends HTMLElement {
                 placeStates,
                 date,
                 osmApiKey: this._config.osm_api_key,
-                lookupCachedResult: (stayKey) => this._findCachedStayReverseGeocode(stayKey),
                 onUpdate: () => {
                     const day = this._cache.get(key);
                     if (!day || !day.segments) return;
@@ -201,28 +200,6 @@ class TimelineCard extends HTMLElement {
         });
     }
 
-
-    _findCachedStayReverseGeocode(stayKey) {
-        for (const dayData of this._cache.values()) {
-            if (!dayData?.segments) continue;
-            for (const segment of dayData.segments) {
-                if (segment.type !== "stay" || segment.zoneName) continue;
-                if (this._stayCacheKey(segment.center) !== stayKey) continue;
-                if (segment.placeName === "Loading address...") continue;
-                if (!segment.placeName) continue;
-                return {
-                    name: segment.placeName,
-                    result: segment.reverseGeocoding ?? null,
-                };
-            }
-        }
-        return null;
-    }
-
-    _stayCacheKey(center) {
-        if (!center) return "unknown";
-        return `${center.lat.toFixed(5)},${center.lon.toFixed(5)}`;
-    }
 
     _collectZones() {
         if (!this._hass || !this._hass.states) return [];
