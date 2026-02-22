@@ -1,0 +1,4 @@
+{
+  "nominatim_reverse_url": "https://nominatim.openstreetmap.org/reverse",
+  "request_interval_ms": 1000
+}

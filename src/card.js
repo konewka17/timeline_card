@@ -5,11 +5,12 @@ import {segmentTimeline} from "./segmentation.js";
 import {renderTimeline} from "./timeline.js";
 import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import {applyPlacesToStays} from "./reverse-geocoding.js";
+import {resolveStaySegments} from "./reverse-geocoding.js";
 
 const DEFAULT_CONFIG = {
     entity: null,
     places_entity: null,
+    osm_api_key: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
 };
@@ -107,12 +108,14 @@ class TimelineCard extends HTMLElement {
             schema: [
                 {name: "entity", required: true, selector: {entity: {}}},
                 {name: "places_entity", selector: {entity: {filter: [{domain: "sensor"}]}}},
+                {name: "osm_api_key", selector: {text: {type: "email"}}},
                 {name: "stay_radius_m", selector: {number: {min: 1, step: 1, mode: "box"}}},
                 {name: "min_stay_minutes", selector: {number: {min: 1, step: 1, mode: "box"}}},
             ],
             computeLabel: (schema) => {
                 if (schema.name === "entity") return "Tracked entity";
                 if (schema.name === "places_entity") return "Places entity (optional)";
+                if (schema.name === "osm_api_key") return "OSM API key (email, optional)";
                 if (schema.name === "stay_radius_m") return "Stay radius (m)";
                 if (schema.name === "min_stay_minutes") return "Minimum stay (minutes)";
                 return undefined;
@@ -124,6 +127,7 @@ class TimelineCard extends HTMLElement {
         return {
             entity: "device_tracker.your_device",
             places_entity: null,
+            osm_api_key: null,
             stay_radius_m: 75,
             min_stay_minutes: 10,
         };
@@ -173,9 +177,16 @@ class TimelineCard extends HTMLElement {
                 stayRadiusM: this._config.stay_radius_m,
                 minStayMinutes: this._config.min_stay_minutes,
             }, zones);
-            if (placeStates.length) {
-                segments = applyPlacesToStays(segments, placeStates, date);
-            }
+            resolveStaySegments(segments, {
+                placeStates,
+                date,
+                osmApiKey: this._config.osm_api_key,
+                onUpdate: () => {
+                    const day = this._cache.get(key);
+                    if (!day || !day.segments) return;
+                    this._render();
+                },
+            });
             this._cache.set(key, {loading: false, segments, points, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
