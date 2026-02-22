@@ -3,7 +3,7 @@
 Location Timeline Card is a custom Lovelace card that builds a **timeline–style day view** from your Home Assistant location history. It turns raw GPS points into an easy-to-read daily story of where a person/device stayed and when they moved.
 
 ## What this card does
-![Example](img/img.png)
+![Example](img/card_example.png)
 - Reads location history from a `device_tracker` or `person` entity
 - Groups points into **stays** and **moves** using configurable thresholds
 - Shows zone names when points are inside Home Assistant `zone.*` entities
