@@ -1,8 +1,9 @@
 # Location Timeline Card (Home Assistant)
 
-Location Timeline Card is a custom Lovelace card that builds a **Google Maps Timeline–style day view** from your Home Assistant location history. It turns raw GPS points into an easy-to-read daily story of where a person/device stayed and when they moved.
+Location Timeline Card is a custom Lovelace card that builds a **timeline–style day view** from your Home Assistant location history. It turns raw GPS points into an easy-to-read daily story of where a person/device stayed and when they moved.
 
 ## What this card does
+![Example](img/img.png)
 - Reads location history from a `device_tracker` or `person` entity
 - Groups points into **stays** and **moves** using configurable thresholds
 - Shows zone names when points are inside Home Assistant `zone.*` entities
@@ -23,19 +24,12 @@ After installation, ensure the card resource is available in Lovelace (HACS norm
 ## Usage
 Add the card in the Lovelace UI editor or with manual YAML.
 
-### Minimal YAML
+### Minimal setup
 ```yaml
 type: custom:location-timeline-card
 entity: device_tracker.my_phone
 ```
-
-### Example with tuning
-```yaml
-type: custom:location-timeline-card
-entity: device_tracker.my_phone
-stay_radius_m: 75
-min_stay_minutes: 10
-```
+The entity must expose latitude/longitude attributes.
 
 ## Reverse Geocoding
 For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name.
@@ -68,13 +62,6 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
 
-## Lovelace UI editor
-The card includes a visual editor with:
-- Tracked entity selector
-- Optional Places entity selector
-- Optional OSM API key (email)
-- Stay radius (meters)
-- Minimum stay duration (minutes)
 
 ## Notes
 - The card reads raw GPS history from the tracked entity’s latitude/longitude attributes.
