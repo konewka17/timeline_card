@@ -59,7 +59,8 @@ Example:
 type: custom:location-timeline-card
 entity: device_tracker.my_phone
 places_entity: sensor.places_my_phone
-osm_api_key: me@example.com```
+osm_api_key: me@example.com
+```
 
 If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 
