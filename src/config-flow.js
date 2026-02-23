@@ -1,10 +1,10 @@
 export function getConfigFormSchema() {
     return {
         schema: [
-            {name: "entity", required: true, selector: {entity: {}}},
+            {name: "entity", required: true, selector: {entity: {multiple: true}}},
             {
                 type: "expandable", name: "", title: "Reverse geocoding", flatten: true, schema: [
-                    {name: "places_entity", selector: {entity: {filter: [{domain: "sensor"}]}}},
+                    {name: "places_entity", selector: {entity: {multiple: true, filter: [{domain: "sensor"}]}}},
                     {name: "osm_api_key", selector: {text: {type: "email"}}},
                 ]
             },
@@ -23,6 +23,7 @@ export function getConfigFormSchema() {
                         {name: "map_appearance", selector: {select: {options: ["auto", "light", "dark"], mode: "dropdown"}}}
                     ]},
                     {name: "map_height_px", selector: {number: {unit_of_measurement: "px"}}},
+                    {name: "colors", selector: {text: {multiple: true}}},
                 ],
             },
         ],

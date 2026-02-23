@@ -85,6 +85,57 @@ ha-card {
   cursor: default;
 }
 
+
+.entity-selector {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.entity-selector[hidden] {
+  display: none;
+}
+
+.entity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #ddd 60%, var(--entity-track-color));
+  color: var(--entity-track-color);
+  padding: 3px 10px 3px 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;}
+
+.entity-chip.active {
+  padding-left: 4px;
+  background: #eee;
+}
+
+.entity-chip.active span {
+  font-weight: 700;
+}
+
+.entity-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.entity-chip ha-icon {
+  --mdc-icon-size: 24px;
+  color: color-mix(in srgb, var(--entity-track-color, var(--secondary-text-color)) 70%, var(--secondary-text-color));
+}
+
+.entity-avatar-icon {
+  color: var(--entity-track-color, var(--secondary-text-color));
+}
+
 .body {
   padding: 8px 16px 16px;
   max-height: 420px;

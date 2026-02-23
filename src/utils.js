@@ -99,3 +99,14 @@ export function haversineMeters(a, b) {
 export function toLatLon(point) {
     return {lat: point.point[0], lon: point.point[1]}
 }
+
+export function getTrackColor(index, colors = []) {
+    if (colors.length) {
+        return colors[index % colors.length];
+    }
+
+    if (index === 0) {
+        return "var(--primary-color)";
+    }
+    return `var(--color-${((index + 1) % 12) + 1})`;
+}

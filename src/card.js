@@ -2,10 +2,10 @@ import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
 import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
-import {renderTimeline} from "./timeline.js";
-import {formatDate, startOfDay, toDateKey, toLatLon} from "./utils.js";
+import {formatDate, getTrackColor, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
+import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
 const DEFAULT_CONFIG = {
@@ -16,6 +16,7 @@ const DEFAULT_CONFIG = {
     min_stay_minutes: 10,
     map_appearance: "auto",
     map_height_px: 200,
+    colors: null,
 };
 
 class TimelineCard extends HTMLElement {
@@ -28,6 +29,7 @@ class TimelineCard extends HTMLElement {
         this._hass = null;
         this._rendered = false;
         this._touchStart = null;
+        this._activeEntityIndex = 0;
 
         this.shadowRoot.addEventListener("click", (event) => {
             const target = event.target.closest("[data-action]");
@@ -43,6 +45,8 @@ class TimelineCard extends HTMLElement {
                 this._openDatePicker();
             } else if (action === "reset-map-zoom") {
                 this._resetMapZoom();
+            } else if (action === "select-entity") {
+                this._setActiveEntityIndex(Number(target.dataset.entityIndex));
             }
         });
 
@@ -94,6 +98,7 @@ class TimelineCard extends HTMLElement {
         if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
             throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
         }
+        this._activeEntityIndex = 0;
         this._cache.clear();
         this._selectedDate = startOfDay(new Date());
         this._syncMapAppearance();
@@ -124,7 +129,7 @@ class TimelineCard extends HTMLElement {
 
     static getStubConfig() {
         return {
-            entity: "device_tracker.your_device",
+            entity: ["device_tracker.your_device"],
             places_entity: null,
             osm_api_key: null,
             stay_radius_m: 75,
@@ -132,6 +137,7 @@ class TimelineCard extends HTMLElement {
             distance_unit: "metric",
             map_appearance: "auto",
             map_height_px: 200,
+            colors: null,
         };
     }
 
@@ -183,35 +189,47 @@ class TimelineCard extends HTMLElement {
     async _ensureDay(date) {
         const key = toDateKey(date);
         const existing = this._cache.get(key);
-        if (existing && (existing.segments || existing.loading)) return;
+        if (existing && (existing.tracks || existing.loading)) return;
 
-        this._cache.set(key, {loading: true, segments: null, points: null, error: null});
+        this._cache.set(key, {loading: true, tracks: null, error: null});
 
         try {
-            const points = await fetchHistory(this._hass, this._config.entity, date);
-            const placeStates = this._config.places_entity
-                ? await fetchEntityHistory(this._hass, this._config.places_entity, date)
-                : [];
+            const entities = this._getEntities();
+            const placesByEntity = this._getPlacesEntityMap();
             const zones = this._collectZones();
-            let segments = segmentTimeline(points, {
-                stayRadiusM: this._config.stay_radius_m,
-                minStayMinutes: this._config.min_stay_minutes,
-            }, zones);
-            resolveStaySegments(segments, {
-                placeStates,
-                date,
-                osmApiKey: this._config.osm_api_key,
-                onUpdate: () => {
-                    const day = this._cache.get(key);
-                    if (!day || !day.segments) return;
-                    this._render();
-                },
+            const tracks = await Promise.all(entities.map(async (entityId, index) => {
+                const points = await fetchHistory(this._hass, entityId, date);
+                const placeEntityId = placesByEntity.get(entityId) || null;
+                const placeStates = placeEntityId
+                    ? await fetchEntityHistory(this._hass, placeEntityId, date)
+                    : [];
+                const segments = segmentTimeline(points, {
+                    stayRadiusM: this._config.stay_radius_m,
+                    minStayMinutes: this._config.min_stay_minutes,
+                }, zones);
+                resolveStaySegments(segments, {
+                    placeStates,
+                    date,
+                    osmApiKey: this._config.osm_api_key,
+                    onUpdate: () => {
+                        const day = this._cache.get(key);
+                        if (!day || !day.tracks) return;
+                        this._render();
+                    },
+                });
+
+                return {entityId, placeEntityId, points, segments};
+            }));
+
+            this._cache.set(key, {
+                loading: false,
+                tracks,
+                error: null,
             });
-            this._cache.set(key, {loading: false, segments, points, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
             this._cache.set(key, {
-                loading: false, segments: null, points: null, error: this._formatErrorMessage(err),
+                loading: false, tracks: null, error: this._formatErrorMessage(err),
             });
         }
         this._render();
@@ -240,7 +258,7 @@ class TimelineCard extends HTMLElement {
 
         const dateKey = toDateKey(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {
-            loading: false, segments: null, points: null, error: null
+            loading: false, tracks: null, error: null
         };
         const isFuture = this._selectedDate >= startOfDay(new Date());
 
@@ -257,11 +275,13 @@ class TimelineCard extends HTMLElement {
         this._applyMapHeight();
 
         const body = this.shadowRoot.getElementById("timeline-body");
+        const selector = this.shadowRoot.getElementById("entity-selector");
+        selector.innerHTML = this._renderEntitySelector();
+        selector.toggleAttribute("hidden", this._getEntities().length < 2);
         this._bindTimelineTouch(body);
         this._updateMapResetButton();
-
-        const timelineMarkup = this._renderTimelineContent(dayData);
-        body.innerHTML = timelineMarkup;
+        const activeDayData = this._getCurrentTrackDayData(dayData);
+        body.innerHTML = this._renderTimelineContent(activeDayData);
 
         this._attachMapCard();
         requestAnimationFrame(() => {
@@ -296,6 +316,7 @@ class TimelineCard extends HTMLElement {
                   <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
+              <div id="entity-selector" class="entity-selector" hidden></div>
               <div id="timeline-body" class="body"></div>
             </div>
           </ha-card>
@@ -378,7 +399,13 @@ class TimelineCard extends HTMLElement {
         if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
 
         try {
-            this._mapView.setDaySegments(dayData);
+            const tracks = Array.isArray(dayData.tracks) ? dayData.tracks : [];
+            this._mapView.setDaySegments({
+                tracks,
+                activeEntityIndex: this._activeEntityIndex,
+                onTrackClick: (entityIndex) => this._setActiveEntityIndex(entityIndex),
+                colors: this._getColors(),
+            });
             this._touchStart = null;
 
             this._updateMapResetButton();
@@ -392,12 +419,13 @@ class TimelineCard extends HTMLElement {
     _handleSegmentHoverStart(segmentIndex) {
         if (!Number.isInteger(segmentIndex)) return;
         const dayData = this._getCurrentDayData();
-        if (!dayData || !Array.isArray(dayData.segments)) return;
+        const track = this._getCurrentTrackDayData(dayData);
+        if (!track || !Array.isArray(track.segments)) return;
 
-        const segment = dayData.segments[segmentIndex];
+        const segment = track.segments[segmentIndex];
         if (!segment || !this._mapView) return;
 
-        const segments = Array.isArray(dayData.segments) ? dayData.segments : [];
+        const segments = Array.isArray(track.segments) ? track.segments : [];
         this._touchStart = null;
         this._mapView.highlightSegment(segment, segments);
     }
@@ -405,7 +433,8 @@ class TimelineCard extends HTMLElement {
     _clearHoverHighlight() {
         if (!this._mapView) return;
         const dayData = this._getCurrentDayData();
-        const segments = Array.isArray(dayData?.segments) ? dayData.segments : [];
+        const track = this._getCurrentTrackDayData(dayData);
+        const segments = Array.isArray(track?.segments) ? track.segments : [];
         this._touchStart = null;
         this._mapView.clearHighlight(segments);
     }
@@ -413,9 +442,10 @@ class TimelineCard extends HTMLElement {
     _handleSegmentClick(segmentIndex) {
         if (!Number.isInteger(segmentIndex)) return;
         const dayData = this._getCurrentDayData();
-        if (!dayData || !Array.isArray(dayData.segments)) return;
+        const track = this._getCurrentTrackDayData(dayData);
+        if (!track || !Array.isArray(track.segments)) return;
 
-        const segment = dayData.segments[segmentIndex];
+        const segment = track.segments[segmentIndex];
         if (!segment) return;
 
         if (segment.type === "stay") {
@@ -423,7 +453,7 @@ class TimelineCard extends HTMLElement {
             this._mapView?.zoomToStay(segment);
             this._updateMapResetButton();
         } else if (segment.type === "move") {
-            const segmentPoints = this._extractSegmentPoints(dayData.points, segment);
+            const segmentPoints = this._extractSegmentPoints(track.points, segment);
             if (segmentPoints.length < 2) return;
             this._mapView?.zoomToPoints(segmentPoints.map(toLatLon));
             this._updateMapResetButton();
@@ -448,6 +478,94 @@ class TimelineCard extends HTMLElement {
 
     _getCurrentDayData() {
         return this._cache.get(toDateKey(this._selectedDate));
+    }
+
+    _getCurrentTrackDayData(dayData = this._getCurrentDayData()) {
+        const tracks = Array.isArray(dayData?.tracks) ? dayData.tracks : [];
+        const index = Math.min(this._activeEntityIndex, Math.max(0, tracks.length - 1));
+        this._activeEntityIndex = index;
+        return tracks[index] || {segments: [], points: [], entityId: null, placeEntityId: null};
+    }
+
+    _setActiveEntityIndex(index) {
+        const entities = this._getEntities();
+        if (!Number.isInteger(index) || index < 0 || index >= entities.length || index === this._activeEntityIndex) {
+            return;
+        }
+        this._activeEntityIndex = index;
+        this._render();
+    }
+
+    _getEntities() {
+        const entities = this._normalizeEntityList(this._config.entity);
+        if (!entities.length) {
+            throw new Error("You need to define an entity");
+        }
+        return entities;
+    }
+
+    _getPlacesEntityMap() {
+        const placeEntityIds = this._normalizeEntityList(this._config.places_entity);
+        const trackedEntities = new Set(this._getEntities());
+        const map = new Map();
+
+        placeEntityIds.forEach((placeEntityId) => {
+            const trackerEntityId = this._hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
+            if (!trackerEntityId || !trackedEntities.has(trackerEntityId) || map.has(trackerEntityId)) {
+                return;
+            }
+            map.set(trackerEntityId, placeEntityId);
+        });
+
+        return map;
+        if (config.distance_unit === undefined) {
+            this._config.distance_unit = "metric";
+        } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
+            throw new Error("distance_unit must be either 'metric' or 'imperial'");
+        }
+    }
+
+    _normalizeEntityList(value) {
+        if (!value) return [];
+        const list = Array.isArray(value) ? value : [value];
+        return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
+    }
+
+    _getColors() {
+        const list = this._config?.colors;
+        if (!list) return [];
+        const values = Array.isArray(list) ? list : String(list).split(",");
+        return values
+            .map((item) => (typeof item === "string" ? item.trim() : ""))
+            .filter(Boolean);
+    }
+
+    _renderEntitySelector() {
+        const entities = this._getEntities();
+        if (entities.length < 2) return "";
+
+        return entities.map((entityId, index) => {
+            const state = this._hass?.states?.[entityId];
+            const picture = state?.attributes?.entity_picture;
+            const name = state?.attributes?.friendly_name || entityId;
+            const escapedName = this._escapeHtml(name);
+            const escapedPicture = this._escapeHtml(picture || "");
+            const trackColor = getTrackColor(index, this._getColors())
+            return `
+              <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
+                ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}
+                <span>${escapedName}</span>
+              </button>
+            `;
+        }).join("");
+    }
+
+    _escapeHtml(text) {
+        return String(text || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll("\"", "&quot;");
     }
 
     _renderTimelineContent(dayData) {
