@@ -12,6 +12,7 @@
     "rollup-plugin-import-css": "^3.5.8"
   },
   "dependencies": {
+    "custom-card-helpers": "^1.9.0",
     "leaflet": "^1.9.4"
   }
 }
