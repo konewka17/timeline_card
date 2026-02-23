@@ -72,6 +72,8 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
 | `distance_unit` | string | `"metric"` | Distance unit for moving segments: `metric` (`m`, `km`) or `imperial` (`ft`, `mi`). |
+| `map_appearance` | string | `"auto"` | Map appearance: `auto` (align with HA theme), `light`, or `dark`. |
+| `map_height_px` | number | `200` | Height of the map area in pixels. |
 
 
 ## Notes
