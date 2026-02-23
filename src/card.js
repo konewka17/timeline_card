@@ -82,6 +82,11 @@ class TimelineCard extends HTMLElement {
             throw new Error("You need to define an entity");
         }
         this._config = {...DEFAULT_CONFIG, ...config};
+        if (config.distance_unit === undefined) {
+            this._config.distance_unit = "metric";
+        } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
+            throw new Error("distance_unit must be either 'metric' or 'imperial'");
+        }
         this._cache.clear();
         this._selectedDate = startOfDay(new Date());
         if (this._hass) {
@@ -112,6 +117,7 @@ class TimelineCard extends HTMLElement {
                 {name: "osm_api_key", selector: {text: {type: "email"}}},
                 {name: "stay_radius_m", selector: {number: {min: 1, step: 1, mode: "box"}}},
                 {name: "min_stay_minutes", selector: {number: {min: 1, step: 1, mode: "box"}}},
+                {name: "distance_unit", selector: {select: {options: [{value: "metric", label: "Metric (m, km)"}, {value: "imperial", label: "Imperial (ft, mi)"}]}}},
             ],
             computeLabel: (schema) => {
                 if (schema.name === "entity") return "Tracked entity";
@@ -119,6 +125,7 @@ class TimelineCard extends HTMLElement {
                 if (schema.name === "osm_api_key") return "OSM API key (email, optional)";
                 if (schema.name === "stay_radius_m") return "Stay radius (m)";
                 if (schema.name === "min_stay_minutes") return "Minimum stay (minutes)";
+                if (schema.name === "distance_unit") return "Distance unit";
                 return undefined;
             },
         };
@@ -131,6 +138,7 @@ class TimelineCard extends HTMLElement {
             osm_api_key: null,
             stay_radius_m: 75,
             min_stay_minutes: 10,
+            distance_unit: "metric",
         };
     }
 
@@ -439,7 +447,10 @@ class TimelineCard extends HTMLElement {
         }
 
         try {
-            return renderTimeline(dayData.segments, this._hass?.locale);
+            return renderTimeline(dayData.segments, {
+                locale: this._hass?.locale,
+                distanceUnit: this._config.distance_unit,
+            });
         } catch (err) {
             const message = this._formatErrorMessage(err);
             console.warn("Timeline card: timeline render failed", err);

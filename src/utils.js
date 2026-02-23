@@ -66,8 +66,17 @@ export function formatDuration(ms) {
     return `${minutes} min`;
 }
 
-export function formatDistance(meters) {
+export function formatDistance(meters, distanceUnit = "metric") {
     if (!Number.isFinite(meters)) return "0 m";
+
+    if (distanceUnit === "imperial") {
+        const feet = meters * 3.28084;
+        if (feet >= 5280) {
+            return `${(feet / 5280).toFixed(1)} mi`;
+        }
+        return `${Math.round(feet)} ft`;
+    }
+
     if (meters >= 1000) {
         return `${(meters / 1000).toFixed(1)} km`;
     }

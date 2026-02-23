@@ -1,6 +1,6 @@
 import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 
-export function renderTimeline(segments, locale) {
+export function renderTimeline(segments, options = {}) {
     if (!segments || segments.length === 0) {
         return `<div class="empty">No location history for this day.</div>`;
     }
@@ -17,7 +17,8 @@ export function renderTimeline(segments, locale) {
     <div class="${timelineClass}">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
-        locale,
+        locale: options.locale,
+        distanceUnit: options.distanceUnit || "metric",
         hideStartTime: index === 0 && firstIsStay,
         hideEndTime: index === segments.length - 1 && lastIsStay,
     })).join("")}
@@ -53,7 +54,7 @@ function renderSegment(segment, index, options) {
       <div class="line-slot"></div>
       <div class="content location travel">
         <ha-icon class="move-icon" icon="mdi:chart-line-variant"></ha-icon>
-        <div class="title">Moving<span class="meta"> - ${formatDistance(segment.distanceM)}</span></div>
+        <div class="title">Moving<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
       </div>
       <div class="content time">
         <div class="meta">${formatDuration(segment.durationMs)}</div>

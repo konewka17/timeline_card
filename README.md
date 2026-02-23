@@ -71,6 +71,7 @@ If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 | `osm_api_key` | string | `null` | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback. |
 | `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
 | `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
+| `distance_unit` | string | `"metric"` | Distance unit for moving segments: `metric` (`m`, `km`) or `imperial` (`ft`, `mi`). |
 
 
 ## Notes
