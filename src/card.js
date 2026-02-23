@@ -90,8 +90,14 @@ class TimelineCard extends HTMLElement {
         } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
             throw new Error("distance_unit must be either 'metric' or 'imperial'");
         }
+        this._config.map_appearance = this._config.map_appearance ?? "auto";
+        if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
+            throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
+        }
         this._cache.clear();
         this._selectedDate = startOfDay(new Date());
+        this._syncMapAppearance();
+        this._applyMapHeight();
         if (this._hass) {
             this._ensureDay(this._selectedDate);
         }
@@ -100,7 +106,7 @@ class TimelineCard extends HTMLElement {
 
     set hass(hass) {
         this._hass = hass;
-        this._mapView?.setDarkMode(Boolean(this._hass?.themes?.darkMode));
+        this._syncMapAppearance();
         if (!this._config.entity) return;
         const dateKey = toDateKey(this._selectedDate);
         if (!this._cache.has(dateKey)) {
@@ -127,6 +133,22 @@ class TimelineCard extends HTMLElement {
             map_appearance: "auto",
             map_height_px: 200,
         };
+    }
+
+    _syncMapAppearance() {
+        let darkMode = Boolean(this._hass?.themes?.darkMode);
+        if (this._config.map_appearance === "dark") {
+            darkMode = true;
+        } else if (this._config.map_appearance === "light") {
+            darkMode = false;
+        }
+        this._mapView?.setDarkMode(darkMode);
+    }
+
+    _applyMapHeight() {
+        const mapElement = this.shadowRoot?.getElementById("overview-map");
+        if (!mapElement) return;
+        mapElement.style.setProperty("height", `${this._config.map_height_px}px`, "important");
     }
 
     getCardSize() {
@@ -232,6 +254,8 @@ class TimelineCard extends HTMLElement {
         const nextButton = this.shadowRoot.querySelector("[data-action='next']");
         nextButton.toggleAttribute("disabled", isFuture);
 
+        this._applyMapHeight();
+
         const body = this.shadowRoot.getElementById("timeline-body");
         this._bindTimelineTouch(body);
         this._updateMapResetButton();
@@ -333,7 +357,7 @@ class TimelineCard extends HTMLElement {
         this._isLoadingMap = true;
         try {
             this._mapView = new TimelineLeafletMap(container);
-            this._mapView.setDarkMode(Boolean(this._hass?.themes?.darkMode));
+            this._syncMapAppearance();
             this._refreshMapPaths();
             this._mapView.fitMap({defer: true});
         } catch (err) {
