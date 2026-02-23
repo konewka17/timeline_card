@@ -167,7 +167,7 @@ ha-card {
   bottom: 0;
   left: 72px;
   width: 12px;
-  background: var(--primary-color);
+  background: var(--timeline-track-color, var(--primary-color));
   border-radius: 999px;
 }
 
@@ -199,7 +199,7 @@ ha-card {
   height: 32px;
   border-radius: 50%;
   background: var(--card-background-color, #fff);
-  border: 3px solid var(--primary-color);
+  border: 3px solid var(--timeline-track-color, var(--primary-color));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,11 +223,11 @@ ha-card {
 }
 
 .stay-icon {
-  color: var(--primary-color);
+  color: var(--timeline-track-color, var(--primary-color));
 }
 
 .move-icon {
-  color: var(--secondary-text-color);
+  color: var(--timeline-track-color, var(--primary-color));
 }
 
 .content {

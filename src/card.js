@@ -567,6 +567,7 @@ class TimelineCard extends HTMLElement {
             return renderTimeline(dayData.segments, {
                 locale: this._hass?.locale,
                 distanceUnit: this._config.distance_unit,
+                trackColor: getTrackColor(this._activeEntityIndex),
             });
         } catch (err) {
             const message = this._formatErrorMessage(err);

@@ -132,7 +132,7 @@ export class TimelineLeafletMap {
 
     fitMap({defer = false, bounds = null, pad = 0.1} = {}) {
         if (bounds === null) {
-            bounds = this._fullDayPaths.flatMap((path) => path.points.map((point) => point.point));
+            bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
             if (!bounds.length) return;
         }
 

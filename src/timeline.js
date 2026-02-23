@@ -14,7 +14,7 @@ export function renderTimeline(segments, options = {}) {
     ].join(" ");
 
     return `
-    <div class="${timelineClass}">
+    <div class="${timelineClass}" style="--timeline-track-color: ${options.trackColor || "var(--primary-color)"};">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
         locale: options.locale,
