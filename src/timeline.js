@@ -1,6 +1,6 @@
-import {formatDistance, formatDuration, formatTime, formatTimeRange} from "./utils.js";
+import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 
-export function renderTimeline(segments) {
+export function renderTimeline(segments, locale) {
     if (!segments || segments.length === 0) {
         return `<div class="empty">No location history for this day.</div>`;
     }
@@ -17,6 +17,7 @@ export function renderTimeline(segments) {
     <div class="${timelineClass}">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
+        locale,
         hideStartTime: index === 0 && firstIsStay,
         hideEndTime: index === segments.length - 1 && lastIsStay,
     })).join("")}

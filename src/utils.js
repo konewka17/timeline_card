@@ -1,3 +1,5 @@
+import {formatTime as formatTimeHelper} from "custom-card-helpers";
+
 export function toDateKey(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -26,7 +28,8 @@ export function formatDate(date) {
     }
 }
 
-export function formatTime(date) {
+export function formatTime(date, locale) {
+    return formatTimeHelper(date, locale);
     try {
         return new Intl.DateTimeFormat(undefined, {
             hour: "2-digit",
@@ -40,15 +43,16 @@ export function formatTime(date) {
 export function formatTimeRange(start, end, options={}) {
     const hideStartTime = options.hideStartTime || false;
     const hideEndTime = options.hideEndTime || false;
+    const locale = options.locale || {language: "en", time_format: "language"};
 
     if (hideStartTime && hideEndTime) {
         return "all day";
     } else if (hideStartTime && !hideEndTime) {
-        return formatTime(end);
+        return formatTime(end, locale);
     } else if (hideEndTime && !hideStartTime) {
-        return formatTime(start);
+        return formatTime(start, locale);
     } else {
-        return `${formatTime(start)} - ${formatTime(end)}`;
+        return `${formatTime(start, locale)} - ${formatTime(end, locale)}`;
     }
 }
 

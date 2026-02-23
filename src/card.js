@@ -243,7 +243,7 @@ class TimelineCard extends HTMLElement {
         body.innerHTML = `
               ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
               ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
-              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments) : ""}
+              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments, this._hass?.locale) : ""}
             `;
         this._attachMapCard();
         requestAnimationFrame(() => {
