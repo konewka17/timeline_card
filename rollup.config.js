@@ -6,8 +6,8 @@ export default [{
     input: "src/card.js",
     plugins: [nodeResolve({}), commonjs(), css()],
     output: {
-        dir: "./dist",
         format: "es",
+        file: "./dist/timeline_card.js",
         sourcemap: false
     }
 }];

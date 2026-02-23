@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "module": "dist/card.js",
+  "module": "dist/timeline_card.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w"
