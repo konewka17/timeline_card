@@ -42,6 +42,22 @@ places_entity:
 ```
 When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
 
+## Configuration options
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `entity` | string or string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from. | 
+| **Reverse geocoding** |  |  | see [Reverse Geocoding](#reverse-geocoding) below|
+| `places_entity` | string or string[] | `null` | Optional `sensor` entity (or list) from Places integration used first for reverse geocoding. Lists must match `entity` order/count when provided. |
+| `osm_api_key` | string | `null` | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback. |
+| **Detection parameters** |  |  |  |
+| `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
+| `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
+| **Map display** |  |  |  |
+| `distance_unit` | string | `"metric"` | Distance unit for moving segments: `metric` (`m`, `km`) or `imperial` (`ft`, `mi`). |
+| `map_appearance` | string | `"auto"` | Map appearance: `auto` (align with HA theme), `light`, or `dark`. |
+| `map_height_px` | number | `200` | Height of the map area in pixels. |
+| `colors` | string[] | `null` | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables. |
+
 ## Reverse Geocoding
 For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name. This process is called **reverse geocoding**: converting latitude/longitude coordinates into an address or place label.
 
@@ -74,23 +90,6 @@ osm_api_key: me@example.com
 ```
 
 If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
-
-## Configuration options
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| `entity` | string or string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from. |
-| **Reverse geocoding** |  |  |  |
-| `places_entity` | string or string[] | `null` | Optional `sensor` entity (or list) from Places integration used first for reverse geocoding. Lists must match `entity` order/count when provided. |
-| `osm_api_key` | string | `null` | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback. |
-| **Detection parameters** |  |  |  |
-| `stay_radius_m` | number | `75` | Radius (meters) used to detect a stay. |
-| `min_stay_minutes` | number | `10` | Minimum duration (minutes) required to qualify as a stay. |
-| **Map display** |  |  |  |
-| `distance_unit` | string | `"metric"` | Distance unit for moving segments: `metric` (`m`, `km`) or `imperial` (`ft`, `mi`). |
-| `map_appearance` | string | `"auto"` | Map appearance: `auto` (align with HA theme), `light`, or `dark`. |
-| `map_height_px` | number | `200` | Height of the map area in pixels. |
-| `colors` | string[] | `null` | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables. |
-
 
 ## Notes
 - The card reads raw GPS history from the tracked entity’s latitude/longitude attributes.
