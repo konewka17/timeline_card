@@ -16,6 +16,7 @@ const DEFAULT_CONFIG = {
     min_stay_minutes: 10,
     map_appearance: "auto",
     map_height_px: 200,
+    colors: null,
 };
 
 class TimelineCard extends HTMLElement {
@@ -136,6 +137,7 @@ class TimelineCard extends HTMLElement {
             distance_unit: "metric",
             map_appearance: "auto",
             map_height_px: 200,
+            colors: null,
         };
     }
 
@@ -402,6 +404,7 @@ class TimelineCard extends HTMLElement {
                 tracks,
                 activeEntityIndex: this._activeEntityIndex,
                 onTrackClick: (entityIndex) => this._setActiveEntityIndex(entityIndex),
+                colors: this._getColors(),
             });
             this._touchStart = null;
 
@@ -528,6 +531,15 @@ class TimelineCard extends HTMLElement {
         return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
     }
 
+    _getColors() {
+        const list = this._config?.colors;
+        if (!list) return [];
+        const values = Array.isArray(list) ? list : String(list).split(",");
+        return values
+            .map((item) => (typeof item === "string" ? item.trim() : ""))
+            .filter(Boolean);
+    }
+
     _renderEntitySelector() {
         const entities = this._getEntities();
         if (entities.length < 2) return "";
@@ -538,7 +550,7 @@ class TimelineCard extends HTMLElement {
             const name = state?.attributes?.friendly_name || entityId;
             const escapedName = this._escapeHtml(name);
             const escapedPicture = this._escapeHtml(picture || "");
-            const trackColor = getTrackColor(index)
+            const trackColor = getTrackColor(index, this._getColors())
             return `
               <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
                 ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}

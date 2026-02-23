@@ -100,7 +100,11 @@ export function toLatLon(point) {
     return {lat: point.point[0], lon: point.point[1]}
 }
 
-export function getTrackColor(index) {
+export function getTrackColor(index, colors = []) {
+    if (colors.length) {
+        return colors[index % colors.length];
+    }
+
     if (index === 0) {
         return "var(--primary-color)";
     }

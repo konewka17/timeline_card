@@ -49,7 +49,7 @@ export class TimelineLeafletMap {
         return this._isMapZoomedToSegment;
     }
 
-    setDaySegments({tracks = [], activeEntityIndex = 0, onTrackClick = null}) {
+    setDaySegments({tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []}) {
         this._fullDayPaths = tracks.map((track, index) => {
             const points = [];
             const segments = Array.isArray(track?.segments) ? track.segments : [];
@@ -66,7 +66,7 @@ export class TimelineLeafletMap {
                 entityIndex: index,
                 isActive: index === activeEntityIndex,
                 points,
-                color: getTrackColor(index),
+                color: getTrackColor(index, colors),
                 opacity: index === activeEntityIndex ? 1 : 0.8,
                 weight: 4,
                 borderWeight: 7,
