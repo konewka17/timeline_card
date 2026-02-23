@@ -240,11 +240,10 @@ class TimelineCard extends HTMLElement {
         const body = this.shadowRoot.getElementById("timeline-body");
         this._bindTimelineTouch(body);
         this._updateMapResetButton();
-        body.innerHTML = `
-              ${dayData.error ? `<div class="error">${dayData.error}</div>` : ""}
-              ${dayData.loading ? `<div class="loading">Loading timeline...</div>` : ""}
-              ${!dayData.loading && !dayData.error ? renderTimeline(dayData.segments, this._hass?.locale) : ""}
-            `;
+
+        const timelineMarkup = this._renderTimelineContent(dayData);
+        body.innerHTML = timelineMarkup;
+
         this._attachMapCard();
         requestAnimationFrame(() => {
             this._refreshMapPaths();
@@ -359,11 +358,16 @@ class TimelineCard extends HTMLElement {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
 
-        this._mapView.setDaySegments(dayData);
-        this._touchStart = null;
+        try {
+            this._mapView.setDaySegments(dayData);
+            this._touchStart = null;
 
-        this._updateMapResetButton();
-        this._mapView.fitMap();
+            this._updateMapResetButton();
+            this._mapView.fitMap();
+        } catch (err) {
+            this._setCurrentDayError(err);
+            this._render();
+        }
     }
 
     _handleSegmentHoverStart(segmentIndex) {
@@ -425,6 +429,29 @@ class TimelineCard extends HTMLElement {
 
     _getCurrentDayData() {
         return this._cache.get(toDateKey(this._selectedDate));
+    }
+
+    _renderTimelineContent(dayData) {
+        const errorHtml = dayData.error ? `<div class="error">${dayData.error}</div>` : "";
+        const loadingHtml = dayData.loading ? `<div class="loading">Loading timeline...</div>` : "";
+        if (dayData.loading || dayData.error) {
+            return `${errorHtml}${loadingHtml}`;
+        }
+
+        try {
+            return renderTimeline(dayData.segments, this._hass?.locale);
+        } catch (err) {
+            const message = this._formatErrorMessage(err);
+            console.warn("Timeline card: timeline render failed", err);
+            this._setCurrentDayError(err);
+            return `<div class="error">${message}</div>`;
+        }
+    }
+
+    _setCurrentDayError(err) {
+        const key = toDateKey(this._selectedDate);
+        const current = this._cache.get(key) || {loading: false, segments: null, points: null, error: null};
+        this._cache.set(key, {...current, loading: false, error: this._formatErrorMessage(err)});
     }
 
     _formatErrorMessage(err) {
