@@ -223,7 +223,7 @@ class TimelineCard extends HTMLElement {
     _collectZones() {
         if (!this._hass || !this._hass.states) return [];
         return Object.values(this._hass.states)
-                     .filter((state) => state.entity_id && state.entity_id.startsWith("zone."))
+                     .filter((state) => state.entity_id && state.entity_id.startsWith("zone.") && state.attributes?.passive !== true)
                      .map((state) => ({
                          name: state.attributes?.friendly_name || state.entity_id,
                          icon: state.attributes?.icon || null,
