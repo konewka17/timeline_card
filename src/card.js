@@ -402,12 +402,6 @@ class TimelineCard extends HTMLElement {
         }
     }
 
-    disconnectedCallback() {
-        if (!this._mapView) return;
-        this._mapView.destroy();
-        this._mapView = null;
-    }
-
     _refreshMapPaths() {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
