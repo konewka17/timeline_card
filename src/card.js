@@ -4,7 +4,7 @@ import {fetchEntityHistory, fetchHistory} from "./history.js";
 import {segmentTimeline} from "./segmentation.js";
 import {formatDate, getTrackColor, startOfDay, toDateKey, toLatLon} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import {clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
+import {clearPersistentCache, clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
@@ -17,6 +17,7 @@ const DEFAULT_CONFIG = {
     map_appearance: "auto",
     map_height_px: 200,
     colors: null,
+    debug: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -41,6 +42,8 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "debug") {
+                this._logCacheToConsole();
             } else if (action === "open-date-picker") {
                 this._openDatePicker();
             } else if (action === "reset-map-zoom") {
@@ -100,6 +103,9 @@ class TimelineCard extends HTMLElement {
         }
         this._activeEntityIndex = 0;
         this._cache.clear();
+        if (this._config.debug) {
+            clearPersistentCache();
+        }
         this._selectedDate = startOfDay(new Date());
         this._syncMapAppearance();
         this._applyMapHeight();
@@ -184,6 +190,11 @@ class TimelineCard extends HTMLElement {
         const key = toDateKey(this._selectedDate);
         this._cache.delete(key);
         this._ensureDay(this._selectedDate).then(() => this._render());
+    }
+
+    _logCacheToConsole() {
+        console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;");
+        console.log(JSON.stringify(this._cache.get(toDateKey(this._selectedDate))));
     }
 
     async _ensureDay(date) {
@@ -303,7 +314,10 @@ class TimelineCard extends HTMLElement {
                 <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
               </div>
               <div class="header my-header">
-                <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                <div class="header-actions">
+                    <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                    ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="Debug"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
+                </div>
                 <div class="date-wrap">
                   <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
                     <span id="timeline-date" class="date"></span>
@@ -518,11 +532,6 @@ class TimelineCard extends HTMLElement {
         });
 
         return map;
-        if (config.distance_unit === undefined) {
-            this._config.distance_unit = "metric";
-        } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
-            throw new Error("distance_unit must be either 'metric' or 'imperial'");
-        }
     }
 
     _normalizeEntityList(value) {
@@ -550,7 +559,7 @@ class TimelineCard extends HTMLElement {
             const name = state?.attributes?.friendly_name || entityId;
             const escapedName = this._escapeHtml(name);
             const escapedPicture = this._escapeHtml(picture || "");
-            const trackColor = getTrackColor(index, this._getColors())
+            const trackColor = getTrackColor(index, this._getColors());
             return `
               <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
                 ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}

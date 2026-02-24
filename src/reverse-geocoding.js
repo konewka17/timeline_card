@@ -52,14 +52,14 @@ export function resolveStaySegments(segments, options) {
         const cached = persistentCache.get(segmentKey);
         if (cached) {
             segment.placeName = cached.placeName;
-            segment.reverseGeocoding = cached.reverseGeocoding;
+            segment.reverseGeocoding = {...cached.reverseGeocoding, loadedFromPersistentCache: true};
             continue;
         }
 
         const placeName = pickPlaceName(placeIntervals, segment.start, segment.end);
         if (placeName) {
             segment.placeName = placeName;
-            segment.reverseGeocoding = {source: "places", name: placeName};
+            segment.reverseGeocoding = {source: "places", name: placeName, intervals: placeIntervals};
             setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
             continue;
         }
@@ -223,6 +223,10 @@ function setPersistentCache(key, placeName, reverseGeocoding) {
     } catch {
         // ignore storage errors
     }
+}
+
+export function clearPersistentCache() {
+    localStorage.removeItem(PERSISTENT_CACHE_KEY);
 }
 
 function sleep(ms) {
