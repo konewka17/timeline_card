@@ -9,14 +9,14 @@ import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
 const DEFAULT_CONFIG = {
-    entity: null,
-    places_entity: null,
+    entity: [],
+    places_entity: [],
     osm_api_key: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
     map_appearance: "auto",
     map_height_px: 200,
-    colors: null,
+    colors: [],
     debug: false,
 };
 
@@ -136,14 +136,14 @@ class TimelineCard extends HTMLElement {
     static getStubConfig() {
         return {
             entity: ["device_tracker.your_device"],
-            places_entity: null,
+            places_entity: [],
             osm_api_key: null,
             stay_radius_m: 75,
             min_stay_minutes: 10,
             distance_unit: "metric",
             map_appearance: "auto",
             map_height_px: 200,
-            colors: null,
+            colors: [],
         };
     }
 
