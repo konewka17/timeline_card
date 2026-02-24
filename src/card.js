@@ -17,6 +17,7 @@ const DEFAULT_CONFIG = {
     map_appearance: "auto",
     map_height_px: 200,
     colors: null,
+    debug: false,
 };
 
 class TimelineCard extends HTMLElement {
@@ -41,6 +42,8 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "debug") {
+                this._logCacheToConsole();
             } else if (action === "open-date-picker") {
                 this._openDatePicker();
             } else if (action === "reset-map-zoom") {
@@ -186,6 +189,11 @@ class TimelineCard extends HTMLElement {
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
+    _logCacheToConsole() {
+        console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;")
+        console.log(JSON.stringify(this._cache.get(toDateKey(this._selectedDate))));
+    }
+
     async _ensureDay(date) {
         const key = toDateKey(date);
         const existing = this._cache.get(key);
@@ -303,7 +311,10 @@ class TimelineCard extends HTMLElement {
                 <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
               </div>
               <div class="header my-header">
-                <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                <div class="header-actions">
+                    <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                    ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="Debug"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ''}
+                </div>
                 <div class="date-wrap">
                   <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
                     <span id="timeline-date" class="date"></span>
