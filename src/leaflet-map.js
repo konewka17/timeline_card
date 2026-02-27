@@ -121,16 +121,16 @@ export class TimelineLeafletMap {
     zoomToStay(stay) {
         if (!stay?.center) return;
         this._isMapZoomedToSegment = true;
-        this.fitMap({bounds: [stay.center], defer: false});
+        this.fitMap([stay.center]);
     }
 
     zoomToPoints(points) {
         if (!Array.isArray(points) || points.length < 2) return;
         this._isMapZoomedToSegment = true;
-        this.fitMap({bounds: points, defer: false});
+        this.fitMap(points);
     }
 
-    fitMap({defer = false, bounds = null, pad = 0.1} = {}) {
+    fitMap(bounds = null) {
         if (bounds === null) {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
             if (!bounds.length) return;
@@ -141,14 +141,8 @@ export class TimelineLeafletMap {
             .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lng));
         if (!normalizedBounds.length) return;
 
-        const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(pad);
-        const doFit = () => this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
-
-        if (defer) {
-            requestAnimationFrame(() => requestAnimationFrame(doFit));
-        } else {
-            doFit();
-        }
+        const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(0.1);
+        this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
     }
 
     _drawMapPaths(segments) {

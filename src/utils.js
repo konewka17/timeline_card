@@ -1,10 +1,24 @@
 import {formatTime as formatTimeHelper} from "custom-card-helpers";
 
-export function toDateKey(date) {
+export function formatDate(date, human_readable = false) {
+    if (human_readable) {
+        try {
+            return new Intl.DateTimeFormat(undefined, {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            }).format(date);
+        } catch {}
+    }
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+}
+
+export function today(){
+    return startOfDay(new Date());
 }
 
 export function startOfDay(date) {
@@ -15,7 +29,7 @@ export function endOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 }
 
-export function formatDate(date) {
+export function formatDateOld(date) {
     try {
         return new Intl.DateTimeFormat(undefined, {
             weekday: "short",
@@ -109,4 +123,27 @@ export function getTrackColor(index, colors = []) {
         return "var(--primary-color)";
     }
     return `var(--color-${((index + 1) % 12) + 1})`;
+}
+
+export function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;");
+}
+
+export function normalizeList(value) {
+    if (!value) return [];
+    const list = Array.isArray(value) ? value : [value];
+    return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
+}
+
+export function formatErrorMessage(err) {
+    const message = err && err.message ? String(err.message) : "";
+    if (message.toLowerCase().includes("unknown command")) {
+        return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
+    }
+    return message || "Unable to load history";
 }

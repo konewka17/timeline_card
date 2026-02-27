@@ -1,4 +1,4 @@
-import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {escapeHtml, formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 
 export function renderTimeline(segments, options = {}) {
     if (!segments || segments.length === 0) {
@@ -63,11 +63,3 @@ function renderSegment(segment, index, options) {
   `;
 }
 
-function escapeHtml(text) {
-    if (!text) return "";
-    return text
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\"", "&quot;");
-}
