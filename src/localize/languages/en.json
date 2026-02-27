@@ -1,1 +1,34 @@
-{}
+{
+  "card": {
+    "labels": {
+      "reset_map_zoom": "Reset map zoom",
+      "previous_day": "Previous day",
+      "debug": "Debug",
+      "pick_date": "Pick date",
+      "refresh": "Refresh",
+      "next_day": "Next day"
+    },
+    "timeline": {
+      "loading": "Loading timeline..."
+    },
+    "description": "Daily location timeline from GPS history."
+  },
+  "timeline": {
+    "empty": "No location history for this day.",
+    "unknown_location": "Unknown location",
+    "moving": "Moving"
+  },
+  "utils": {
+    "time": {
+      "all_day": "all day"
+    },
+    "duration": {
+      "hour_short": "h",
+      "minute_short": "min"
+    },
+    "errors": {
+      "history_api_unavailable": "History WebSocket API not available. Ensure the Recorder/History integration is enabled.",
+      "unable_to_load_history": "Unable to load history"
+    }
+  }
+}

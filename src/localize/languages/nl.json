@@ -1,0 +1,34 @@
+{
+  "card": {
+    "labels": {
+      "reset_map_zoom": "Kaartzoom resetten",
+      "previous_day": "Vorige dag",
+      "debug": "Debug",
+      "pick_date": "Datum kiezen",
+      "refresh": "Verversen",
+      "next_day": "Volgende dag"
+    },
+    "timeline": {
+      "loading": "Tijdlijn laden..."
+    },
+    "description": "Dagelijkse locatietijdlijn uit GPS-geschiedenis."
+  },
+  "timeline": {
+    "empty": "Geen locatiegeschiedenis voor deze dag.",
+    "unknown_location": "Onbekende locatie",
+    "moving": "Onderweg"
+  },
+  "utils": {
+    "time": {
+      "all_day": "hele dag"
+    },
+    "duration": {
+      "hour_short": "u",
+      "minute_short": "min"
+    },
+    "errors": {
+      "history_api_unavailable": "History WebSocket API niet beschikbaar. Zorg dat de Recorder/History-integratie is ingeschakeld.",
+      "unable_to_load_history": "Kan geschiedenis niet laden"
+    }
+  }
+}

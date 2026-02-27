@@ -1,4 +1,5 @@
 import {formatTime} from "custom-card-helpers";
+import {localize} from "./localize/localize.js";
 
 export function formatDate(date, locale = null) {
     if (locale) {
@@ -35,7 +36,7 @@ export function formatTimeRange(start, end, options={}) {
     const locale = options.locale || {language: "en", time_format: "language"};
 
     if (hideStartTime && hideEndTime) {
-        return "all day";
+        return localize("utils.time.all_day");
     } else if (hideStartTime && !hideEndTime) {
         return formatTime(end, locale);
     } else if (hideEndTime && !hideStartTime) {
@@ -50,9 +51,9 @@ export function formatDuration(ms) {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
-        return `${hours} h ${minutes} min`;
+        return `${hours} ${localize("utils.duration.hour_short")} ${minutes} ${localize("utils.duration.minute_short")}`;
     }
-    return `${minutes} min`;
+    return `${minutes} ${localize("utils.duration.minute_short")}`;
 }
 
 export function formatDistance(meters, distanceUnit = "metric") {
@@ -126,9 +127,9 @@ export function normalizeList(value) {
 export function formatErrorMessage(err) {
     const message = err && err.message ? String(err.message) : "";
     if (message.toLowerCase().includes("unknown command")) {
-        return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
+        return localize("utils.errors.history_api_unavailable");
     }
-    return message || "Unable to load history";
+    return message || localize("utils.errors.unable_to_load_history");
 }
 
 export function sleep(ms) {

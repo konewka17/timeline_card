@@ -15,6 +15,7 @@ import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
+import {localize} from "./localize/localize.js";
 
 const DEFAULT_CONFIG = {
     entity: [],
@@ -188,23 +189,23 @@ class TimelineCard extends HTMLElement {
             <div class="card">
               <div class="map-wrap">
                 <div id="overview-map"></div>
-                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="Reset map zoom" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
+                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="${localize("card.labels.reset_map_zoom")}" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
               </div>
               <div class="header my-header">
                 <div class="header-actions">
-                    <ha-icon-button class="nav-button" data-action="prev" label="Previous day"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                    ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="Debug"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
+                    <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                    ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="${localize("card.labels.debug")}"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
                 </div>
                 <div class="date-wrap">
-                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="Pick date">
+                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="${localize("card.labels.pick_date")}">
                     <span id="timeline-date" class="date"></span>
                     <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
                   </button>
                   <input id="timeline-date-picker" class="date-picker-input" type="date">
                 </div>
                 <div class="header-actions">
-                  <ha-icon-button class="nav-button" data-action="refresh" label="Refresh"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
-                  <ha-icon-button class="nav-button" data-action="next" label="Next day"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
+                  <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
+                  <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
               <div id="entity-selector" class="entity-selector" hidden></div>
@@ -306,7 +307,7 @@ class TimelineCard extends HTMLElement {
     _renderTimelineContent(dayData) {
         if (dayData.loading || dayData.error) {
             const errorHtml = dayData.error ? `<div class="error">${dayData.error}</div>` : "";
-            const loadingHtml = dayData.loading ? `<div class="loading">Loading timeline...</div>` : "";
+            const loadingHtml = dayData.loading ? `<div class="loading">${localize("card.timeline.loading")}</div>` : "";
             return `${errorHtml}${loadingHtml}`;
         }
 
@@ -485,5 +486,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
     type: "location-timeline-card",
     name: "Location Timeline Card",
-    description: "Daily location timeline from GPS history.",
+    description: localize("card.description"),
 });

@@ -1,8 +1,9 @@
 import {escapeHtml, formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {localize} from "./localize/localize.js";
 
 export function renderTimeline(segments, locale, distance_unit) {
     if (!segments || segments.length === 0) {
-        return `<div class="empty">No location history for this day.</div>`;
+        return `<div class="empty">${localize("timeline.empty")}</div>`;
     }
 
     const firstIsStay = segments[0]?.type === "stay";
@@ -35,7 +36,7 @@ function renderSegment(segment, index, options) {
               <div class="line-dot"></div>
             </div>
             <div class="content location">
-              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || "Unknown location")}</div>
+              <div class="title">${escapeHtml(segment.zoneName || segment.placeName || localize("timeline.unknown_location"))}</div>
             </div>
             <div class="content time">
               <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
@@ -50,7 +51,7 @@ function renderSegment(segment, index, options) {
       <div class="line-slot"></div>
       <div class="content location travel">
         <ha-icon class="move-icon" icon="mdi:chart-line-variant"></ha-icon>
-        <div class="title">Moving<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
+        <div class="title">${localize("timeline.moving")}<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
       </div>
       <div class="content time">
         <div class="meta">${formatDuration(segment.durationMs)}</div>
@@ -58,4 +59,3 @@ function renderSegment(segment, index, options) {
     </div>
   `;
 }
-
