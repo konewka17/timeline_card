@@ -14,7 +14,6 @@ let lastRequestAt = 0;
 let queueSession = 0;
 const persistentCache = loadPersistentCache();
 
-
 export function clearReverseGeocodingQueue() {
     queueSession += 1;
 
@@ -34,14 +33,12 @@ export function clearReverseGeocodingQueue() {
 }
 
 export function resolveStaySegments(segments, options) {
-    const {
-        placeStates = [],
-        date,
-        osmApiKey = null,
-        onUpdate = () => {},
-    } = options;
+    const {placeStates = [], date, osmApiKey = null, onUpdate = () => {}} = options;
     const placeIntervals = placeStates.length
-        ? buildPlaceIntervals([...placeStates].sort((a, b) => a.ts - b.ts), date)
+        ? buildPlaceIntervals(
+              [...placeStates].sort((a, b) => a.ts - b.ts),
+              date,
+          )
         : [];
 
     for (const segment of segments) {
@@ -129,8 +126,8 @@ async function resolveQueuedRequest(request, sessionAtStart) {
             result = await response.json();
             const features = result.features?.[0]?.properties?.geocoding || {};
             const houseNumber = features.housenumber ? ` ${features.housenumber}` : "";
-            const formatted_address = features.street ? `${features.street}${houseNumber}, ${features.city}` : null
-            const formatted_locality = features.locality ? `${features.locality}, ${features.city}` : null
+            const formatted_address = features.street ? `${features.street}${houseNumber}, ${features.city}` : null;
+            const formatted_locality = features.locality ? `${features.locality}, ${features.city}` : null;
             name = features.name || formatted_address || formatted_locality || features.label || UNKNOWN_LOCATION;
         }
     } catch (error) {
@@ -165,7 +162,7 @@ function buildPlaceIntervals(placeStates, date) {
 
 function placeDisplayName(state) {
     const attrs = state.attributes || {};
-    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ''}, ${attrs.city}` : null
+    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ""}, ${attrs.city}` : null;
     return attrs.place_name || formatted_address || state.state || attrs.formatted_address || null;
 }
 
@@ -187,7 +184,6 @@ function pickPlaceName(intervals, start, end) {
     }
     return best;
 }
-
 
 function toPersistentCacheKey(segment) {
     const lat = Number(segment?.center?.lat);

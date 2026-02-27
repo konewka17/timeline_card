@@ -85,7 +85,6 @@ ha-card {
   cursor: default;
 }
 
-
 .entity-selector {
   display: flex;
   justify-content: center;
@@ -109,7 +108,8 @@ ha-card {
   padding: 3px 10px 3px 3px;
   cursor: pointer;
   white-space: nowrap;
-  background: none;}
+  background: none;
+}
 
 .entity-chip.active {
   padding-left: 4px;
@@ -256,7 +256,7 @@ ha-card {
   color: var(--secondary-text-color);
 }
 
-.entry.stay .title{
+.entry.stay .title {
   background-color: #0001;
   padding: 3px 10px;
   border-radius: 20px;
@@ -274,7 +274,6 @@ ha-card {
   font-weight: normal;
 }
 
-
 .map-wrap {
   position: relative;
 }
@@ -286,8 +285,7 @@ ha-card {
 
 #overview-map.dark {
   background: #090909;
-  --map-filter: invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2)
-    saturate(0.3);
+  --map-filter: invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3);
 }
 
 .leaflet-tile-pane {

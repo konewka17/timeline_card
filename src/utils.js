@@ -40,7 +40,7 @@ export function formatTime(date, locale) {
     }
 }
 
-export function formatTimeRange(start, end, options={}) {
+export function formatTimeRange(start, end, options = {}) {
     const hideStartTime = options.hideStartTime || false;
     const hideEndTime = options.hideEndTime || false;
     const locale = options.locale || {language: "en", time_format: "language"};
@@ -92,12 +92,17 @@ export function haversineMeters(a, b) {
     const lat2 = toRad(b.lat);
     const sin1 = Math.sin(dLat / 2);
     const sin2 = Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2), Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)));
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2),
+            Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)),
+        );
     return r * c;
 }
 
 export function toLatLon(point) {
-    return {lat: point.point[0], lon: point.point[1]}
+    return {lat: point.point[0], lon: point.point[1]};
 }
 
 export function getTrackColor(index, colors = []) {

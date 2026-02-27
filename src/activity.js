@@ -3,7 +3,7 @@ export function resolveMoveSegments(segments, activityStates, date) {
 
     const intervals = buildActivityIntervals(
         [...activityStates].sort((a, b) => a.ts - b.ts),
-        date
+        date,
     );
     if (intervals.length === 0) return;
 
@@ -30,7 +30,8 @@ function pickActivityName(intervals, start, end) {
     const counts = new Map();
     for (const interval of intervals) {
         const overlapMs = Math.min(end, interval.end) - Math.max(start, interval.start);
-        if (overlapMs <= 0 || !interval.name || ["unknown", "unavailable"].includes(interval.name.toLowerCase())) continue;
+        if (overlapMs <= 0 || !interval.name || ["unknown", "unavailable"].includes(interval.name.toLowerCase()))
+            continue;
         counts.set(interval.name, (counts.get(interval.name) || 0) + overlapMs);
     }
 

@@ -36,7 +36,7 @@ function detectStays(points, stayRadius, minStayMs) {
 
     while (i < points.length - 1) {
         const cluster = [toLatLon(points[i])];
-        let center = toLatLon(points[i])
+        let center = toLatLon(points[i]);
         let lastInIndex = i;
         let outlierUsed = false;
 
@@ -87,7 +87,7 @@ function meanCenter(cluster) {
             acc.lon += point.lon;
             return acc;
         },
-        {lat: 0, lon: 0}
+        {lat: 0, lon: 0},
     );
     return {
         lat: sum.lat / cluster.length,
