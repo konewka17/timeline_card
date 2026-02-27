@@ -1,7 +1,6 @@
 import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
-import {fetchEntityHistory, fetchHistory} from "./history.js";
-import {segmentTimeline} from "./segmentation.js";
+import {getSegmentedTracks} from "./segmentation.js";
 import {
     escapeHtml,
     formatDate,
@@ -13,7 +12,7 @@ import {
     toLatLon
 } from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import {clearPersistentCache, clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
+import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
@@ -197,47 +196,14 @@ class TimelineCard extends HTMLElement {
         this._cache.set(key, {loading: true, tracks: null, error: null});
 
         try {
-            const entities = this._config.entity;
-            const placesByEntity = this._getPlacesEntityMap();
-            const zones = this._collectZones();
-            const tracks = await Promise.all(entities.map(async (entityId) => {
-                const points = await fetchHistory(this._hass, entityId, date);
-                const placeEntityId = placesByEntity.get(entityId) || null;
-                const placeStates = placeEntityId ? await fetchEntityHistory(this._hass, placeEntityId, date) : [];
-                const segments = segmentTimeline(points, {
-                    stayRadiusM: this._config.stay_radius_m,
-                    minStayMinutes: this._config.min_stay_minutes,
-                }, zones);
-                resolveStaySegments(segments, {
-                    placeStates, date, osmApiKey: this._config.osm_api_key,
-                    onUpdate: () => {this._render();}
-                });
-                return {entityId, placeEntityId, points, segments};
-            }));
-            this._cache.set(key, {loading: false, tracks, error: null,});
+            const tracks = await getSegmentedTracks(date, this._config, this._hass, () => {this._render()});
+            this._cache.set(key, {loading: false, tracks, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
-            this._cache.set(key, {loading: false, tracks: null, error: formatErrorMessage(err),});
+            this._cache.set(key, {loading: false, tracks: null, error: formatErrorMessage(err)});
         }
         this._render();
-        requestAnimationFrame(() => {
-            this._drawMapPaths();
-        });
-    }
-
-    _collectZones() {
-        if (!this._hass || !this._hass.states) return [];
-        const states = Object.values(this._hass.states);
-        return states
-            .filter((state) => state.entity_id?.startsWith("zone.") && state.attributes?.passive !== true)
-            .map((state) => ({
-                name: state.attributes?.friendly_name || state.entity_id,
-                icon: state.attributes?.icon || null,
-                lat: Number(state.attributes?.latitude),
-                lon: Number(state.attributes?.longitude),
-                radius: Number(state.attributes?.radius) || 100,
-            }))
-            .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
+        requestAnimationFrame(() => this._drawMapPaths());
     }
 
     _render() {
@@ -256,14 +222,12 @@ class TimelineCard extends HTMLElement {
             .toggleAttribute("disabled", this._selectedDate >= today());
         this._applyMapHeight();
 
-        const body = this.shadowRoot.getElementById("timeline-body");
         const selector = this.shadowRoot.getElementById("entity-selector");
         selector.innerHTML = this._renderEntitySelector();
         selector.toggleAttribute("hidden", this._config.entity.length < 2);
-        this._bindTimelineTouch(body);
         this._updateMapResetButton();
         const activeDayData = this._getCurrentTrackDayData(dayData);
-        body.innerHTML = this._renderTimelineContent(activeDayData);
+        this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
         this._attachMapCard();
         this._rendered = true;
@@ -304,6 +268,9 @@ class TimelineCard extends HTMLElement {
             </div>
           </ha-card>
         `;
+
+        const body = this.shadowRoot.getElementById("timeline-body");
+        this._bindTimelineTouch(body);
     }
 
     _openDatePicker() {
@@ -461,19 +428,6 @@ class TimelineCard extends HTMLElement {
         this._render();
     }
 
-    _getPlacesEntityMap() {
-        const map = new Map();
-        this._config.places_entity.forEach((placeEntityId) => {
-            const trackerEntityId = this._hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
-            if (!trackerEntityId || !this._config.entity.includes(trackerEntityId) || map.has(trackerEntityId)) {
-                return;
-            }
-            map.set(trackerEntityId, placeEntityId);
-        });
-
-        return map;
-    }
-
     _renderEntitySelector() {
         const entities = this._config.entity;
         if (entities.length < 2) return "";
@@ -502,7 +456,9 @@ class TimelineCard extends HTMLElement {
         }
 
         try {
-            return renderTimeline(dayData.segments, {locale: this._hass?.locale, distanceUnit: this._config.distance_unit});
+            return renderTimeline(dayData.segments, {
+                locale: this._hass?.locale, distanceUnit: this._config.distance_unit
+            });
         } catch (err) {
             const message = formatErrorMessage(err);
             console.warn("Timeline card: timeline render failed", err);

@@ -1,4 +1,6 @@
 import {haversineMeters, toLatLon} from "./utils.js";
+import {fetchEntityHistory, fetchHistory} from "./history.js";
+import {resolveStaySegments} from "./reverse-geocoding.js";
 
 export function segmentTimeline(points, options, zones) {
     if (!Array.isArray(points) || points.length === 0) return [];
@@ -149,4 +151,52 @@ function resolveZone(center, zones) {
         }
     }
     return match;
+}
+
+export function getPlacesEntityMap(config, hass) {
+    const map = new Map();
+    config.places_entity.forEach((placeEntityId) => {
+        const trackerEntityId = hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
+        if (!trackerEntityId || !config.entity.includes(trackerEntityId) || map.has(trackerEntityId)) {
+            return;
+        }
+        map.set(trackerEntityId, placeEntityId);
+    });
+
+    return map;
+}
+
+function collectZones(hass) {
+    if (!hass || !hass.states) return [];
+    const states = Object.values(hass.states);
+    return states
+        .filter((state) => state.entity_id?.startsWith("zone.") && state.attributes?.passive !== true)
+        .map((state) => ({
+            name: state.attributes?.friendly_name || state.entity_id,
+            icon: state.attributes?.icon || null,
+            lat: Number(state.attributes?.latitude),
+            lon: Number(state.attributes?.longitude),
+            radius: Number(state.attributes?.radius) || 100,
+        }))
+        .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
+}
+
+export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
+    const entities = config.entity;
+    const placesByEntity = getPlacesEntityMap(config, hass);
+    const zones = collectZones(hass);
+    return await Promise.all(entities.map(async (entityId) => {
+        const points = await fetchHistory(hass, entityId, date);
+        const placeEntityId = placesByEntity.get(entityId) || null;
+        const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
+        const segments = segmentTimeline(points, {
+            stayRadiusM: config.stay_radius_m,
+            minStayMinutes: config.min_stay_minutes,
+        }, zones);
+        resolveStaySegments(segments, {
+            placeStates, date, osmApiKey: config.osm_api_key,
+            onUpdate: onQueueUpdate
+        });
+        return {entityId, placeEntityId, points, segments};
+    }));
 }
