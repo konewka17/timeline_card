@@ -1,14 +1,10 @@
-import {haversineMeters, toLatLon} from "./utils.js";
-import {fetchEntityHistory, toPoint} from "./history.js";
+import {endOfDay, haversineMeters, startOfDay, toLatLon, toPoint} from "./utils.js";
 import {resolveStaySegments} from "./reverse-geocoding.js";
 
-export function segmentTimeline(points, options, zones) {
+export function segmentTimeline(points, config, zones) {
     if (!Array.isArray(points) || points.length === 0) return [];
-    const stayRadius = Math.max(10, options.stayRadiusM || 75);
-    const minStayMs = Math.max(1, options.minStayMinutes || 10) * 60000;
-
     const sorted = [...points].sort((a, b) => a.timestamp - b.timestamp);
-    const stays = detectStays(sorted, stayRadius, minStayMs);
+    const stays = detectStays(sorted, config);
 
     const segments = [];
     let cursor = 0;
@@ -28,14 +24,15 @@ export function segmentTimeline(points, options, zones) {
         const move = buildMoveSegment(sorted.slice(cursor), lastStayEndpoint);
         if (move) segments.push(move);
     }
-
     return segments;
 }
 
-function detectStays(points, stayRadius, minStayMs) {
+function detectStays(points, config) {
+    const stayRadius = Math.max(10, config.stay_radius_m || 75);
+    const minStayMs = Math.max(1, config.min_stay_minutes || 10) * 60000;
+
     const stays = [];
     let i = 0;
-
     while (i < points.length - 1) {
         const cluster = [toLatLon(points[i])];
         let center = toLatLon(points[i])
@@ -52,12 +49,10 @@ function detectStays(points, stayRadius, minStayMs) {
                 outlierUsed = false;
                 continue;
             }
-
             if (!outlierUsed && distance <= stayRadius * 2) {
                 outlierUsed = true;
                 continue;
             }
-
             break;
         }
 
@@ -78,7 +73,6 @@ function detectStays(points, stayRadius, minStayMs) {
             i += 1;
         }
     }
-
     return stays;
 }
 
@@ -91,10 +85,7 @@ function meanCenter(cluster) {
         },
         {lat: 0, lon: 0}
     );
-    return {
-        lat: sum.lat / cluster.length,
-        lon: sum.lon / cluster.length,
-    };
+    return {lat: sum.lat / cluster.length, lon: sum.lon / cluster.length};
 }
 
 function maxDistance(center, cluster) {
@@ -153,7 +144,7 @@ function resolveZone(center, zones) {
     return match;
 }
 
-export function getPlacesEntityMap(config, hass) {
+function getPlacesEntityMap(config, hass) {
     const map = new Map();
     config.places_entity.forEach((placeEntityId) => {
         const trackerEntityId = hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
@@ -181,18 +172,34 @@ function collectZones(hass) {
         .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
 }
 
+async function fetchEntityHistory(hass, entityId, date) {
+    if (!hass || !entityId) return [];
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+    const message = {
+        type: "history/history_during_period",
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        entity_ids: [entityId],
+        minimal_response: false,
+        no_attributes: false,
+        significant_changes_only: false,
+    };
+
+    const response = await hass.callWS(message);
+    return response[entityId] || [];
+}
+
 export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
     const entities = config.entity;
     const placesByEntity = getPlacesEntityMap(config, hass);
     const zones = collectZones(hass);
     return await Promise.all(entities.map(async (entityId) => {
-        const points = await fetchEntityHistory(hass, entityId, date).map((state) => toPoint(state)).filter(Boolean);
+        let points = await fetchEntityHistory(hass, entityId, date)
+        points = points.map((state) => toPoint(state)).filter(Boolean);
         const placeEntityId = placesByEntity.get(entityId) || null;
         const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
-        const segments = segmentTimeline(points, {
-            stayRadiusM: config.stay_radius_m,
-            minStayMinutes: config.min_stay_minutes,
-        }, zones);
+        const segments = segmentTimeline(points, config, zones);
         resolveStaySegments(segments, {
             placeStates, date, osmApiKey: config.osm_api_key,
             onUpdate: onQueueUpdate

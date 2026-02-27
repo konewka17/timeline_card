@@ -1,5 +1,5 @@
 import Leaflet from "leaflet";
-import {getTrackColor, normalizeLatLng} from "./utils.js";
+import {getTrackColor} from "./utils.js";
 
 const DEFAULT_CENTER = [52.3731339, 4.8903147];
 const DEFAULT_ZOOM = 13;
@@ -81,7 +81,7 @@ export class TimelineLeafletMap {
         this._isMapZoomedToSegment = false;
 
         const activeSegments = tracks[activeEntityIndex]?.segments || [];
-        this._drawMapPaths(activeSegments);
+        this._drawMapSegments(activeSegments);
     }
 
     highlightSegment(segment, segments) {
@@ -98,7 +98,7 @@ export class TimelineLeafletMap {
             this._isTravelHighlightActive = true;
         }
 
-        this._drawMapPaths(segments);
+        this._drawMapSegments(segments);
     }
 
     clearHighlight(segments) {
@@ -110,7 +110,7 @@ export class TimelineLeafletMap {
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
 
-        this._drawMapPaths(segments);
+        this._drawMapSegments(segments);
     }
 
     resetMapZoom() {
@@ -133,19 +133,12 @@ export class TimelineLeafletMap {
     fitMap(bounds = null) {
         if (bounds === null) {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
-            if (!bounds.length) return;
         }
-
-        const normalizedBounds = bounds
-            .map(normalizeLatLng)
-            .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lng));
-        if (!normalizedBounds.length) return;
-
-        const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(0.1);
+        const paddedBounds = this._Leaflet.latLngBounds(bounds).pad(0.1);
         this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
     }
 
-    _drawMapPaths(segments) {
+    _drawMapSegments(segments) {
         this._mapLayers.forEach((layer) => layer.remove());
         this._mapLayers = [];
 

@@ -1,9 +1,9 @@
-import {formatTime as formatTimeHelper} from "custom-card-helpers";
+import {formatTime} from "custom-card-helpers";
 
-export function formatDate(date, human_readable = false) {
-    if (human_readable) {
+export function formatDate(date, locale = null) {
+    if (locale) {
         try {
-            return new Intl.DateTimeFormat(undefined, {
+            return new Intl.DateTimeFormat(locale.language, {
                 weekday: "short",
                 year: "numeric",
                 month: "short",
@@ -27,31 +27,6 @@ export function startOfDay(date) {
 
 export function endOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-}
-
-export function formatDateOld(date) {
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        }).format(date);
-    } catch {
-        return date.toDateString();
-    }
-}
-
-export function formatTime(date, locale) {
-    return formatTimeHelper(date, locale);
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(date);
-    } catch {
-        return date.toLocaleTimeString();
-    }
 }
 
 export function formatTimeRange(start, end, options={}) {
@@ -114,6 +89,14 @@ export function toLatLon(point) {
     return {lat: point.point[0], lon: point.point[1]}
 }
 
+export function toPoint(state) {
+    const attrs = state.a || {};
+    let lat = Number(attrs.latitude);
+    let lon = Number(attrs.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {point: [lat, lon], timestamp: new Date(state.lu * 1000),};
+}
+
 export function getTrackColor(index, colors = []) {
     if (colors.length) {
         return colors[index % colors.length];
@@ -146,18 +129,4 @@ export function formatErrorMessage(err) {
         return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
     }
     return message || "Unable to load history";
-}
-
-export function normalizeLatLng(point) {
-    if (Array.isArray(point) && point.length >= 2) {
-        return {lat: Number(point[0]), lng: Number(point[1])};
-    }
-    if (!point || typeof point !== "object") return null;
-    if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
-        return {lat: Number(point.lat), lng: Number(point.lng)};
-    }
-    if (Number.isFinite(point.lat) && Number.isFinite(point.lon)) {
-        return {lat: Number(point.lat), lng: Number(point.lon)};
-    }
-    return null;
 }

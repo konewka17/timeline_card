@@ -160,7 +160,7 @@ class TimelineCard extends HTMLElement {
         const dateKey = formatDate(this._selectedDate);
         const dayData = this._cache.get(dateKey) || {loading: false, tracks: null, error: null};
 
-        this.shadowRoot.getElementById("timeline-date").textContent = formatDate(this._selectedDate, true);
+        this.shadowRoot.getElementById("timeline-date").textContent = formatDate(this._selectedDate, this._hass?.locale);
         const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
         datePicker.value = formatDate(this._selectedDate);
         datePicker.max = formatDate(new Date());
@@ -311,9 +311,7 @@ class TimelineCard extends HTMLElement {
         }
 
         try {
-            return renderTimeline(dayData.segments, {
-                locale: this._hass?.locale, distanceUnit: this._config.distance_unit
-            });
+            return renderTimeline(dayData.segments, this._hass?.locale, this._config.distance_unit);
         } catch (err) {
             const message = formatErrorMessage(err);
             console.warn("Timeline card: timeline render failed", err);
