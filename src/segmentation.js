@@ -1,5 +1,5 @@
 import {haversineMeters, toLatLon} from "./utils.js";
-import {fetchEntityHistory, fetchHistory} from "./history.js";
+import {fetchEntityHistory, toPoint} from "./history.js";
 import {resolveStaySegments} from "./reverse-geocoding.js";
 
 export function segmentTimeline(points, options, zones) {
@@ -186,7 +186,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
     const placesByEntity = getPlacesEntityMap(config, hass);
     const zones = collectZones(hass);
     return await Promise.all(entities.map(async (entityId) => {
-        const points = await fetchHistory(hass, entityId, date);
+        const points = await fetchEntityHistory(hass, entityId, date).map((state) => toPoint(state)).filter(Boolean);
         const placeEntityId = placesByEntity.get(entityId) || null;
         const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
         const segments = segmentTimeline(points, {

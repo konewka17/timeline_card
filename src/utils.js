@@ -147,3 +147,17 @@ export function formatErrorMessage(err) {
     }
     return message || "Unable to load history";
 }
+
+export function normalizeLatLng(point) {
+    if (Array.isArray(point) && point.length >= 2) {
+        return {lat: Number(point[0]), lng: Number(point[1])};
+    }
+    if (!point || typeof point !== "object") return null;
+    if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+        return {lat: Number(point.lat), lng: Number(point.lng)};
+    }
+    if (Number.isFinite(point.lat) && Number.isFinite(point.lon)) {
+        return {lat: Number(point.lat), lng: Number(point.lon)};
+    }
+    return null;
+}

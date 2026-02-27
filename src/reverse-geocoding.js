@@ -153,10 +153,10 @@ function buildPlaceIntervals(placeStates, date) {
     const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
     return placeStates.map((state, index) => {
         const next = placeStates[index + 1];
-        const end = next ? next.ts : endOfDay;
+        const end = next ? new Date(next.lu * 1000) : endOfDay;
         const name = placeDisplayName(state);
         return {
-            start: state.ts,
+            start: new Date(state.lu * 1000),
             end,
             name,
         };
