@@ -1,24 +1,20 @@
-import {formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {escapeHtml, formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 
-export function renderTimeline(segments, options = {}) {
+export function renderTimeline(segments, locale, distance_unit) {
     if (!segments || segments.length === 0) {
         return `<div class="empty">No location history for this day.</div>`;
     }
 
     const firstIsStay = segments[0]?.type === "stay";
     const lastIsStay = segments[segments.length - 1]?.type === "stay";
-    const timelineClass = [
-        "timeline",
-        firstIsStay ? "trim-spine-top" : "",
-        lastIsStay ? "trim-spine-bottom" : "",
-    ].join(" ");
+    const timelineClass = ["timeline", firstIsStay ? "trim-spine-top" : "", lastIsStay ? "trim-spine-bottom" : ""]
 
     return `
-    <div class="${timelineClass}">
+    <div class="${timelineClass.join(" ")}">
       <div class="spine"></div>
       ${segments.map((segment, index) => renderSegment(segment, index, {
-        locale: options.locale,
-        distanceUnit: options.distanceUnit || "metric",
+        locale: locale,
+        distanceUnit: distance_unit || "metric",
         hideStartTime: index === 0 && firstIsStay,
         hideEndTime: index === segments.length - 1 && lastIsStay,
     })).join("")}
@@ -63,11 +59,3 @@ function renderSegment(segment, index, options) {
   `;
 }
 
-function escapeHtml(text) {
-    if (!text) return "";
-    return text
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\"", "&quot;");
-}

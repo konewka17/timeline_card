@@ -1,10 +1,24 @@
-import {formatTime as formatTimeHelper} from "custom-card-helpers";
+import {formatTime} from "custom-card-helpers";
 
-export function toDateKey(date) {
+export function formatDate(date, locale = null) {
+    if (locale) {
+        try {
+            return new Intl.DateTimeFormat(locale.language, {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            }).format(date);
+        } catch {}
+    }
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+}
+
+export function today(){
+    return startOfDay(new Date());
 }
 
 export function startOfDay(date) {
@@ -13,31 +27,6 @@ export function startOfDay(date) {
 
 export function endOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-}
-
-export function formatDate(date) {
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        }).format(date);
-    } catch {
-        return date.toDateString();
-    }
-}
-
-export function formatTime(date, locale) {
-    return formatTimeHelper(date, locale);
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(date);
-    } catch {
-        return date.toLocaleTimeString();
-    }
 }
 
 export function formatTimeRange(start, end, options={}) {
@@ -100,6 +89,14 @@ export function toLatLon(point) {
     return {lat: point.point[0], lon: point.point[1]}
 }
 
+export function toPoint(state) {
+    const attrs = state.a || {};
+    let lat = Number(attrs.latitude);
+    let lon = Number(attrs.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {point: [lat, lon], timestamp: new Date(state.lu * 1000),};
+}
+
 export function getTrackColor(index, colors = []) {
     if (colors.length) {
         return colors[index % colors.length];
@@ -109,4 +106,31 @@ export function getTrackColor(index, colors = []) {
         return "var(--primary-color)";
     }
     return `var(--color-${((index + 1) % 12) + 1})`;
+}
+
+export function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;");
+}
+
+export function normalizeList(value) {
+    if (!value) return [];
+    const list = Array.isArray(value) ? value : [value];
+    return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
+}
+
+export function formatErrorMessage(err) {
+    const message = err && err.message ? String(err.message) : "";
+    if (message.toLowerCase().includes("unknown command")) {
+        return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
+    }
+    return message || "Unable to load history";
+}
+
+export function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }

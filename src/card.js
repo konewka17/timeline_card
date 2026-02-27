@@ -1,10 +1,18 @@
 import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
-import {fetchEntityHistory, fetchHistory} from "./history.js";
-import {segmentTimeline} from "./segmentation.js";
-import {formatDate, getTrackColor, startOfDay, toDateKey, toLatLon} from "./utils.js";
+import {getSegmentedTracks} from "./segmentation.js";
+import {
+    escapeHtml,
+    formatDate,
+    formatErrorMessage,
+    getTrackColor,
+    normalizeList,
+    startOfDay,
+    today,
+    toLatLon
+} from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
-import {clearPersistentCache, clearReverseGeocodingQueue, resolveStaySegments} from "./reverse-geocoding.js";
+import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 
@@ -16,6 +24,7 @@ const DEFAULT_CONFIG = {
     min_stay_minutes: 10,
     map_appearance: "auto",
     map_height_px: 200,
+    distance_unit: "metric",
     colors: [],
     debug: false,
 };
@@ -31,83 +40,23 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._touchStart = null;
         this._activeEntityIndex = 0;
-
-        this.shadowRoot.addEventListener("click", (event) => {
-            const target = event.target.closest("[data-action]");
-            if (!target) return;
-            const action = target.dataset.action;
-            if (action === "prev") {
-                this._shiftDate(-1);
-            } else if (action === "next") {
-                this._shiftDate(1);
-            } else if (action === "refresh") {
-                this._refreshCurrentDay();
-            } else if (action === "debug") {
-                this._logCacheToConsole();
-            } else if (action === "open-date-picker") {
-                this._openDatePicker();
-            } else if (action === "reset-map-zoom") {
-                this._resetMapZoom();
-            } else if (action === "select-entity") {
-                this._setActiveEntityIndex(Number(target.dataset.entityIndex));
-            }
-        });
-
-
-        this.shadowRoot.addEventListener("change", (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker") return;
-            if (!target.value) return;
-            const next = new Date(`${target.value}T00:00:00`);
-            if (!Number.isNaN(next.getTime())) {
-                this._selectedDate = startOfDay(next);
-                this._ensureDay(this._selectedDate).then(() => this._render());
-            }
-        });
-
-        this.shadowRoot.addEventListener("mouseover", (event) => {
-            const entry = event.target.closest("[data-segment-index]");
-            if (!entry || !this.shadowRoot.contains(entry)) return;
-            if (entry.contains(event.relatedTarget)) return;
-            this._handleSegmentHoverStart(Number(entry.dataset.segmentIndex));
-        });
-
-        this.shadowRoot.addEventListener("mouseout", (event) => {
-            const entry = event.target.closest("[data-segment-index]");
-            if (!entry || !this.shadowRoot.contains(entry)) return;
-            if (entry.contains(event.relatedTarget)) return;
-            this._clearHoverHighlight();
-        });
-
-        this.shadowRoot.addEventListener("click", (event) => {
-            const entry = event.target.closest("[data-segment-index]");
-            if (!entry || !this.shadowRoot.contains(entry)) return;
-            if (entry.contains(event.relatedTarget)) return;
-            this._handleSegmentClick(Number(entry.dataset.segmentIndex));
-        });
+        this._addEventListeners();
     }
 
+    // noinspection JSUnusedGlobalSymbols
     setConfig(config) {
-        if (!config || !config.entity) {
-            throw new Error("You need to define an entity");
-        }
         this._config = {...DEFAULT_CONFIG, ...config};
-        if (config.distance_unit === undefined) {
-            this._config.distance_unit = "metric";
-        } else if (config.distance_unit !== "metric" && config.distance_unit !== "imperial") {
-            throw new Error("distance_unit must be either 'metric' or 'imperial'");
-        }
-        this._config.map_appearance = this._config.map_appearance ?? "auto";
-        if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
-            throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
-        }
-        this._activeEntityIndex = 0;
+        this._checkConfig();
+
         this._cache.clear();
         if (this._config.debug) {
             clearPersistentCache();
         }
+
+        this._activeEntityIndex = 0;
         this._selectedDate = startOfDay(new Date());
-        this._syncMapAppearance();
+        this._setDarkMode();
+        this._renderEntitySelector(true);
         this._applyMapHeight();
         if (this._hass) {
             this._ensureDay(this._selectedDate);
@@ -115,11 +64,13 @@ class TimelineCard extends HTMLElement {
         this._render();
     }
 
+    // noinspection JSUnusedGlobalSymbols
     set hass(hass) {
         this._hass = hass;
-        this._syncMapAppearance();
+        this._setDarkMode();
+        this._renderEntitySelector();
         if (!this._config.entity) return;
-        const dateKey = toDateKey(this._selectedDate);
+        const dateKey = formatDate(this._selectedDate);
         if (!this._cache.has(dateKey)) {
             this._ensureDay(this._selectedDate);
         }
@@ -129,11 +80,32 @@ class TimelineCard extends HTMLElement {
         }
     }
 
+    // noinspection JSUnusedGlobalSymbols
     static getConfigForm() {
         return getConfigFormSchema();
     }
 
-    _syncMapAppearance() {
+    // noinspection JSUnusedGlobalSymbols
+    getCardSize() {
+        return 10;
+    }
+
+    _checkConfig() {
+        this._config.entity = normalizeList(this._config.entity);
+        this._config.places_entity = normalizeList(this._config.places_entity);
+        this._config.colors = normalizeList(this._config.colors);
+        if (this._config.entity.length === 0) {
+            throw new Error("You need to define an entity");
+        }
+        if (!["metric", "imperial"].includes(this._config.distance_unit)) {
+            throw new Error("distance_unit must be either 'metric' or 'imperial'");
+        }
+        if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
+            throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
+        }
+    }
+
+    _setDarkMode() {
         let darkMode = Boolean(this._hass?.themes?.darkMode);
         if (this._config.map_appearance === "dark") {
             darkMode = true;
@@ -149,10 +121,7 @@ class TimelineCard extends HTMLElement {
         mapElement.style.setProperty("height", `${this._config.map_height_px}px`, "important");
     }
 
-    getCardSize() {
-        return 6;
-    }
-
+    // Actions
     _shiftDate(direction) {
         clearReverseGeocodingQueue();
 
@@ -173,118 +142,40 @@ class TimelineCard extends HTMLElement {
     }
 
     _refreshCurrentDay() {
-        const key = toDateKey(this._selectedDate);
+        const key = formatDate(this._selectedDate);
         this._cache.delete(key);
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
     _logCacheToConsole() {
         console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;");
-        console.log(JSON.stringify(this._cache.get(toDateKey(this._selectedDate))));
+        console.log(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
     }
 
-    async _ensureDay(date) {
-        const key = toDateKey(date);
-        const existing = this._cache.get(key);
-        if (existing && (existing.tracks || existing.loading)) return;
-
-        this._cache.set(key, {loading: true, tracks: null, error: null});
-
-        try {
-            const entities = this._getEntities();
-            const placesByEntity = this._getPlacesEntityMap();
-            const zones = this._collectZones();
-            const tracks = await Promise.all(entities.map(async (entityId, index) => {
-                const points = await fetchHistory(this._hass, entityId, date);
-                const placeEntityId = placesByEntity.get(entityId) || null;
-                const placeStates = placeEntityId
-                    ? await fetchEntityHistory(this._hass, placeEntityId, date)
-                    : [];
-                const segments = segmentTimeline(points, {
-                    stayRadiusM: this._config.stay_radius_m,
-                    minStayMinutes: this._config.min_stay_minutes,
-                }, zones);
-                resolveStaySegments(segments, {
-                    placeStates,
-                    date,
-                    osmApiKey: this._config.osm_api_key,
-                    onUpdate: () => {
-                        const day = this._cache.get(key);
-                        if (!day || !day.tracks) return;
-                        this._render();
-                    },
-                });
-
-                return {entityId, placeEntityId, points, segments};
-            }));
-
-            this._cache.set(key, {
-                loading: false,
-                tracks,
-                error: null,
-            });
-        } catch (err) {
-            console.warn("Timeline card: history fetch failed", err);
-            this._cache.set(key, {
-                loading: false, tracks: null, error: this._formatErrorMessage(err),
-            });
-        }
-        this._render();
-        requestAnimationFrame(() => {
-            this._refreshMapPaths();
-        });
-    }
-
-    _collectZones() {
-        if (!this._hass || !this._hass.states) return [];
-        return Object.values(this._hass.states)
-                     .filter((state) => state.entity_id && state.entity_id.startsWith("zone.") && state.attributes?.passive !== true)
-                     .map((state) => ({
-                         name: state.attributes?.friendly_name || state.entity_id,
-                         icon: state.attributes?.icon || null,
-                         lat: Number(state.attributes?.latitude),
-                         lon: Number(state.attributes?.longitude),
-                         radius: Number(state.attributes?.radius) || 100,
-                     }))
-                     .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
-    }
-
+    // Rendering
     _render() {
         if (!this.shadowRoot) return;
         this._ensureBaseLayout();
 
-        const dateKey = toDateKey(this._selectedDate);
-        const dayData = this._cache.get(dateKey) || {
-            loading: false, tracks: null, error: null
-        };
-        const isFuture = this._selectedDate >= startOfDay(new Date());
+        const dateKey = formatDate(this._selectedDate);
+        const dayData = this._cache.get(dateKey) || {loading: false, tracks: null, error: null};
 
-        const dateEl = this.shadowRoot.getElementById("timeline-date");
-        dateEl.textContent = formatDate(this._selectedDate);
-
+        this.shadowRoot.getElementById("timeline-date").textContent = formatDate(this._selectedDate, this._hass?.locale);
         const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
-        datePicker.value = toDateKey(this._selectedDate);
-        datePicker.max = toDateKey(new Date());
+        datePicker.value = formatDate(this._selectedDate);
+        datePicker.max = formatDate(new Date());
 
-        const nextButton = this.shadowRoot.querySelector("[data-action='next']");
-        nextButton.toggleAttribute("disabled", isFuture);
-
+        this.shadowRoot.querySelector("[data-action='next']")
+            .toggleAttribute("disabled", this._selectedDate >= today());
         this._applyMapHeight();
 
-        const body = this.shadowRoot.getElementById("timeline-body");
-        const selector = this.shadowRoot.getElementById("entity-selector");
-        selector.innerHTML = this._renderEntitySelector();
-        selector.toggleAttribute("hidden", this._getEntities().length < 2);
-        this._bindTimelineTouch(body);
         this._updateMapResetButton();
         const activeDayData = this._getCurrentTrackDayData(dayData);
-        body.innerHTML = this._renderTimelineContent(activeDayData);
+        this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
         this._attachMapCard();
-        requestAnimationFrame(() => {
-            this._refreshMapPaths();
-        });
         this._rendered = true;
+        requestAnimationFrame(() => this._drawMapPaths());
     }
 
     _ensureBaseLayout() {
@@ -321,8 +212,10 @@ class TimelineCard extends HTMLElement {
             </div>
           </ha-card>
         `;
-    }
 
+        const body = this.shadowRoot.getElementById("timeline-body");
+        this._bindTimelineTouch(body);
+    }
 
     _openDatePicker() {
         const input = this.shadowRoot?.getElementById("timeline-date-picker");
@@ -341,33 +234,7 @@ class TimelineCard extends HTMLElement {
         resetBtn.toggleAttribute("hidden", !this._mapView?.isMapZoomedToSegment);
     }
 
-    _bindTimelineTouch(body) {
-        if (!body || body.dataset.swipeBound === "true") return;
-        body.dataset.swipeBound = "true";
-
-        body.addEventListener("touchstart", (event) => {
-            const touch = event.changedTouches?.[0];
-            if (!touch) return;
-            this._touchStart = {x: touch.clientX, y: touch.clientY};
-        }, {passive: true});
-
-        body.addEventListener("touchend", (event) => {
-            const touch = event.changedTouches?.[0];
-            if (!touch || !this._touchStart) return;
-
-            const deltaX = touch.clientX - this._touchStart.x;
-            const deltaY = touch.clientY - this._touchStart.y;
-            this._touchStart = null;
-
-            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
-                return;
-            }
-
-            this._shiftDate(deltaX > 0 ? -1 : 1);
-        }, {passive: true});
-    }
-
-    async _attachMapCard() {
+    _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
         if (!container || this._mapView || this._isLoadingMap) return;
         if (!this.isConnected || !container.isConnected) {
@@ -378,9 +245,8 @@ class TimelineCard extends HTMLElement {
         this._isLoadingMap = true;
         try {
             this._mapView = new TimelineLeafletMap(container);
-            this._syncMapAppearance();
-            this._refreshMapPaths();
-            this._mapView.fitMap({defer: true});
+            this._setDarkMode();
+            this._drawMapPaths();
         } catch (err) {
             console.warn("Timeline card: map setup failed", err);
         } finally {
@@ -388,7 +254,7 @@ class TimelineCard extends HTMLElement {
         }
     }
 
-    _refreshMapPaths() {
+    _drawMapPaths() {
         const dayData = this._getCurrentDayData();
         if (!dayData || dayData.loading || dayData.error || !this._mapView) return;
 
@@ -398,7 +264,7 @@ class TimelineCard extends HTMLElement {
                 tracks,
                 activeEntityIndex: this._activeEntityIndex,
                 onTrackClick: (entityIndex) => this._setActiveEntityIndex(entityIndex),
-                colors: this._getColors(),
+                colors: this._config.colors,
             });
             this._touchStart = null;
 
@@ -408,6 +274,139 @@ class TimelineCard extends HTMLElement {
             this._setCurrentDayError(err);
             this._render();
         }
+    }
+
+    _renderEntitySelector(force_rerender = false) {
+        if (!this._baseLayoutReady) return;
+        if (this._entitySelectorRendered && !force_rerender) return;
+        this._entitySelectorRendered = true;
+
+        const entities = this._config.entity;
+        if (entities.length < 2) return "";
+
+        const selector = this.shadowRoot?.getElementById("entity-selector");
+        if (!selector) return;
+        selector.innerHTML = entities.map((entityId, index) => {
+            const state = this._hass?.states?.[entityId];
+            const picture = state?.attributes?.entity_picture;
+            const name = state?.attributes?.friendly_name || entityId;
+            const escapedName = escapeHtml(name);
+            const escapedPicture = escapeHtml(picture || "");
+            const trackColor = getTrackColor(index, this._config?.colors);
+            return `
+              <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
+                ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}
+                <span>${escapedName}</span>
+              </button>
+            `;
+        }).join("");
+        selector.toggleAttribute("hidden", this._config.entity.length < 2);
+    }
+
+    _renderTimelineContent(dayData) {
+        if (dayData.loading || dayData.error) {
+            const errorHtml = dayData.error ? `<div class="error">${dayData.error}</div>` : "";
+            const loadingHtml = dayData.loading ? `<div class="loading">Loading timeline...</div>` : "";
+            return `${errorHtml}${loadingHtml}`;
+        }
+
+        try {
+            return renderTimeline(dayData.segments, this._hass?.locale, this._config.distance_unit);
+        } catch (err) {
+            const message = formatErrorMessage(err);
+            console.warn("Timeline card: timeline render failed", err);
+            this._setCurrentDayError(err);
+            return `<div class="error">${message}</div>`;
+        }
+    }
+
+    // Functions
+    async _ensureDay(date) {
+        const key = formatDate(date);
+        const existing = this._cache.get(key);
+        if (existing && (existing.tracks || existing.loading)) return;
+
+        this._cache.set(key, {loading: true, tracks: null, error: null});
+
+        try {
+            const tracks = await getSegmentedTracks(date, this._config, this._hass, () => {this._render();});
+            this._cache.set(key, {loading: false, tracks, error: null});
+        } catch (err) {
+            console.warn("Timeline card: history fetch failed", err);
+            this._cache.set(key, {loading: false, tracks: null, error: formatErrorMessage(err)});
+        }
+        this._render();
+        requestAnimationFrame(() => this._drawMapPaths());
+    }
+
+    _getCurrentDayData() {
+        return this._cache.get(formatDate(this._selectedDate));
+    }
+
+    _getCurrentTrackDayData(dayData = this._getCurrentDayData()) {
+        const tracks = Array.isArray(dayData?.tracks) ? dayData.tracks : [];
+        const index = Math.min(this._activeEntityIndex, Math.max(0, tracks.length - 1));
+        this._activeEntityIndex = index;
+        return tracks[index] || {segments: [], points: [], entityId: null, placeEntityId: null};
+    }
+
+    _setActiveEntityIndex(index) {
+        if (!Number.isInteger(index) || index < 0 || index >= this._config.entity.length || index === this._activeEntityIndex) {
+            return;
+        }
+        this._activeEntityIndex = index;
+        this._render();
+    }
+
+    _setCurrentDayError(err) {
+        const key = formatDate(this._selectedDate);
+        const current = this._cache.get(key) || {loading: false, segments: null, points: null, error: null};
+        this._cache.set(key, {...current, loading: false, error: formatErrorMessage(err)});
+    }
+
+    // Event listeners
+    _addEventListeners() {
+        this.shadowRoot.addEventListener("click", (event) => {
+            const target = event.target.closest("[data-action]");
+            if (!target) return;
+            const action = target.dataset.action;
+            if (action === "prev") {
+                this._shiftDate(-1);
+            } else if (action === "next") {
+                this._shiftDate(1);
+            } else if (action === "refresh") {
+                this._refreshCurrentDay();
+            } else if (action === "debug") {
+                this._logCacheToConsole();
+            } else if (action === "open-date-picker") {
+                this._openDatePicker();
+            } else if (action === "reset-map-zoom") {
+                this._resetMapZoom();
+            } else if (action === "select-entity") {
+                this._setActiveEntityIndex(Number(target.dataset.entityIndex));
+            }
+        });
+
+        this.shadowRoot.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker" || !target.value) return;
+            const next = new Date(`${target.value}T00:00:00`);
+            if (!Number.isNaN(next.getTime())) {
+                this._selectedDate = startOfDay(next);
+                this._ensureDay(this._selectedDate).then(() => this._render());
+            }
+        });
+
+        this.shadowRoot.addEventListener("mouseover", (e) => this._onSegmentEvent(e, (idx) => this._handleSegmentHoverStart(idx)));
+        this.shadowRoot.addEventListener("mouseout", (e) => this._onSegmentEvent(e, (idx) => this._clearHoverHighlight(idx)));
+        this.shadowRoot.addEventListener("click", (e) => this._onSegmentEvent(e, (idx) => this._handleSegmentClick(idx)));
+    }
+
+    _onSegmentEvent(e, callback) {
+        const entry = e.target.closest("[data-segment-index]");
+        if (!entry || !this.shadowRoot.contains(entry)) return;
+        if (entry.contains(e.relatedTarget)) return;
+        callback(Number(entry.dataset.segmentIndex));
     }
 
     _handleSegmentHoverStart(segmentIndex) {
@@ -443,152 +442,40 @@ class TimelineCard extends HTMLElement {
         if (!segment) return;
 
         if (segment.type === "stay") {
-            this._copyStayCoordinatesToClipboard(segment);
             this._mapView?.zoomToStay(segment);
             this._updateMapResetButton();
         } else if (segment.type === "move") {
-            const segmentPoints = this._extractSegmentPoints(track.points, segment);
+            const segmentPoints = track.points.filter((point) => point.timestamp >= segment.start && point.timestamp <= segment.end);
             if (segmentPoints.length < 2) return;
             this._mapView?.zoomToPoints(segmentPoints.map(toLatLon));
             this._updateMapResetButton();
         }
     }
 
-    _copyStayCoordinatesToClipboard(segment) {
-        const lat = Number(segment?.center?.lat);
-        const lon = Number(segment?.center?.lon);
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-        const value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+    _bindTimelineTouch(body) {
+        if (!body || body.dataset.swipeBound === "true") return;
+        body.dataset.swipeBound = "true";
 
-        if (navigator?.clipboard?.writeText) {
-            navigator.clipboard.writeText(value).catch(() => {});
-        }
-    }
+        body.addEventListener("touchstart", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch) return;
+            this._touchStart = {x: touch.clientX, y: touch.clientY};
+        }, {passive: true});
 
-    _extractSegmentPoints(points, segment) {
-        if (!Array.isArray(points)) return [];
-        return points.filter((point) => point.timestamp >= segment.start && point.timestamp <= segment.end);
-    }
+        body.addEventListener("touchend", (event) => {
+            const touch = event.changedTouches?.[0];
+            if (!touch || !this._touchStart) return;
 
-    _getCurrentDayData() {
-        return this._cache.get(toDateKey(this._selectedDate));
-    }
+            const deltaX = touch.clientX - this._touchStart.x;
+            const deltaY = touch.clientY - this._touchStart.y;
+            this._touchStart = null;
 
-    _getCurrentTrackDayData(dayData = this._getCurrentDayData()) {
-        const tracks = Array.isArray(dayData?.tracks) ? dayData.tracks : [];
-        const index = Math.min(this._activeEntityIndex, Math.max(0, tracks.length - 1));
-        this._activeEntityIndex = index;
-        return tracks[index] || {segments: [], points: [], entityId: null, placeEntityId: null};
-    }
-
-    _setActiveEntityIndex(index) {
-        const entities = this._getEntities();
-        if (!Number.isInteger(index) || index < 0 || index >= entities.length || index === this._activeEntityIndex) {
-            return;
-        }
-        this._activeEntityIndex = index;
-        this._render();
-    }
-
-    _getEntities() {
-        const entities = this._normalizeEntityList(this._config.entity);
-        if (!entities.length) {
-            throw new Error("You need to define an entity");
-        }
-        return entities;
-    }
-
-    _getPlacesEntityMap() {
-        const placeEntityIds = this._normalizeEntityList(this._config.places_entity);
-        const trackedEntities = new Set(this._getEntities());
-        const map = new Map();
-
-        placeEntityIds.forEach((placeEntityId) => {
-            const trackerEntityId = this._hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
-            if (!trackerEntityId || !trackedEntities.has(trackerEntityId) || map.has(trackerEntityId)) {
+            if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)) {
                 return;
             }
-            map.set(trackerEntityId, placeEntityId);
-        });
 
-        return map;
-    }
-
-    _normalizeEntityList(value) {
-        if (!value) return [];
-        const list = Array.isArray(value) ? value : [value];
-        return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
-    }
-
-    _getColors() {
-        const list = this._config?.colors;
-        if (!list) return [];
-        const values = Array.isArray(list) ? list : String(list).split(",");
-        return values
-            .map((item) => (typeof item === "string" ? item.trim() : ""))
-            .filter(Boolean);
-    }
-
-    _renderEntitySelector() {
-        const entities = this._getEntities();
-        if (entities.length < 2) return "";
-
-        return entities.map((entityId, index) => {
-            const state = this._hass?.states?.[entityId];
-            const picture = state?.attributes?.entity_picture;
-            const name = state?.attributes?.friendly_name || entityId;
-            const escapedName = this._escapeHtml(name);
-            const escapedPicture = this._escapeHtml(picture || "");
-            const trackColor = getTrackColor(index, this._getColors());
-            return `
-              <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
-                ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : "<ha-icon class=\"entity-avatar-icon\" icon=\"mdi:account-circle\"></ha-icon>"}
-                <span>${escapedName}</span>
-              </button>
-            `;
-        }).join("");
-    }
-
-    _escapeHtml(text) {
-        return String(text || "")
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll("\"", "&quot;");
-    }
-
-    _renderTimelineContent(dayData) {
-        const errorHtml = dayData.error ? `<div class="error">${dayData.error}</div>` : "";
-        const loadingHtml = dayData.loading ? `<div class="loading">Loading timeline...</div>` : "";
-        if (dayData.loading || dayData.error) {
-            return `${errorHtml}${loadingHtml}`;
-        }
-
-        try {
-            return renderTimeline(dayData.segments, {
-                locale: this._hass?.locale,
-                distanceUnit: this._config.distance_unit,
-            });
-        } catch (err) {
-            const message = this._formatErrorMessage(err);
-            console.warn("Timeline card: timeline render failed", err);
-            this._setCurrentDayError(err);
-            return `<div class="error">${message}</div>`;
-        }
-    }
-
-    _setCurrentDayError(err) {
-        const key = toDateKey(this._selectedDate);
-        const current = this._cache.get(key) || {loading: false, segments: null, points: null, error: null};
-        this._cache.set(key, {...current, loading: false, error: this._formatErrorMessage(err)});
-    }
-
-    _formatErrorMessage(err) {
-        const message = err && err.message ? String(err.message) : "";
-        if (message.toLowerCase().includes("unknown command")) {
-            return "History WebSocket API not available. Ensure the Recorder/History integration is enabled.";
-        }
-        return message || "Unable to load history";
+            this._shiftDate(deltaX > 0 ? -1 : 1);
+        }, {passive: true});
     }
 }
 

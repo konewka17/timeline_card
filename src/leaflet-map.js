@@ -16,7 +16,11 @@ export class TimelineLeafletMap {
             zoomControl: true,
         });
 
-        this._tileLayer = createTileLayer(Leaflet).addTo(this._leafletMap);
+        const attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>, &copy; <a href=\"https://carto.com/attributions\">CARTO</a>";
+        const tileLayer = Leaflet.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`, {
+            attribution, subdomains: "abcd", minZoom: 0, maxZoom: 20
+        });
+        tileLayer.addTo(this._leafletMap);
         this._leafletMap.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
         this._mapLayers = [];
@@ -28,7 +32,6 @@ export class TimelineLeafletMap {
         this._isMapZoomedToSegment = false;
 
         this.setDarkMode(false);
-
         requestAnimationFrame(() => this._leafletMap.invalidateSize());
     }
 
@@ -63,13 +66,8 @@ export class TimelineLeafletMap {
             });
 
             return {
-                entityIndex: index,
-                isActive: index === activeEntityIndex,
-                points,
-                color: getTrackColor(index, colors),
-                opacity: index === activeEntityIndex ? 1 : 0.8,
-                weight: 4,
-                borderWeight: 7,
+                entityIndex: index, isActive: index === activeEntityIndex, points, color: getTrackColor(index, colors),
+                opacity: index === activeEntityIndex ? 1 : 0.8, weight: 4, borderWeight: 7,
             };
         });
 
@@ -83,7 +81,7 @@ export class TimelineLeafletMap {
         this._isMapZoomedToSegment = false;
 
         const activeSegments = tracks[activeEntityIndex]?.segments || [];
-        this._drawMapPaths(activeSegments);
+        this._drawMapSegments(activeSegments);
     }
 
     highlightSegment(segment, segments) {
@@ -94,11 +92,13 @@ export class TimelineLeafletMap {
         if (segment?.type === "stay") {
             this._highlightedStay = segment;
         } else if (segment?.type === "move") {
-            this._highlightedPath = [{points: segment.points, color: "var(--accent-color)", weight: 7, opacity: 1, borderWeight: 10}];
+            this._highlightedPath = [{
+                points: segment.points, color: "var(--accent-color)", weight: 7, opacity: 1, borderWeight: 10
+            }];
             this._isTravelHighlightActive = true;
         }
 
-        this._drawMapPaths(segments);
+        this._drawMapSegments(segments);
     }
 
     clearHighlight(segments) {
@@ -110,7 +110,7 @@ export class TimelineLeafletMap {
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
 
-        this._drawMapPaths(segments);
+        this._drawMapSegments(segments);
     }
 
     resetMapZoom() {
@@ -121,37 +121,24 @@ export class TimelineLeafletMap {
     zoomToStay(stay) {
         if (!stay?.center) return;
         this._isMapZoomedToSegment = true;
-        this.fitMap({bounds: [stay.center], defer: false});
+        this.fitMap([stay.center]);
     }
 
     zoomToPoints(points) {
         if (!Array.isArray(points) || points.length < 2) return;
         this._isMapZoomedToSegment = true;
-        this.fitMap({bounds: points, defer: false});
+        this.fitMap(points);
     }
 
-    fitMap({defer = false, bounds = null, pad = 0.1} = {}) {
+    fitMap(bounds = null) {
         if (bounds === null) {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
-            if (!bounds.length) return;
         }
-
-        const normalizedBounds = bounds
-            .map(normalizeLatLng)
-            .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lng));
-        if (!normalizedBounds.length) return;
-
-        const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(pad);
-        const doFit = () => this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
-
-        if (defer) {
-            requestAnimationFrame(() => requestAnimationFrame(doFit));
-        } else {
-            doFit();
-        }
+        const paddedBounds = this._Leaflet.latLngBounds(bounds).pad(0.1);
+        this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
     }
 
-    _drawMapPaths(segments) {
+    _drawMapSegments(segments) {
         this._mapLayers.forEach((layer) => layer.remove());
         this._mapLayers = [];
 
@@ -161,18 +148,13 @@ export class TimelineLeafletMap {
     }
 
     _drawMapMarkers(segments) {
-        const stayMarkers = Array.isArray(segments)
-            ? segments.filter((segment) => segment?.type === "stay")
-            : [];
+        const stayMarkers = Array.isArray(segments) ? segments.filter((segment) => segment?.type === "stay") : [];
 
         stayMarkers.forEach((stay) => {
             const icon = createMarkerIcon({
-                iconName: stay.zoneIcon || "mdi:map-marker",
-                markerSize: 18,
-                iconSize: 14,
+                iconName: stay.zoneIcon || "mdi:map-marker", markerSize: 18, iconSize: 14,
                 backgroundColor: this._activeTrackColor,
-                borderColor: `color-mix(in srgb, black 30%, ${this._activeTrackColor})`,
-                iconPadding: "2px",
+                borderColor: `color-mix(in srgb, black 30%, ${this._activeTrackColor})`, iconPadding: "2px",
                 leafletIconSize: [22, 22],
             });
 
@@ -182,11 +164,8 @@ export class TimelineLeafletMap {
         if (!this._highlightedStay) return;
 
         const icon = createMarkerIcon({
-            iconName: this._highlightedStay.zoneIcon || "mdi:map-marker",
-            markerSize: 22,
-            iconSize: 22,
-            backgroundColor: "var(--accent-color)",
-            borderColor: "color-mix(in srgb, black 30%, var(--accent-color))",
+            iconName: this._highlightedStay.zoneIcon || "mdi:map-marker", markerSize: 22, iconSize: 22,
+            backgroundColor: "var(--accent-color)", borderColor: "color-mix(in srgb, black 30%, var(--accent-color))",
             leafletIconSize: [26, 26],
         });
 
@@ -204,16 +183,13 @@ export class TimelineLeafletMap {
 
             if (path.isActive || path.entityIndex === undefined) {
                 this._mapLayers.push(this._Leaflet.polyline(latLngs, {
-                    color: `color-mix(in srgb, black 30%, ${path.color})`,
-                    opacity: path.opacity ?? 1,
+                    color: `color-mix(in srgb, black 30%, ${path.color})`, opacity: path.opacity ?? 1,
                     weight: path.borderWeight ?? (path.weight + 3),
                 }));
             }
 
             const line = this._Leaflet.polyline(latLngs, {
-                color: path.color,
-                opacity: path.opacity ?? 1,
-                weight: path.weight,
+                color: path.color, opacity: path.opacity ?? 1, weight: path.weight,
             });
             line.on("click", () => {
                 if (!Number.isInteger(path.entityIndex) || !this._onTrackClick) return;
@@ -224,40 +200,14 @@ export class TimelineLeafletMap {
     }
 }
 
-const createMarkerIcon = ({iconName, markerSize, iconSize, backgroundColor, borderColor, leafletIconSize, iconPadding = "0"}) => {
+function createMarkerIcon(options) {
     const haIcon = document.createElement("ha-icon");
-    haIcon.setAttribute("icon", iconName);
-    haIcon.setAttribute("style", `color: white; --mdc-icon-size: ${iconSize}px; padding: ${iconPadding}`);
+    haIcon.setAttribute("icon", options.iconName);
+    haIcon.setAttribute("style", `color: white; --mdc-icon-size: ${(options.iconSize)}px; padding: ${options.iconPadding || 0}`);
 
     const iconDiv = document.createElement("div");
     iconDiv.appendChild(haIcon);
-    iconDiv.setAttribute("style", `height: ${markerSize}px; width: ${markerSize}px; background-color: ${backgroundColor}; border-radius: 50%; border: 2px solid ${borderColor}; display: flex;`);
+    iconDiv.setAttribute("style", `height: ${(options.markerSize)}px; width: ${(options.markerSize)}px; background-color: ${(options.backgroundColor)}; border-radius: 50%; border: 2px solid ${(options.borderColor)}; display: flex;`);
 
-    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: leafletIconSize});
-};
-
-const createTileLayer = (leaflet) => leaflet.tileLayer(
-    `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}${leaflet.Browser.retina ? "@2x.png" : ".png"}`,
-    {
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        minZoom: 0,
-        maxZoom: 20,
-    }
-);
-
-const normalizeLatLng = (point) => {
-    if (Array.isArray(point) && point.length >= 2) {
-        return {lat: Number(point[0]), lng: Number(point[1])};
-    }
-    if (!point || typeof point !== "object") return null;
-    if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
-        return {lat: Number(point.lat), lng: Number(point.lng)};
-    }
-    if (Number.isFinite(point.lat) && Number.isFinite(point.lon)) {
-        return {lat: Number(point.lat), lng: Number(point.lon)};
-    }
-    return null;
-};
-
+    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: options.leafletIconSize});
+}

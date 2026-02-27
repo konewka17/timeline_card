@@ -84,8 +84,10 @@ By default, Home Assistant only stores raw GPS coordinates in history. If you wa
 Example:
 ```yaml
 type: custom:location-timeline-card
-entity: device_tracker.my_phone
-places_entity: sensor.places_my_phone
+entity: 
+  - device_tracker.my_phone
+places_entity: 
+  - sensor.places_my_phone
 osm_api_key: me@example.com
 ```
 
