@@ -1,3 +1,5 @@
+import {sleep} from "./utils.js";
+
 const UNKNOWN_LOCATION = "Unknown location";
 const LOADING_LOCATION = "Loading address...";
 const PERSISTENT_CACHE_KEY = "location_timeline_reverse_geocode_cache_v1";
@@ -13,7 +15,6 @@ let queueRunning = false;
 let lastRequestAt = 0;
 let queueSession = 0;
 const persistentCache = loadPersistentCache();
-
 
 export function clearReverseGeocodingQueue() {
     queueSession += 1;
@@ -33,21 +34,13 @@ export function clearReverseGeocodingQueue() {
     }
 }
 
-export function resolveStaySegments(segments, options) {
-    const {
-        placeStates = [],
-        date,
-        osmApiKey = null,
-        onUpdate = () => {},
-    } = options;
-    const placeIntervals = placeStates.length
-        ? buildPlaceIntervals([...placeStates].sort((a, b) => a.ts - b.ts), date)
-        : [];
-
+export function resolveStaySegments(segments, placeStates, date, osmApiKey, onUpdate) {
+    const placeIntervals = buildPlaceIntervals(placeStates, date);
     for (const segment of segments) {
         if (segment.type !== "stay" || segment.zoneName) continue;
         if (segment.placeName && segment.placeName !== LOADING_LOCATION) continue;
 
+        // Load from persistent cache
         const segmentKey = toPersistentCacheKey(segment);
         const cached = persistentCache.get(segmentKey);
         if (cached) {
@@ -56,6 +49,7 @@ export function resolveStaySegments(segments, options) {
             continue;
         }
 
+        // Load from `places`
         const placeName = pickPlaceName(placeIntervals, segment.start, segment.end);
         if (placeName) {
             segment.placeName = placeName;
@@ -64,16 +58,17 @@ export function resolveStaySegments(segments, options) {
             continue;
         }
 
-        if (!osmApiKey) {
-            segment.placeName = UNKNOWN_LOCATION;
+        // Load from OSM Nominatim API
+        if (osmApiKey) {
+            segment.placeName = LOADING_LOCATION;
             segment.reverseGeocoding = null;
-            setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
+            enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate);
             continue;
         }
 
-        segment.placeName = LOADING_LOCATION;
+        segment.placeName = UNKNOWN_LOCATION;
         segment.reverseGeocoding = null;
-        enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate);
+        setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
     }
 }
 
@@ -129,8 +124,8 @@ async function resolveQueuedRequest(request, sessionAtStart) {
             result = await response.json();
             const features = result.features?.[0]?.properties?.geocoding || {};
             const houseNumber = features.housenumber ? ` ${features.housenumber}` : "";
-            const formatted_address = features.street ? `${features.street}${houseNumber}, ${features.city}` : null
-            const formatted_locality = features.locality ? `${features.locality}, ${features.city}` : null
+            const formatted_address = features.street ? `${features.street}${houseNumber}, ${features.city}` : null;
+            const formatted_locality = features.locality ? `${features.locality}, ${features.city}` : null;
             name = features.name || formatted_address || formatted_locality || features.label || UNKNOWN_LOCATION;
         }
     } catch (error) {
@@ -165,7 +160,7 @@ function buildPlaceIntervals(placeStates, date) {
 
 function placeDisplayName(state) {
     const attrs = state.attributes || {};
-    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ''}, ${attrs.city}` : null
+    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ""}, ${attrs.city}` : null;
     return attrs.place_name || formatted_address || state.state || attrs.formatted_address || null;
 }
 
@@ -187,7 +182,6 @@ function pickPlaceName(intervals, start, end) {
     }
     return best;
 }
-
 
 function toPersistentCacheKey(segment) {
     const lat = Number(segment?.center?.lat);
@@ -229,6 +223,3 @@ export function clearPersistentCache() {
     localStorage.removeItem(PERSISTENT_CACHE_KEY);
 }
 
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}

@@ -130,3 +130,7 @@ export function formatErrorMessage(err) {
     }
     return message || "Unable to load history";
 }
+
+export function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}

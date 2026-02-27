@@ -200,10 +200,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
         const placeEntityId = placesByEntity.get(entityId) || null;
         const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
         const segments = segmentTimeline(points, config, zones);
-        resolveStaySegments(segments, {
-            placeStates, date, osmApiKey: config.osm_api_key,
-            onUpdate: onQueueUpdate
-        });
+        resolveStaySegments(segments, placeStates, date, config.osm_api_key, onQueueUpdate);
         return {entityId, placeEntityId, points, segments};
     }));
 }
