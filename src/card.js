@@ -93,6 +93,7 @@ class TimelineCard extends HTMLElement {
         this._activeEntityIndex = 0;
         this._selectedDate = startOfDay(new Date());
         this._setDarkMode();
+        this._renderEntitySelector(true);
         this._applyMapHeight();
         if (this._hass) {
             this._ensureDay(this._selectedDate);
@@ -104,6 +105,7 @@ class TimelineCard extends HTMLElement {
     set hass(hass) {
         this._hass = hass;
         this._setDarkMode();
+        this._renderEntitySelector();
         if (!this._config.entity) return;
         const dateKey = formatDate(this._selectedDate);
         if (!this._cache.has(dateKey)) {
@@ -196,7 +198,7 @@ class TimelineCard extends HTMLElement {
         this._cache.set(key, {loading: true, tracks: null, error: null});
 
         try {
-            const tracks = await getSegmentedTracks(date, this._config, this._hass, () => {this._render()});
+            const tracks = await getSegmentedTracks(date, this._config, this._hass, () => {this._render();});
             this._cache.set(key, {loading: false, tracks, error: null});
         } catch (err) {
             console.warn("Timeline card: history fetch failed", err);
@@ -222,9 +224,6 @@ class TimelineCard extends HTMLElement {
             .toggleAttribute("disabled", this._selectedDate >= today());
         this._applyMapHeight();
 
-        const selector = this.shadowRoot.getElementById("entity-selector");
-        selector.innerHTML = this._renderEntitySelector();
-        selector.toggleAttribute("hidden", this._config.entity.length < 2);
         this._updateMapResetButton();
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
@@ -428,11 +427,17 @@ class TimelineCard extends HTMLElement {
         this._render();
     }
 
-    _renderEntitySelector() {
+    _renderEntitySelector(force_rerender = false) {
+        if (!this._baseLayoutReady) return;
+        if (this._entitySelectorRendered && !force_rerender) return;
+        this._entitySelectorRendered = true;
+
         const entities = this._config.entity;
         if (entities.length < 2) return "";
 
-        return entities.map((entityId, index) => {
+        const selector = this.shadowRoot?.getElementById("entity-selector");
+        if (!selector) return;
+        selector.innerHTML = entities.map((entityId, index) => {
             const state = this._hass?.states?.[entityId];
             const picture = state?.attributes?.entity_picture;
             const name = state?.attributes?.friendly_name || entityId;
@@ -446,6 +451,7 @@ class TimelineCard extends HTMLElement {
               </button>
             `;
         }).join("");
+        selector.toggleAttribute("hidden", this._config.entity.length < 2);
     }
 
     _renderTimelineContent(dayData) {
