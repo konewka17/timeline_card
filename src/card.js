@@ -254,10 +254,10 @@ class TimelineCard extends HTMLElement {
         if (!icon) return;
 
         if (this._todayFitMode === "current") {
-            icon.setAttribute("icon", "mdi:crosshairs-gps");
+            icon.setAttribute("icon", "mdi:magnify-scan");
             fitToggleBtn.setAttribute("label", "Switch to full path fit");
         } else {
-            icon.setAttribute("icon", "mdi:magnify-scan");
+            icon.setAttribute("icon", "mdi:crosshairs-gps");
             fitToggleBtn.setAttribute("label", "Switch to current location fit");
         }
     }
@@ -288,7 +288,9 @@ class TimelineCard extends HTMLElement {
 
         try {
             const tracks = Array.isArray(dayData.tracks) ? dayData.tracks : [];
-            this._mapView.setCurrentLocations(this._getCurrentEntityLocations({forDisplay: true}));
+            if (this._config.show_current_location) {
+                this._mapView._currentLocations = this._getCurrentEntityLocations();
+            }
             this._mapView.setDaySegments(tracks, this._activeEntityIndex, (entityIndex) => this._setActiveEntityIndex(entityIndex), this._config.colors,);
             this._touchStart = null;
 
@@ -402,18 +404,13 @@ class TimelineCard extends HTMLElement {
         this._fitMapToCurrentMode();
     }
 
-    _getCurrentEntityLocations(options = {}) {
+    _getCurrentEntityLocations() {
         if (!this._isSelectedDateToday()) {
             return [];
         }
 
-        const shouldHideForDisplay = options.forDisplay && !this._config.show_current_location;
-        if (shouldHideForDisplay) {
-            return [];
-        }
-
         return this._config.entity
-                   .map((entityId) => {
+                   .map((entityId, index) => {
                        const state = this._hass?.states?.[entityId];
                        const lat = Number(state?.attributes?.latitude);
                        const lon = Number(state?.attributes?.longitude);
@@ -423,6 +420,8 @@ class TimelineCard extends HTMLElement {
                            point: [lat, lon],
                            picture: state?.attributes?.entity_picture || null,
                            name: state?.attributes?.friendly_name || entityId,
+                           color: getTrackColor(index, this._config?.colors),
+                           isActive: index === this._activeEntityIndex,
                        };
                    })
                    .filter(Boolean);
