@@ -29,6 +29,7 @@ const DEFAULT_CONFIG = {
     distance_unit: "metric",
     colors: [],
     show_current_location: true,
+    hide_moving: false,
     debug: false,
 };
 
@@ -333,7 +334,7 @@ class TimelineCard extends HTMLElement {
         }
 
         try {
-            return renderTimeline(dayData.segments, this._hass?.locale, this._config.distance_unit);
+            return renderTimeline(dayData.segments, this._hass?.locale, this._config);
         } catch (err) {
             const message = formatErrorMessage(err);
             console.warn("Timeline card: timeline render failed", err);

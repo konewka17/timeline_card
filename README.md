@@ -57,6 +57,7 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `map_appearance` | string | `"auto"` | Map appearance: `auto` (align with HA theme), `light`, or `dark`. |
 | `map_height_px` | number | `200` | Height of the map area in pixels. |
 | `show_current_location` | boolean | `true` | Show the current location for each configured entity when viewing today. |
+| `hide_moving` | boolean | `false` | Hide moving rows and keep only stays. |
 | `colors` | string[] | `[]` | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables. |
 
 ## Reverse Geocoding

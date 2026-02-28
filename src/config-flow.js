@@ -23,7 +23,10 @@ export function getConfigFormSchema() {
                         {name: "map_appearance", selector: {select: {options: ["auto", "light", "dark"], mode: "dropdown"}}}
                     ]},
                     {name: "map_height_px", selector: {number: {unit_of_measurement: "px"}}},
-                    {name: "show_current_location", selector: {boolean: {}}},
+                    {type: "grid", name: "", flatten: true, schema: [
+                        {name: "show_current_location", selector: {boolean: {}}},
+                        {name: "hide_moving", selector: {boolean: {}}},
+                    ]},
                     {name: "colors", selector: {text: {multiple: true}}},
                 ],
             },
