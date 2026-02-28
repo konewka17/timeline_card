@@ -12,9 +12,7 @@ export class TimelineLeafletMap {
 
         this._Leaflet = Leaflet;
         this._mapElement = mapElement;
-        this._leafletMap = Leaflet.map(mapElement, {
-            zoomControl: true,
-        });
+        this._leafletMap = Leaflet.map(mapElement, {zoomControl: true,});
 
         const attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>, &copy; <a href=\"https://carto.com/attributions\">CARTO</a>";
         const tileLayer = Leaflet.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`, {
@@ -26,6 +24,7 @@ export class TimelineLeafletMap {
         this._mapLayers = [];
         this._fullDayPaths = [];
         this._fullDayPath = [];
+        this._currentLocations = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
@@ -44,6 +43,7 @@ export class TimelineLeafletMap {
         this._mapLayers = [];
         this._fullDayPath = [];
         this._fullDayPaths = [];
+        this._currentLocations = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
     }
@@ -52,7 +52,7 @@ export class TimelineLeafletMap {
         return this._isMapZoomedToSegment;
     }
 
-    setDaySegments({tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []}) {
+    setDaySegments(tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []) {
         this._fullDayPaths = tracks.map((track, index) => {
             const points = [];
             const segments = Array.isArray(track?.segments) ? track.segments : [];
@@ -130,6 +130,10 @@ export class TimelineLeafletMap {
         this.fitMap(points);
     }
 
+    setCurrentLocations(currentLocations = []) {
+        this._currentLocations = Array.isArray(currentLocations) ? currentLocations : [];
+    }
+
     fitMap(bounds = null) {
         if (bounds === null) {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
@@ -144,6 +148,7 @@ export class TimelineLeafletMap {
 
         this._drawMapLines();
         this._drawMapMarkers(segments);
+        this._drawCurrentLocationMarkers();
         this._mapLayers.forEach((layer) => this._leafletMap.addLayer(layer));
     }
 
@@ -198,6 +203,20 @@ export class TimelineLeafletMap {
             this._mapLayers.push(line);
         });
     }
+
+    _drawCurrentLocationMarkers() {
+        let markerGroup = Leaflet.layerGroup()
+        this._currentLocations.forEach((location) => {
+            if (!location?.point) return;
+
+            const icon = location.picture
+                ? createEntityPictureIcon(location.picture, location.name)
+                : createDefaultCurrentLocationIcon();
+
+            markerGroup.addLayer(this._Leaflet.marker(location.point, {icon, zIndexOffset: 1000}));
+        });
+        this._mapLayers.push(markerGroup);
+    }
 }
 
 function createMarkerIcon(options) {
@@ -210,4 +229,28 @@ function createMarkerIcon(options) {
     iconDiv.setAttribute("style", `height: ${(options.markerSize)}px; width: ${(options.markerSize)}px; background-color: ${(options.backgroundColor)}; border-radius: 50%; border: 2px solid ${(options.borderColor)}; display: flex;`);
 
     return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: options.leafletIconSize});
+}
+
+function createEntityPictureIcon(pictureUrl, name = "") {
+    const img = document.createElement("img");
+    img.src = pictureUrl;
+    img.alt = name;
+    img.setAttribute("style", "height: 42px; width: 42px; border-radius: 50%; object-fit: cover;");
+
+    const iconDiv = document.createElement("div");
+    iconDiv.appendChild(img);
+    iconDiv.setAttribute("style", "height: 42px; width: 42px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px #0005; overflow: hidden; background: white;");
+
+    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [42, 42]});
+}
+
+function createDefaultCurrentLocationIcon() {
+    const innerDot = document.createElement("div");
+    innerDot.setAttribute("style", "height: 14px; width: 14px; border-radius: 50%; background: #1a73e8; border: 3px solid white; box-shadow: 0 1px 6px #0006;");
+
+    const iconDiv = document.createElement("div");
+    iconDiv.appendChild(innerDot);
+    iconDiv.setAttribute("style", "height: 20px; width: 20px; display: flex; align-items: center; justify-content: center;");
+
+    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [20, 20]});
 }

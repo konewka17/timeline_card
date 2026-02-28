@@ -318,6 +318,10 @@ ha-card {
   display: none;
 }
 
+#map-fit-toggle[hidden] {
+  display: none;
+}
+
 .leaflet-pane {
   z-index: 0 !important;
 }

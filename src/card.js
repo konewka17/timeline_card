@@ -27,6 +27,7 @@ const DEFAULT_CONFIG = {
     map_height_px: 200,
     distance_unit: "metric",
     colors: [],
+    show_current_location: true,
     debug: false,
 };
 
@@ -41,6 +42,7 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._touchStart = null;
         this._activeEntityIndex = 0;
+        this._todayFitMode = "current";
         this._addEventListeners();
     }
 
@@ -55,6 +57,7 @@ class TimelineCard extends HTMLElement {
         }
 
         this._activeEntityIndex = 0;
+        this._todayFitMode = "current";
         this._selectedDate = startOfDay(new Date());
         this._setDarkMode();
         this._renderEntitySelector(true);
@@ -134,11 +137,13 @@ class TimelineCard extends HTMLElement {
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
+        this._todayFitMode = "current";
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
     _resetMapZoom() {
         this._mapView?.resetMapZoom();
+        this._fitMapToCurrentMode();
         this._updateMapResetButton();
     }
 
@@ -171,6 +176,7 @@ class TimelineCard extends HTMLElement {
         this._applyMapHeight();
 
         this._updateMapResetButton();
+        this._updateMapFitToggleButton();
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
@@ -189,7 +195,7 @@ class TimelineCard extends HTMLElement {
             <div class="card">
               <div class="map-wrap">
                 <div id="overview-map"></div>
-                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="${localize("card.labels.reset_map_zoom")}" hidden><ha-icon icon="mdi:magnify-expand"></ha-icon></ha-icon-button>
+                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="${localize("card.labels.reset_map_zoom")}" hidden><ha-icon icon="mdi:magnify-scan"></ha-icon></ha-icon-button>
               </div>
               <div class="header my-header">
                 <div class="header-actions">
@@ -205,6 +211,7 @@ class TimelineCard extends HTMLElement {
                 </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
+                  <ha-icon-button id="map-fit-toggle" class="nav-button" data-action="toggle-map-fit" hidden><ha-icon></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
@@ -235,6 +242,26 @@ class TimelineCard extends HTMLElement {
         resetBtn.toggleAttribute("hidden", !this._mapView?.isMapZoomedToSegment);
     }
 
+    _updateMapFitToggleButton() {
+        const fitToggleBtn = this.shadowRoot?.getElementById("map-fit-toggle");
+        if (!fitToggleBtn) return;
+
+        const isToday = this._isSelectedDateToday();
+        fitToggleBtn.toggleAttribute("hidden", !isToday);
+        if (!isToday) return;
+
+        const icon = fitToggleBtn.querySelector("ha-icon");
+        if (!icon) return;
+
+        if (this._todayFitMode === "current") {
+            icon.setAttribute("icon", "mdi:crosshairs-gps");
+            fitToggleBtn.setAttribute("label", "Switch to full path fit");
+        } else {
+            icon.setAttribute("icon", "mdi:magnify-scan");
+            fitToggleBtn.setAttribute("label", "Switch to current location fit");
+        }
+    }
+
     _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
         if (!container || this._mapView || this._isLoadingMap) return;
@@ -261,16 +288,13 @@ class TimelineCard extends HTMLElement {
 
         try {
             const tracks = Array.isArray(dayData.tracks) ? dayData.tracks : [];
-            this._mapView.setDaySegments({
-                tracks,
-                activeEntityIndex: this._activeEntityIndex,
-                onTrackClick: (entityIndex) => this._setActiveEntityIndex(entityIndex),
-                colors: this._config.colors,
-            });
+            this._mapView.setCurrentLocations(this._getCurrentEntityLocations({forDisplay: true}));
+            this._mapView.setDaySegments(tracks, this._activeEntityIndex, (entityIndex) => this._setActiveEntityIndex(entityIndex), this._config.colors,);
             this._touchStart = null;
 
             this._updateMapResetButton();
-            this._mapView.fitMap();
+            this._updateMapFitToggleButton();
+            this._fitMapToCurrentMode();
         } catch (err) {
             this._setCurrentDayError(err);
             this._render();
@@ -359,6 +383,51 @@ class TimelineCard extends HTMLElement {
         this._render();
     }
 
+    _fitMapToCurrentMode() {
+        let bounds = null;
+        if (this._isSelectedDateToday() && this._todayFitMode === "current") {
+            bounds = this._getCurrentEntityLocations().map(point => point.point);
+        }
+        this._mapView.fitMap(bounds);
+    }
+
+    _isSelectedDateToday() {
+        return this._selectedDate?.getTime() === today().getTime();
+    }
+
+    _toggleMapFitMode() {
+        if (!this._isSelectedDateToday()) return;
+        this._todayFitMode = this._todayFitMode === "current" ? "timeline" : "current";
+        this._updateMapFitToggleButton();
+        this._fitMapToCurrentMode();
+    }
+
+    _getCurrentEntityLocations(options = {}) {
+        if (!this._isSelectedDateToday()) {
+            return [];
+        }
+
+        const shouldHideForDisplay = options.forDisplay && !this._config.show_current_location;
+        if (shouldHideForDisplay) {
+            return [];
+        }
+
+        return this._config.entity
+                   .map((entityId) => {
+                       const state = this._hass?.states?.[entityId];
+                       const lat = Number(state?.attributes?.latitude);
+                       const lon = Number(state?.attributes?.longitude);
+                       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+                       return {
+                           point: [lat, lon],
+                           picture: state?.attributes?.entity_picture || null,
+                           name: state?.attributes?.friendly_name || entityId,
+                       };
+                   })
+                   .filter(Boolean);
+    }
+
     _setCurrentDayError(err) {
         const key = formatDate(this._selectedDate);
         const current = this._cache.get(key) || {loading: false, segments: null, points: null, error: null};
@@ -377,6 +446,8 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
+            } else if (action === "toggle-map-fit") {
+                this._toggleMapFitMode();
             } else if (action === "debug") {
                 this._logCacheToConsole();
             } else if (action === "open-date-picker") {
@@ -394,6 +465,7 @@ class TimelineCard extends HTMLElement {
             const next = new Date(`${target.value}T00:00:00`);
             if (!Number.isNaN(next.getTime())) {
                 this._selectedDate = startOfDay(next);
+                this._todayFitMode = "current";
                 this._ensureDay(this._selectedDate).then(() => this._render());
             }
         });
