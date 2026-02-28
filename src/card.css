@@ -88,15 +88,47 @@ ha-card {
 
 .entity-selector {
   display: flex;
+  flex: 1;
   justify-content: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 12px 6px;
-  border-bottom: 1px solid var(--divider-color);
+  padding: 10px 12px 6px 0;
 }
 
 .entity-selector[hidden] {
   display: none;
+}
+
+.selector-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.selector-collapse {
+  --mdc-icon-button-size: 34px;
+}
+
+.selector-row[hidden] {
+  display: none;
+}
+
+.timeline-section {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms ease, opacity 260ms ease;
+  opacity: 1;
+}
+
+.timeline-content {
+  overflow: hidden;
+}
+
+.timeline-section.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
 }
 
 .entity-chip {
@@ -311,6 +343,13 @@ ha-card {
   background: var(--card-background-color, #fff);
   border-radius: 50%;
   box-shadow: 0 2px 6px #0003;
+}
+
+.map-reset-left {
+  left: 8px;
+  right: auto;
+  top: auto;
+  bottom: 8px;
 }
 
 .map-reset[hidden] {
