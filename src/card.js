@@ -200,6 +200,7 @@ class TimelineCard extends HTMLElement {
                 <div id="overview-map"></div>
                 <ha-icon-button id="map-fit-mode" class="map-reset" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
               </div>
+              <div id="entity-selector" class="entity-selector" hidden></div>
               <div class="header my-header">
                 <div class="header-actions">
                     <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
@@ -217,7 +218,6 @@ class TimelineCard extends HTMLElement {
                   <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
-              <div id="entity-selector" class="entity-selector" hidden></div>
               <div id="timeline-body" class="body"></div>
             </div>
           </ha-card>
