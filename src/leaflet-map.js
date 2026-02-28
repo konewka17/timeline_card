@@ -28,7 +28,6 @@ export class TimelineLeafletMap {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
-        this._isMapZoomedToSegment = false;
 
         this.setDarkMode(false);
         requestAnimationFrame(() => this._leafletMap.invalidateSize());
@@ -46,10 +45,6 @@ export class TimelineLeafletMap {
         this._currentLocations = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
-    }
-
-    get isMapZoomedToSegment() {
-        return this._isMapZoomedToSegment;
     }
 
     setDaySegments(tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []) {
@@ -78,7 +73,6 @@ export class TimelineLeafletMap {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
-        this._isMapZoomedToSegment = false;
 
         const activeSegments = tracks[activeEntityIndex]?.segments || [];
         this._drawMapSegments(activeSegments);
@@ -111,23 +105,6 @@ export class TimelineLeafletMap {
         this._isTravelHighlightActive = false;
 
         this._drawMapSegments(segments);
-    }
-
-    resetMapZoom() {
-        this._isMapZoomedToSegment = false;
-        this.fitMap();
-    }
-
-    zoomToStay(stay) {
-        if (!stay?.center) return;
-        this._isMapZoomedToSegment = true;
-        this.fitMap([stay.center]);
-    }
-
-    zoomToPoints(points) {
-        if (!Array.isArray(points) || points.length < 2) return;
-        this._isMapZoomedToSegment = true;
-        this.fitMap(points);
     }
 
     fitMap(bounds = null) {
@@ -249,7 +226,7 @@ function createEntityIcon(location) {
     }
     const iconDiv = document.createElement("div");
     iconDiv.appendChild(icon);
-    iconDiv.setAttribute("style", `height: 42px; width: 42px; border-radius: 50%; border: 3px solid ${location.color}; box-shadow: 0 2px 8px #0005; overflow: hidden; background-color: color-mix(in srgb, white 30%, ${location.color})`);
+    iconDiv.setAttribute("style", `height: 42px; width: 42px; border-radius: 50%; border: 3px solid color-mix(in srgb, black 30%, ${location.color}); overflow: hidden; background-color: ${location.color}`);
 
     return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [48, 48]});
 }

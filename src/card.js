@@ -6,6 +6,7 @@ import {
     formatDate,
     formatErrorMessage,
     getTrackColor,
+    isToday,
     normalizeList,
     startOfDay,
     today,
@@ -42,7 +43,7 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._touchStart = null;
         this._activeEntityIndex = 0;
-        this._todayFitMode = "current";
+        this._resetMapFitMode();
         this._addEventListeners();
     }
 
@@ -57,8 +58,8 @@ class TimelineCard extends HTMLElement {
         }
 
         this._activeEntityIndex = 0;
-        this._todayFitMode = "current";
         this._selectedDate = startOfDay(new Date());
+        this._resetMapFitMode()
         this._setDarkMode();
         this._renderEntitySelector(true);
         this._applyMapHeight();
@@ -137,14 +138,16 @@ class TimelineCard extends HTMLElement {
         const next = new Date(this._selectedDate);
         next.setDate(next.getDate() + direction);
         this._selectedDate = startOfDay(next);
-        this._todayFitMode = "current";
+        this._resetMapFitMode()
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
-    _resetMapZoom() {
-        this._mapView?.resetMapZoom();
-        this._fitMapToCurrentMode();
-        this._updateMapResetButton();
+    _resetMapFitMode() {
+        if (isToday(this._selectedDate) && this._config.show_current_location) {
+            this._mapFitMode = "current_location";
+        } else {
+            this._mapFitMode = "selected_entity_path";
+        }
     }
 
     _refreshCurrentDay() {
@@ -175,8 +178,7 @@ class TimelineCard extends HTMLElement {
             .toggleAttribute("disabled", this._selectedDate >= today());
         this._applyMapHeight();
 
-        this._updateMapResetButton();
-        this._updateMapFitToggleButton();
+        this._updateMapFitButton();
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
@@ -193,10 +195,7 @@ class TimelineCard extends HTMLElement {
           <style>${css}\n${leafletCss}</style>
           <ha-card>
             <div class="card">
-              <div class="map-wrap">
-                <div id="overview-map"></div>
-                <ha-icon-button id="map-reset-zoom" class="map-reset" data-action="reset-map-zoom" label="${localize("card.labels.reset_map_zoom")}" hidden><ha-icon icon="mdi:magnify-scan"></ha-icon></ha-icon-button>
-              </div>
+              <div id="overview-map"></div>
               <div class="header my-header">
                 <div class="header-actions">
                     <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
@@ -211,7 +210,7 @@ class TimelineCard extends HTMLElement {
                 </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
-                  <ha-icon-button id="map-fit-toggle" class="nav-button" data-action="toggle-map-fit" hidden><ha-icon></ha-icon></ha-icon-button>
+                  <ha-icon-button id="map-fit-toggle" class="nav-button" data-action="toggle-map-fit"><ha-icon></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
@@ -236,29 +235,26 @@ class TimelineCard extends HTMLElement {
         input.click();
     }
 
-    _updateMapResetButton() {
-        const resetBtn = this.shadowRoot?.getElementById("map-reset-zoom");
-        if (!resetBtn) return;
-        resetBtn.toggleAttribute("hidden", !this._mapView?.isMapZoomedToSegment);
-    }
-
-    _updateMapFitToggleButton() {
+    _updateMapFitButton() {
         const fitToggleBtn = this.shadowRoot?.getElementById("map-fit-toggle");
         if (!fitToggleBtn) return;
-
-        const isToday = this._isSelectedDateToday();
-        fitToggleBtn.toggleAttribute("hidden", !isToday);
-        if (!isToday) return;
-
         const icon = fitToggleBtn.querySelector("ha-icon");
-        if (!icon) return;
 
-        if (this._todayFitMode === "current") {
+        if (this._mapFitMode === "segment") {
+            fitToggleBtn.toggleAttribute("hidden", false);
             icon.setAttribute("icon", "mdi:magnify-scan");
             fitToggleBtn.setAttribute("label", "Switch to full path fit");
+        } else if (isToday(this._selectedDate) && this._config.show_current_location) {
+            fitToggleBtn.toggleAttribute("hidden", false);
+            if (this._mapFitMode === "current_location") {
+                icon.setAttribute("icon", "mdi:magnify-scan");
+                fitToggleBtn.setAttribute("label", "Switch to full path fit");
+            } else {
+                icon.setAttribute("icon", "mdi:crosshairs-gps");
+                fitToggleBtn.setAttribute("label", "Switch to current location fit");
+            }
         } else {
-            icon.setAttribute("icon", "mdi:crosshairs-gps");
-            fitToggleBtn.setAttribute("label", "Switch to current location fit");
+            fitToggleBtn.toggleAttribute("hidden", true);
         }
     }
 
@@ -294,8 +290,7 @@ class TimelineCard extends HTMLElement {
             this._mapView.setDaySegments(tracks, this._activeEntityIndex, (entityIndex) => this._setActiveEntityIndex(entityIndex), this._config.colors,);
             this._touchStart = null;
 
-            this._updateMapResetButton();
-            this._updateMapFitToggleButton();
+            this._updateMapFitButton();
             this._fitMapToCurrentMode();
         } catch (err) {
             this._setCurrentDayError(err);
@@ -387,25 +382,24 @@ class TimelineCard extends HTMLElement {
 
     _fitMapToCurrentMode() {
         let bounds = null;
-        if (this._isSelectedDateToday() && this._todayFitMode === "current") {
+        if (isToday(this._selectedDate) && this._mapFitMode === "current_location") {
             bounds = this._getCurrentEntityLocations().map(point => point.point);
         }
         this._mapView.fitMap(bounds);
     }
 
-    _isSelectedDateToday() {
-        return this._selectedDate?.getTime() === today().getTime();
-    }
-
     _toggleMapFitMode() {
-        if (!this._isSelectedDateToday()) return;
-        this._todayFitMode = this._todayFitMode === "current" ? "timeline" : "current";
-        this._updateMapFitToggleButton();
+        if (this._mapFitMode === "current_location") {
+            this._mapFitMode = "selected_entity_path";
+        }else{
+            this._resetMapFitMode()
+        }
+        this._updateMapFitButton();
         this._fitMapToCurrentMode();
     }
 
     _getCurrentEntityLocations() {
-        if (!this._isSelectedDateToday()) {
+        if (!isToday(this._selectedDate)) {
             return [];
         }
 
@@ -451,8 +445,6 @@ class TimelineCard extends HTMLElement {
                 this._logCacheToConsole();
             } else if (action === "open-date-picker") {
                 this._openDatePicker();
-            } else if (action === "reset-map-zoom") {
-                this._resetMapZoom();
             } else if (action === "select-entity") {
                 this._setActiveEntityIndex(Number(target.dataset.entityIndex));
             }
@@ -464,7 +456,7 @@ class TimelineCard extends HTMLElement {
             const next = new Date(`${target.value}T00:00:00`);
             if (!Number.isNaN(next.getTime())) {
                 this._selectedDate = startOfDay(next);
-                this._todayFitMode = "current";
+                this._resetMapFitMode();
                 this._ensureDay(this._selectedDate).then(() => this._render());
             }
         });
@@ -513,14 +505,14 @@ class TimelineCard extends HTMLElement {
         const segment = track.segments[segmentIndex];
         if (!segment) return;
 
+        this._mapFitMode = "segment";
+        this._updateMapFitButton();
         if (segment.type === "stay") {
-            this._mapView?.zoomToStay(segment);
-            this._updateMapResetButton();
+            this._mapView?.fitMap([segment.center]);
         } else if (segment.type === "move") {
             const segmentPoints = track.points.filter((point) => point.timestamp >= segment.start && point.timestamp <= segment.end);
             if (segmentPoints.length < 2) return;
-            this._mapView?.zoomToPoints(segmentPoints.map(toLatLon));
-            this._updateMapResetButton();
+            this._mapView?.fitMap(segmentPoints.map(toLatLon));
         }
     }
 
