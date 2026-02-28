@@ -196,7 +196,10 @@ class TimelineCard extends HTMLElement {
           <style>${css}\n${leafletCss}</style>
           <ha-card>
             <div class="card">
-              <div id="overview-map"></div>
+              <div class="map-wrap">
+                <div id="overview-map"></div>
+                <ha-icon-button id="map-fit-mode" class="map-reset" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
+              </div>
               <div class="header my-header">
                 <div class="header-actions">
                     <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
@@ -211,7 +214,6 @@ class TimelineCard extends HTMLElement {
                 </div>
                 <div class="header-actions">
                   <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
-                  <ha-icon-button id="map-fit-toggle" class="nav-button" data-action="toggle-map-fit"><ha-icon></ha-icon></ha-icon-button>
                   <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
                 </div>
               </div>
@@ -237,7 +239,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _updateMapFitButton() {
-        const fitToggleBtn = this.shadowRoot?.getElementById("map-fit-toggle");
+        const fitToggleBtn = this.shadowRoot?.getElementById("map-fit-mode");
         if (!fitToggleBtn) return;
         const icon = fitToggleBtn.querySelector("ha-icon");
 
@@ -389,7 +391,7 @@ class TimelineCard extends HTMLElement {
         this._mapView.fitMap(bounds);
     }
 
-    _toggleMapFitMode() {
+    _updateMapFitMode() {
         if (this._mapFitMode === "current_location") {
             this._mapFitMode = "selected_entity_path";
         }else{
@@ -440,8 +442,8 @@ class TimelineCard extends HTMLElement {
                 this._shiftDate(1);
             } else if (action === "refresh") {
                 this._refreshCurrentDay();
-            } else if (action === "toggle-map-fit") {
-                this._toggleMapFitMode();
+            } else if (action === "update-map-fit-mode") {
+                this._updateMapFitMode();
             } else if (action === "debug") {
                 this._logCacheToConsole();
             } else if (action === "open-date-picker") {

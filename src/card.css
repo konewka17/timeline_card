@@ -274,6 +274,10 @@ ha-card {
   font-weight: normal;
 }
 
+.map-wrap {
+  position: relative;
+}
+
 #overview-map {
   height: 200px;
   --map-filter: invert(0);
@@ -313,7 +317,7 @@ ha-card {
   display: none;
 }
 
-#map-fit-toggle[hidden] {
+#map-fit-mode[hidden] {
   display: none;
 }
 
