@@ -24,7 +24,7 @@ export function getConfigFormSchema() {
                     ]},
                     {name: "map_height_px", selector: {number: {unit_of_measurement: "px"}}},
                     {type: "grid", name: "", flatten: true, schema: [
-                        {name: "show_current_location", selector: {boolean: {}}},
+                        {name: "hide_current_location", selector: {boolean: {}}},
                         {name: "hide_moving", selector: {boolean: {}}},
                     ]},
                     {name: "colors", selector: {text: {multiple: true}}},

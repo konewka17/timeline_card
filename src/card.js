@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
     map_height_px: 200,
     distance_unit: "metric",
     colors: [],
-    show_current_location: true,
+    hide_current_location: false,
     hide_moving: false,
     debug: false,
 };
@@ -144,7 +144,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _resetMapFitMode() {
-        if (isToday(this._selectedDate) && this._config.show_current_location) {
+        if (isToday(this._selectedDate) && !this._config.hide_current_location) {
             this._mapFitMode = "current_location";
         } else {
             this._mapFitMode = "selected_entity_path";
@@ -245,7 +245,7 @@ class TimelineCard extends HTMLElement {
             fitToggleBtn.toggleAttribute("hidden", false);
             icon.setAttribute("icon", "mdi:magnify-scan");
             fitToggleBtn.setAttribute("label", "Switch to full path fit");
-        } else if (isToday(this._selectedDate) && this._config.show_current_location) {
+        } else if (isToday(this._selectedDate) && !this._config.hide_current_location) {
             fitToggleBtn.toggleAttribute("hidden", false);
             if (this._mapFitMode === "current_location") {
                 icon.setAttribute("icon", "mdi:magnify-scan");
@@ -285,7 +285,7 @@ class TimelineCard extends HTMLElement {
 
         try {
             const tracks = Array.isArray(dayData.tracks) ? dayData.tracks : [];
-            if (this._config.show_current_location) {
+            if (!this._config.hide_current_location) {
                 this._mapView._currentLocations = this._getCurrentEntityLocations();
             }
             this._mapView.setDaySegments(tracks, this._activeEntityIndex, (entityIndex) => this._setActiveEntityIndex(entityIndex), this._config.colors,);
