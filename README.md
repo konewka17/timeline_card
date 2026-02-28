@@ -58,6 +58,7 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `map_height_px` | number | `200` | Height of the map area in pixels. |
 | `hide_current_location` | boolean | `false` | Hide the current location when viewing today. |
 | `hide_moving` | boolean | `false` | Hide moving rows and keep only stays. |
+| `collapse_timeline` | boolean | `false` | Start with the timeline section collapsed on first render. |
 | `colors` | string[] | `[]` | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables. |
 
 ## Reverse Geocoding

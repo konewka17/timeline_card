@@ -27,6 +27,7 @@ export function getConfigFormSchema() {
                         {name: "hide_current_location", selector: {boolean: {}}},
                         {name: "hide_moving", selector: {boolean: {}}},
                     ]},
+                    {name: "collapse_timeline", selector: {boolean: {}}},
                     {name: "colors", selector: {text: {multiple: true}}},
                 ],
             },

@@ -30,6 +30,7 @@ const DEFAULT_CONFIG = {
     colors: [],
     hide_current_location: false,
     hide_moving: false,
+    collapse_timeline: false,
     debug: false,
 };
 
@@ -44,6 +45,7 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._touchStart = null;
         this._activeEntityIndex = 0;
+        this._timelineCollapsed = false;
         this._resetMapFitMode();
         this._addEventListeners();
     }
@@ -59,6 +61,7 @@ class TimelineCard extends HTMLElement {
         }
 
         this._activeEntityIndex = 0;
+        this._timelineCollapsed = Boolean(this._config.collapse_timeline);
         this._selectedDate = startOfDay(new Date());
         this._resetMapFitMode()
         this._setDarkMode();
@@ -180,6 +183,7 @@ class TimelineCard extends HTMLElement {
         this._applyMapHeight();
 
         this._updateMapFitButton();
+        this._updateCollapseButtons();
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
@@ -199,26 +203,38 @@ class TimelineCard extends HTMLElement {
               <div class="map-wrap">
                 <div id="overview-map"></div>
                 <ha-icon-button id="map-fit-mode" class="map-reset" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
+                <ha-icon-button id="timeline-collapse-map" class="map-reset map-reset-left" data-action="toggle-timeline-collapse" hidden>
+                  <ha-icon></ha-icon>
+                </ha-icon-button>
               </div>
-              <div class="header my-header">
-                <div class="header-actions">
-                    <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
-                    ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="${localize("card.labels.debug")}"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
+              <div class="selector-row" id="selector-row" hidden>
+                <ha-icon-button id="timeline-collapse-selector" class="selector-collapse" data-action="toggle-timeline-collapse">
+                  <ha-icon></ha-icon>
+                </ha-icon-button>
+                <div id="entity-selector" class="entity-selector"></div>
+              </div>
+              <div id="timeline-section" class="timeline-section">
+                <div class="timeline-content">
+                <div class="header my-header">
+                  <div class="header-actions">
+                      <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
+                      ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="${localize("card.labels.debug")}"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
+                  </div>
+                  <div class="date-wrap">
+                    <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="${localize("card.labels.pick_date")}">
+                      <span id="timeline-date" class="date"></span>
+                      <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
+                    </button>
+                    <input id="timeline-date-picker" class="date-picker-input" type="date">
+                  </div>
+                  <div class="header-actions">
+                    <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
+                    <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
+                  </div>
                 </div>
-                <div class="date-wrap">
-                  <button class="date-trigger" data-action="open-date-picker" type="button" aria-label="${localize("card.labels.pick_date")}">
-                    <span id="timeline-date" class="date"></span>
-                    <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
-                  </button>
-                  <input id="timeline-date-picker" class="date-picker-input" type="date">
-                </div>
-                <div class="header-actions">
-                  <ha-icon-button class="nav-button" data-action="refresh" label="${localize("card.labels.refresh")}"><ha-icon icon="mdi:refresh"></ha-icon></ha-icon-button>
-                  <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
+                <div id="timeline-body" class="body"></div>
                 </div>
               </div>
-              <div id="entity-selector" class="entity-selector" hidden></div>
-              <div id="timeline-body" class="body"></div>
             </div>
           </ha-card>
         `;
@@ -307,10 +323,15 @@ class TimelineCard extends HTMLElement {
         this._entitySelectorRendered = true;
 
         const entities = this._config.entity;
-        if (entities.length < 2) return "";
-
         const selector = this.shadowRoot?.getElementById("entity-selector");
-        if (!selector) return;
+        const selectorRow = this.shadowRoot?.getElementById("selector-row");
+        if (!selector || !selectorRow) return;
+        if (entities.length < 2) {
+            selectorRow.toggleAttribute("hidden", true);
+            return;
+        }
+
+        selectorRow.toggleAttribute("hidden", false);
         selector.innerHTML = entities.map((entityId, index) => {
             const state = this._hass?.states?.[entityId];
             const picture = state?.attributes?.entity_picture;
@@ -326,6 +347,29 @@ class TimelineCard extends HTMLElement {
             `;
         }).join("");
         selector.toggleAttribute("hidden", this._config.entity.length < 2);
+        this._updateCollapseButtons();
+    }
+
+    _updateCollapseButtons() {
+        const selectorCollapseBtn = this.shadowRoot?.getElementById("timeline-collapse-selector");
+        const mapCollapseBtn = this.shadowRoot?.getElementById("timeline-collapse-map");
+        const timelineSection = this.shadowRoot?.getElementById("timeline-section");
+        if (!selectorCollapseBtn || !mapCollapseBtn || !timelineSection) return;
+
+        const useSelectorButton = this._config.entity.length > 1;
+        const useMapButton = this._config.entity.length < 2;
+        const icon = this._timelineCollapsed ? "mdi:chevron-down" : "mdi:chevron-up";
+        const label = this._timelineCollapsed ? "Expand timeline" : "Collapse timeline";
+
+        selectorCollapseBtn.toggleAttribute("hidden", !useSelectorButton);
+        mapCollapseBtn.toggleAttribute("hidden", !useMapButton);
+
+        selectorCollapseBtn.querySelector("ha-icon")?.setAttribute("icon", icon);
+        mapCollapseBtn.querySelector("ha-icon")?.setAttribute("icon", icon);
+        selectorCollapseBtn.setAttribute("label", label);
+        mapCollapseBtn.setAttribute("label", label);
+
+        timelineSection.classList.toggle("collapsed", this._timelineCollapsed);
     }
 
     _renderTimelineContent(dayData) {
@@ -450,6 +494,9 @@ class TimelineCard extends HTMLElement {
                 this._openDatePicker();
             } else if (action === "select-entity") {
                 this._setActiveEntityIndex(Number(target.dataset.entityIndex));
+            } else if (action === "toggle-timeline-collapse") {
+                this._timelineCollapsed = !this._timelineCollapsed;
+                this._updateCollapseButtons();
             }
         });
 
