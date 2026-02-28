@@ -18,8 +18,13 @@ export function formatDate(date, locale = null) {
     return `${y}-${m}-${d}`;
 }
 
-export function today(){
+export function today() {
     return startOfDay(new Date());
+}
+
+export function isToday(date) {
+    if (!date) return false;
+    return startOfDay(date)?.getTime() === today().getTime();
 }
 
 export function startOfDay(date) {
@@ -30,7 +35,7 @@ export function endOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 }
 
-export function formatTimeRange(start, end, options={}) {
+export function formatTimeRange(start, end, options = {}) {
     const hideStartTime = options.hideStartTime || false;
     const hideEndTime = options.hideEndTime || false;
     const locale = options.locale || {language: "en", time_format: "language"};
@@ -87,7 +92,7 @@ export function haversineMeters(a, b) {
 }
 
 export function toLatLon(point) {
-    return {lat: point.point[0], lon: point.point[1]}
+    return {lat: point.point[0], lon: point.point[1]};
 }
 
 export function toPoint(state) {

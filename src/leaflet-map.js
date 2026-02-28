@@ -12,9 +12,7 @@ export class TimelineLeafletMap {
 
         this._Leaflet = Leaflet;
         this._mapElement = mapElement;
-        this._leafletMap = Leaflet.map(mapElement, {
-            zoomControl: true,
-        });
+        this._leafletMap = Leaflet.map(mapElement, {zoomControl: true,});
 
         const attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>, &copy; <a href=\"https://carto.com/attributions\">CARTO</a>";
         const tileLayer = Leaflet.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`, {
@@ -26,10 +24,10 @@ export class TimelineLeafletMap {
         this._mapLayers = [];
         this._fullDayPaths = [];
         this._fullDayPath = [];
+        this._currentLocations = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
-        this._isMapZoomedToSegment = false;
 
         this.setDarkMode(false);
         requestAnimationFrame(() => this._leafletMap.invalidateSize());
@@ -44,15 +42,12 @@ export class TimelineLeafletMap {
         this._mapLayers = [];
         this._fullDayPath = [];
         this._fullDayPaths = [];
+        this._currentLocations = [];
         this._highlightedPath = [];
         this._highlightedStay = null;
     }
 
-    get isMapZoomedToSegment() {
-        return this._isMapZoomedToSegment;
-    }
-
-    setDaySegments({tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []}) {
+    setDaySegments(tracks = [], activeEntityIndex = 0, onTrackClick = null, colors = []) {
         this._fullDayPaths = tracks.map((track, index) => {
             const points = [];
             const segments = Array.isArray(track?.segments) ? track.segments : [];
@@ -78,7 +73,6 @@ export class TimelineLeafletMap {
         this._highlightedPath = [];
         this._highlightedStay = null;
         this._isTravelHighlightActive = false;
-        this._isMapZoomedToSegment = false;
 
         const activeSegments = tracks[activeEntityIndex]?.segments || [];
         this._drawMapSegments(activeSegments);
@@ -113,23 +107,6 @@ export class TimelineLeafletMap {
         this._drawMapSegments(segments);
     }
 
-    resetMapZoom() {
-        this._isMapZoomedToSegment = false;
-        this.fitMap();
-    }
-
-    zoomToStay(stay) {
-        if (!stay?.center) return;
-        this._isMapZoomedToSegment = true;
-        this.fitMap([stay.center]);
-    }
-
-    zoomToPoints(points) {
-        if (!Array.isArray(points) || points.length < 2) return;
-        this._isMapZoomedToSegment = true;
-        this.fitMap(points);
-    }
-
     fitMap(bounds = null) {
         if (bounds === null) {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
@@ -144,6 +121,7 @@ export class TimelineLeafletMap {
 
         this._drawMapLines();
         this._drawMapMarkers(segments);
+        this._drawCurrentLocationMarkers();
         this._mapLayers.forEach((layer) => this._leafletMap.addLayer(layer));
     }
 
@@ -198,6 +176,21 @@ export class TimelineLeafletMap {
             this._mapLayers.push(line);
         });
     }
+
+    _drawCurrentLocationMarkers() {
+        let markerGroup = Leaflet.layerGroup();
+        if (this._currentLocations.length === 1){
+            markerGroup.addLayer(this._Leaflet.marker(this._currentLocations[0].point, {icon: createDefaultCurrentLocationIcon(), zIndexOffset: 1000}));
+        } else {
+            this._currentLocations.forEach((location, index) => {
+                if (!location?.point) return;
+                const icon = createEntityIcon(location);
+                const zIndexOffset = location.isActive ? 1500 : 1000;
+                markerGroup.addLayer(this._Leaflet.marker(location.point, {icon, zIndexOffset: zIndexOffset}));
+            });
+        }
+        this._mapLayers.push(markerGroup);
+    }
 }
 
 function createMarkerIcon(options) {
@@ -210,4 +203,41 @@ function createMarkerIcon(options) {
     iconDiv.setAttribute("style", `height: ${(options.markerSize)}px; width: ${(options.markerSize)}px; background-color: ${(options.backgroundColor)}; border-radius: 50%; border: 2px solid ${(options.borderColor)}; display: flex;`);
 
     return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: options.leafletIconSize});
+}
+
+function createEntityIcon(location) {
+    let icon;
+    if (location.picture){
+        icon = document.createElement("img");
+        icon.src = location.picture;
+        icon.alt = location.name;
+        icon.setAttribute("style", "height: 42px; width: 42px; border-radius: 50%; object-fit: cover;");
+    } else {
+        const getAbbreviation = (name) => {
+            const words = name.split(" ");
+            if (words.length === 1) {
+                return words[0].charAt(0).toUpperCase() + words[0].charAt(1);
+            }
+            return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+        }
+        icon = document.createElement("div")
+        icon.innerHTML = getAbbreviation(location.name);
+        icon.setAttribute("style", `height: 42px; width: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; color: white;`);
+    }
+    const iconDiv = document.createElement("div");
+    iconDiv.appendChild(icon);
+    iconDiv.setAttribute("style", `height: 42px; width: 42px; border-radius: 50%; border: 3px solid color-mix(in srgb, black 30%, ${location.color}); overflow: hidden; background-color: ${location.color}`);
+
+    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [48, 48]});
+}
+
+function createDefaultCurrentLocationIcon() {
+    const innerDot = document.createElement("div");
+    innerDot.setAttribute("style", "height: 14px; width: 14px; border-radius: 50%; background: #1a73e8; border: 3px solid white; box-shadow: 0 1px 6px #0006;");
+
+    const iconDiv = document.createElement("div");
+    iconDiv.appendChild(innerDot);
+    iconDiv.setAttribute("style", "height: 20px; width: 20px; display: flex; align-items: center; justify-content: center;");
+
+    return Leaflet.divIcon({html: iconDiv, className: "my-leaflet-icon", iconSize: [20, 20]});
 }
