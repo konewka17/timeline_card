@@ -424,6 +424,7 @@ class TimelineCard extends HTMLElement {
             return;
         }
         this._activeEntityIndex = index;
+        this._renderEntitySelector(true)
         this._render();
     }
 
