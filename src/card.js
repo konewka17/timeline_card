@@ -1,5 +1,7 @@
 import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
+import leafletMarkerClusterCss from "leaflet.markercluster/dist/MarkerCluster.css"
+import leafletMarkerClusterDefaultCss from "leaflet.markercluster/dist/MarkerCluster.Default.css"
 import {getSegmentedTracks} from "./segmentation.js";
 import {
     escapeHtml,
@@ -197,7 +199,7 @@ class TimelineCard extends HTMLElement {
         this._baseLayoutReady = true;
 
         this.shadowRoot.innerHTML = `
-          <style>${css}\n${leafletCss}</style>
+          <style>${css}\n${leafletCss}\n${leafletMarkerClusterCss}\n${leafletMarkerClusterDefaultCss}</style>
           <ha-card>
             <div class="card">
               <div class="map-wrap">

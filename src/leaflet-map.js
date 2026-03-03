@@ -1,4 +1,5 @@
 import Leaflet from "leaflet";
+import * as MarkerCluster from "leaflet.markercluster";
 import {getTrackColor} from "./utils.js";
 
 const DEFAULT_CENTER = [52.3731339, 4.8903147];
@@ -20,6 +21,7 @@ export class TimelineLeafletMap {
         });
         tileLayer.addTo(this._leafletMap);
         this._leafletMap.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        this._leafletMap.createPane("markerClusters");
 
         this._mapLayers = [];
         this._fullDayPaths = [];
@@ -178,7 +180,7 @@ export class TimelineLeafletMap {
     }
 
     _drawCurrentLocationMarkers() {
-        let markerGroup = Leaflet.layerGroup();
+        let markerGroup = new MarkerCluster.MarkerClusterGroup({clusterPane: "markerClusters"});
         if (this._currentLocations.length === 1){
             markerGroup.addLayer(this._Leaflet.marker(this._currentLocations[0].point, {icon: createDefaultCurrentLocationIcon(), zIndexOffset: 1000}));
         } else {
