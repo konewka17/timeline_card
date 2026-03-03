@@ -115,3 +115,8 @@ export function getTrackColor(index, colors = []) {
     }
     return `var(--color-${((index + 1) % 12) + 1})`;
 }
+
+export function capitalizeFirst(text) {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
