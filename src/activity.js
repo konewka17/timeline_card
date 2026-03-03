@@ -84,7 +84,9 @@ export function resolveActivities(segments, activityStates, date, activityIconMa
                     )?.icon;
             }
 
-            splitSegments.push(newSegment);
+            if (newSegment.durationMs > 0 || newSegment.distanceM > 0) {
+                splitSegments.push(newSegment);
+            }
         }
 
         return splitSegments.length > 0 ? splitSegments : [segment];
