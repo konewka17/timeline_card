@@ -106,6 +106,18 @@ export function getConfigFormSchema() {
                     },
                 ],
             },
+            {
+                type: "expandable",
+                name: "",
+                title: "Updates",
+                flatten: true,
+                schema: [
+                    {
+                        name: "update_interval",
+                        selector: {number: {min: 0, step: 1, unit_of_measurement: "sec", mode: "box"}},
+                    },
+                ],
+            },
         ],
         assertConfig: (config) => {
             const entities = Array.isArray(config.entity) ? config.entity : [];
