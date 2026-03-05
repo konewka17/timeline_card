@@ -1,5 +1,6 @@
 import {endOfDay, haversineMeters, startOfDay, toLatLon, toPoint} from "./utils.js";
 import {resolveStaySegments} from "./reverse-geocoding.js";
+import {resolveActivities} from "./activity.js";
 
 export function segmentTimeline(points, config, zones) {
     if (!Array.isArray(points) || points.length === 0) return [];
@@ -35,7 +36,7 @@ function detectStays(points, config) {
     let i = 0;
     while (i < points.length - 1) {
         const cluster = [toLatLon(points[i])];
-        let center = toLatLon(points[i])
+        let center = toLatLon(points[i]);
         let lastInIndex = i;
         let outlierUsed = false;
 
@@ -83,7 +84,7 @@ function meanCenter(cluster) {
             acc.lon += point.lon;
             return acc;
         },
-        {lat: 0, lon: 0}
+        {lat: 0, lon: 0},
     );
     return {lat: sum.lat / cluster.length, lon: sum.lon / cluster.length};
 }
@@ -144,25 +145,13 @@ function resolveZone(center, zones) {
     return match;
 }
 
-function getPlacesEntityMap(config, hass) {
-    const map = new Map();
-    config.places_entity.forEach((placeEntityId) => {
-        const trackerEntityId = hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
-        if (!trackerEntityId || !config.entity.includes(trackerEntityId) || map.has(trackerEntityId)) {
-            return;
-        }
-        map.set(trackerEntityId, placeEntityId);
-    });
-
-    return map;
-}
-
 function collectZones(hass) {
     if (!hass || !hass.states) return [];
     const states = Object.values(hass.states);
     return states
         .filter((state) => state.entity_id?.startsWith("zone.") && state.attributes?.passive !== true)
         .map((state) => ({
+            id: state.entity_id.replace("zone.", ""),
             name: state.attributes?.friendly_name || state.entity_id,
             icon: state.attributes?.icon || null,
             lat: Number(state.attributes?.latitude),
@@ -186,21 +175,54 @@ async function fetchEntityHistory(hass, entityId, date) {
         significant_changes_only: false,
     };
 
-    const response = await hass.callWS(message);
-    return response[entityId] || [];
+    const response = await callWS(hass, message);
+    return extractEntityStates(response, entityId);
+}
+
+async function callWS(hass, message) {
+    if (typeof hass.callWS === "function") {
+        return hass.callWS(message);
+    }
+    if (hass.connection && typeof hass.connection.sendMessagePromise === "function") {
+        return hass.connection.sendMessagePromise(message);
+    }
+    throw new Error("Home Assistant connection not available");
+}
+
+function extractEntityStates(response, entityId) {
+    if (!response) return [];
+    if (!Array.isArray(response) && typeof response === "object") {
+        const list = response[entityId];
+        return Array.isArray(list) ? list : [];
+    }
+    if (!Array.isArray(response)) return [];
+    if (response.length === 0) return [];
+    if (Array.isArray(response[0])) {
+        return response[0] || [];
+    }
+    return response.filter((state) => state.entity_id === entityId);
 }
 
 export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
-    const entities = config.entity;
-    const placesByEntity = getPlacesEntityMap(config, hass);
+    const entityEntries = config.entity;
     const zones = collectZones(hass);
-    return await Promise.all(entities.map(async (entityId) => {
-        let points = await fetchEntityHistory(hass, entityId, date)
-        points = points.map((state) => toPoint(state)).filter(Boolean);
-        const placeEntityId = placesByEntity.get(entityId) || null;
-        const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
-        const segments = segmentTimeline(points, config, zones);
-        resolveStaySegments(segments, placeStates, date, config.osm_api_key, onQueueUpdate);
-        return {entityId, placeEntityId, points, segments};
-    }));
+
+    return await Promise.all(
+        entityEntries.map(async (entry) => {
+            const entityId = entry.entity;
+            const rawStates = await fetchEntityHistory(hass, entityId, date);
+            const points = rawStates.map((state) => toPoint(state)).filter(Boolean);
+
+            const placeEntityId = entry.places_entity || null;
+            const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
+
+            const activityEntityId = entry.activity_entity || null;
+            const activityStates = activityEntityId ? await fetchEntityHistory(hass, activityEntityId, date) : [];
+
+            const baseSegments = segmentTimeline(points, config, zones);
+            resolveStaySegments(baseSegments, placeStates, date, config.osm_api_key, onQueueUpdate);
+            const segments = resolveActivities(baseSegments, activityStates, date, config.activity_icon_map, zones);
+            return {entityId, placeEntityId, activityEntityId, points, segments};
+        }),
+    );
 }

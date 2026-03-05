@@ -159,9 +159,9 @@ function buildPlaceIntervals(placeStates, date) {
 }
 
 function placeDisplayName(state) {
-    const attrs = state.attributes || {};
+    const attrs = state.a || {};
     const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ""}, ${attrs.city}` : null;
-    return attrs.place_name || formatted_address || state.state || attrs.formatted_address || null;
+    return attrs.place_name || formatted_address || state.s || attrs.formatted_address || null;
 }
 
 function pickPlaceName(intervals, start, end) {
@@ -222,4 +222,3 @@ function setPersistentCache(key, placeName, reverseGeocoding) {
 export function clearPersistentCache() {
     localStorage.removeItem(PERSISTENT_CACHE_KEY);
 }
-

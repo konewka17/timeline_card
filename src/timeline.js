@@ -1,4 +1,4 @@
-import {escapeHtml, formatDistance, formatDuration, formatTimeRange} from "./utils.js";
+import {capitalizeFirst, escapeHtml, formatDistance, formatDuration, formatTimeRange} from "./utils.js";
 import {localize} from "./localize/localize.js";
 
 export function renderTimeline(segments, locale, config) {
@@ -13,13 +13,18 @@ export function renderTimeline(segments, locale, config) {
     return `
     <div class="${timelineClass.join(" ")}">
       <div class="spine"></div>
-      ${segments.map((segment, index) => renderSegment(segment, index, {
-        locale: locale,
-        distanceUnit: config.distance_unit || "metric",
-        hideMoving: Boolean(config.hide_moving),
-        hideStartTime: index === 0 && firstIsStay,
-        hideEndTime: index === segments.length - 1 && lastIsStay,
-    })).join("")}
+      ${segments
+          .map((segment, index) =>
+              renderSegment(segment, index, {
+                  locale: locale,
+                  iconMap: config.activity_icon_map || {},
+                  distanceUnit: config.distance_unit || "metric",
+                  hideMoving: Boolean(config.hide_moving),
+                  hideStartTime: index === 0 && firstIsStay,
+                  hideEndTime: index === segments.length - 1 && lastIsStay,
+              }),
+          )
+          .join("")}
     </div>
   `;
 }
@@ -47,6 +52,7 @@ function renderSegment(segment, index, options) {
     }
 
     if (!options.hideMoving) {
+        console.log(segment);
         return `
           <div class="entry move" data-segment-index="${index}" data-segment-type="move">
             <div class="left-icon"></div>
@@ -54,8 +60,8 @@ function renderSegment(segment, index, options) {
               <div class="spine-overlay"></div>
             </div>
             <div class="content location travel">
-              <ha-icon class="move-icon" icon="mdi:chart-line-variant"></ha-icon>
-              <div class="title">${localize("timeline.moving")}<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
+              <ha-icon class="move-icon" icon="${segment.activityIcon || "mdi:chart-line-variant"}"></ha-icon>
+              <div class="title">${escapeHtml(capitalizeFirst(segment.activityName || localize("timeline.moving")))}<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
             </div>
             <div class="content time">
               <div class="meta">${formatDuration(segment.durationMs)}</div>
