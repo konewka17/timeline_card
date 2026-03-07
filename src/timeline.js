@@ -52,7 +52,6 @@ function renderSegment(segment, index, options) {
     }
 
     if (!options.hideMoving) {
-        console.log(segment);
         return `
           <div class="entry move" data-segment-index="${index}" data-segment-type="move">
             <div class="left-icon"></div>
