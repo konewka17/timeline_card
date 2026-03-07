@@ -222,6 +222,14 @@ class TimelineCard extends HTMLElement {
 
         this._updateMapFitButton();
         this._updateCollapseButtons();
+
+        const activeEntityColor = getTrackColor(
+            this._activeEntityIndex,
+            this._config?.colors,
+            this._config?.entity?.[this._activeEntityIndex]?.color,
+        );
+        this.shadowRoot.querySelector(".card")?.style.setProperty("--timeline-color", activeEntityColor);
+
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
 
