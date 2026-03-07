@@ -43,10 +43,14 @@ export function resolveStaySegments(segments, placeStates, date, osmApiKey, onUp
         // Load from persistent cache
         const segmentKey = toPersistentCacheKey(segment);
         const cached = persistentCache.get(segmentKey);
-        if (cached) {
-            segment.placeName = cached.placeName;
-            segment.reverseGeocoding = {...cached.reverseGeocoding, loadedFromPersistentCache: true};
-            continue;
+        if (cached && cached.placeName) {
+            if (cached.placeName === UNKNOWN_LOCATION) {
+                persistentCache.delete(segmentKey);
+            } else {
+                segment.placeName = cached.placeName;
+                segment.reverseGeocoding = {...cached.reverseGeocoding, loadedFromPersistentCache: true};
+                continue;
+            }
         }
 
         // Load from `places`
@@ -68,7 +72,6 @@ export function resolveStaySegments(segments, placeStates, date, osmApiKey, onUp
 
         segment.placeName = UNKNOWN_LOCATION;
         segment.reverseGeocoding = null;
-        setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
     }
 }
 
@@ -140,7 +143,9 @@ async function resolveQueuedRequest(request, sessionAtStart) {
     queuedSegments.delete(segment);
     segment.placeName = name;
     segment.reverseGeocoding = result;
-    setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
+    if (name !== UNKNOWN_LOCATION) {
+        setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
+    }
     onUpdate();
 }
 
