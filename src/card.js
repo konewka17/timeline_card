@@ -349,7 +349,6 @@ class TimelineCard extends HTMLElement {
                 this._activeEntityIndex,
                 (entityIndex) => this._setActiveEntityIndex(entityIndex),
                 this._config.colors,
-                this._config.activity_icon_map,
             );
             this._touchStart = null;
 
