@@ -6,7 +6,8 @@
       "debug": "Debug",
       "pick_date": "Pick date",
       "refresh": "Refresh",
-      "next_day": "Next day"
+      "next_day": "Next day",
+      "update_interval": "Update interval"
     },
     "timeline": {
       "loading": "Loading timeline..."

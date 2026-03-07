@@ -6,7 +6,8 @@
       "debug": "Debug",
       "pick_date": "Datum kiezen",
       "refresh": "Verversen",
-      "next_day": "Volgende dag"
+      "next_day": "Volgende dag",
+      "update_interval": "Update-interval"
     },
     "timeline": {
       "loading": "Tijdlijn laden..."

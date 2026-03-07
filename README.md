@@ -85,6 +85,8 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `hide_moving`            | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                        |
 | `collapse_timeline`      | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                   |
 | `colors`                 | string[] | `[]`         | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables. |
+| **Misc**          |          |              |                                                                                                                                                              |
+| `update_interval`        | number   | `300`         | How often to refresh the card (in seconds). |
 
 ## Reverse Geocoding
 

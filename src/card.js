@@ -34,6 +34,7 @@ const DEFAULT_CONFIG = {
     collapse_timeline: false,
     debug: false,
     activity_icon_map: {},
+    update_interval: 300,
 };
 
 class TimelineCard extends HTMLElement {
@@ -48,6 +49,7 @@ class TimelineCard extends HTMLElement {
         this._touchStart = null;
         this._activeEntityIndex = 0;
         this._timelineCollapsed = false;
+        this._updateIntervalId = null;
         this._resetMapFitMode();
         this._addEventListeners();
     }
@@ -72,6 +74,7 @@ class TimelineCard extends HTMLElement {
         if (this._hass) {
             this._ensureDay(this._selectedDate);
         }
+        this._setupUpdateInterval();
         this._render();
     }
 
@@ -100,6 +103,14 @@ class TimelineCard extends HTMLElement {
     // noinspection JSUnusedGlobalSymbols
     getCardSize() {
         return 10;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    disconnectedCallback() {
+        if (this._updateIntervalId) {
+            clearInterval(this._updateIntervalId);
+            this._updateIntervalId = null;
+        }
     }
 
     _checkConfig() {
@@ -166,6 +177,22 @@ class TimelineCard extends HTMLElement {
     _logCacheToConsole() {
         console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;");
         console.log(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
+    }
+
+    _setupUpdateInterval() {
+        if (this._updateIntervalId) {
+            clearInterval(this._updateIntervalId);
+            this._updateIntervalId = null;
+        }
+
+        const interval = Number(this._config.update_interval);
+        if (interval > 0) {
+            this._updateIntervalId = setInterval(() => {
+                if (isToday(this._selectedDate)) {
+                    this._refreshCurrentDay();
+                }
+            }, interval * 1000);
+        }
     }
 
     // Rendering
