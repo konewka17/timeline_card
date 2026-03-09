@@ -4,7 +4,11 @@ import nl from "./languages/nl.json";
 const languages = {en, nl};
 
 export function localize(string, search = "", replace = "") {
-    const lang = (localStorage.getItem("selectedLanguage") || "en").replace(/['"]+/g, "").replace("-", "_");
+    let lang = (localStorage.getItem("selectedLanguage"))?.replace(/['"]+/g, "").replace("-", "_");
+    if (!lang) {
+        const _hass = document.querySelector("home-assistant").hass
+        lang = _hass.selectedLanguage || _hass.language || _hass.locale?.language || "en";
+    }
 
     let translated;
     try {
