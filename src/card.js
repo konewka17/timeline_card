@@ -32,6 +32,7 @@ const DEFAULT_CONFIG = {
     hide_current_location: false,
     hide_moving: false,
     collapse_timeline: false,
+    timeline_use_entity_color: false,
     debug: false,
     activity_icon_map: {},
 };
@@ -201,7 +202,9 @@ class TimelineCard extends HTMLElement {
             this._config?.colors,
             this._config?.entity?.[this._activeEntityIndex]?.color,
         );
-        this.shadowRoot.querySelector(".card")?.style.setProperty("--timeline-color", activeEntityColor);
+        if (this._config.timeline_use_entity_color) {
+            this.shadowRoot.querySelector(".card")?.style.setProperty("--timeline-color", activeEntityColor);
+        }
 
         const activeDayData = this._getCurrentTrackDayData(dayData);
         this.shadowRoot.getElementById("timeline-body").innerHTML = this._renderTimelineContent(activeDayData);
