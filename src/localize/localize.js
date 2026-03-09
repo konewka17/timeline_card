@@ -4,7 +4,7 @@ import nl from "./languages/nl.json";
 const languages = {en, nl};
 
 export function localize(string, search = "", replace = "") {
-    let lang = (localStorage.getItem("selectedLanguage"))
+    let lang = localStorage.getItem("selectedLanguage")
     if (!lang) {
         const _hass = document.querySelector("home-assistant").hass
         lang = _hass.selectedLanguage || _hass.language || _hass.locale?.language || "en";
