@@ -93,7 +93,15 @@ export function getConfigFormSchema() {
                             {name: "hide_moving", selector: {boolean: {}}},
                         ],
                     },
-                    {name: "collapse_timeline", selector: {boolean: {}}},
+                    {
+                        type: "grid",
+                        name: "",
+                        flatten: true,
+                        schema: [
+                            {name: "collapse_timeline", selector: {boolean: {}}},
+                            {name: "timeline_use_entity_color", selector: {boolean: {}}},
+                        ]
+                    },
                     {name: "colors", selector: {text: {multiple: true}}},
                     {
                         name: "activity_icon_map",
