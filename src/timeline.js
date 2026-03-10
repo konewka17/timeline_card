@@ -44,8 +44,9 @@ function renderSegment(segment, index, options) {
             <div class="content location">
               <div class="title">${escapeHtml(segment.zoneName || segment.placeName || localize("timeline.unknown_location"))}</div>
             </div>
-            <div class="content time">
-              <div class="meta">${formatTimeRange(segment.start, segment.end, options)}</div>
+            <div class="content time multiline">
+              <div class="meta timerange">${formatTimeRange(segment.start, segment.end, options)}</div>
+              ${options?.hideStartTime || options?.hideEndTime ? "" : `<div class="meta small duration">${formatDuration(segment.durationMs)}</div>`}
             </div>
           </div>
         `;
@@ -63,7 +64,7 @@ function renderSegment(segment, index, options) {
               <div class="title">${escapeHtml(capitalizeFirst(segment.activityName || localize("timeline.moving")))}<span class="meta"> - ${formatDistance(segment.distanceM, options.distanceUnit)}</span></div>
             </div>
             <div class="content time">
-              <div class="meta">${formatDuration(segment.durationMs)}</div>
+              <div class="meta duration">${formatDuration(segment.durationMs)}</div>
             </div>
           </div>
         `;
