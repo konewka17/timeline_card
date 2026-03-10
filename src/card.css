@@ -285,6 +285,10 @@ ha-card {
   text-align: right;
 }
 
+.content.time.multiline {
+  gap: 0;
+}
+
 .entry.move .title {
   margin-left: 10px;
   color: var(--secondary-text-color);
@@ -306,6 +310,14 @@ ha-card {
   font-size: 0.85rem;
   color: var(--secondary-text-color);
   font-weight: normal;
+}
+
+.meta.small {
+  font-size: 0.65rem;
+}
+
+.meta.duration {
+  color: color-mix(in srgb, var(--secondary-text-color) 60%, var(--primary-background-color));
 }
 
 .map-wrap {
