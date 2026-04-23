@@ -151,3 +151,16 @@ entity:
 ```
 
 You can replace `entity: null` or `places_entity: null` with `entity: []`
+
+## Debug mode
+In some cases for me to properly debug issues, you will need to enable debug mode and send me the logs. If this is necessary, please follow these steps:
+- Upgrade the card to the latest version by going to this repo in HACS, and clicking Update information.
+- Hard refresh your dashboard with `Shift+F5`
+- Go to this card's configuration, switch to yaml mode, and add the option `debug: true` as a parameter
+- Save the config, you will now see a debug icon appear next to the date picker
+- Navigate to a day where to issue occurs
+- Open your Developer Tools console (Chrome: `Ctrl+Shift+J`)
+- Click the debug icon, and you should see a log be generated in the console
+- Copy that full log into a file, and send it to me privately via [email](mailto:konewka17.github@gmail.com)
+  - Note that this log will contains your coordinates for that day, I'll handle them carefully and will only use it for debugging
+- Please also share your full configuration
