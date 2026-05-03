@@ -163,12 +163,11 @@ function collectZones(hass) {
 
 async function fetchEntityHistory(hass, entityId, date) {
     if (!hass || !entityId) return [];
-    const start = startOfDay(date);
-    const end = endOfDay(date);
+    const historyPadding = 6 * 60 * 60 * 1000;
     const message = {
         type: "history/history_during_period",
-        start_time: start.toISOString(),
-        end_time: end.toISOString(),
+        start_time: new Date(startOfDay(date) - historyPadding).toISOString(),
+        end_time: new Date(endOfDay(date) + historyPadding).toISOString(),
         entity_ids: [entityId],
         minimal_response: false,
         no_attributes: false,
@@ -176,7 +175,44 @@ async function fetchEntityHistory(hass, entityId, date) {
     };
 
     const response = await callWS(hass, message);
-    return extractEntityStates(response, entityId);
+    const states = extractEntityStates(response, entityId);
+    return clampHistoryToDay(states, date);
+}
+
+function clampHistoryToDay(states, date) {
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+
+    const currentDayStates = [];
+    let previousState = null;
+    let previousTimestamp = null;
+    let nextState = null;
+    let nextTimestamp = null;
+
+    for (const state of states) {
+        const timestamp = state.lu * 1000;
+        if (timestamp < start) {
+            if (previousTimestamp === null || timestamp > previousTimestamp) {
+                previousState = state;
+                previousTimestamp = timestamp;
+            }
+        } else if (timestamp > end) {
+            if (nextTimestamp === null || timestamp < nextTimestamp) {
+                nextState = state;
+                nextTimestamp = timestamp;
+            }
+        } else {
+            currentDayStates.push(state);
+        }
+    }
+
+    if (previousState) {
+        currentDayStates.unshift({...previousState, lu: start / 1000, lc: start / 1000,});
+    }
+    if (nextState) {
+        currentDayStates.push({...nextState, lu: end / 1000, lc: end / 1000,});
+    }
+    return currentDayStates;
 }
 
 async function callWS(hass, message) {
