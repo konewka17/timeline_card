@@ -39,6 +39,19 @@ Location Timeline Card is a custom Lovelace card that builds a **timeline–styl
 
 After installation, ensure the card resource is available in Lovelace (HACS normally registers this automatically).
 
+## Manual installation
+
+1. Download `timeline_card.js` from the latest GitHub Release.
+2. Copy it to your Home Assistant `www` folder, for example `/config/www/timeline_card.js`.
+3. Add it as a dashboard resource:
+
+```yaml
+url: /local/timeline_card.js
+type: module
+```
+
+4. Refresh your browser cache.
+
 ## Usage
 
 Add the card in the Lovelace UI editor or with manual YAML.

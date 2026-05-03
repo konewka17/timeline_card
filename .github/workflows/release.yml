@@ -53,4 +53,5 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   body_path: RELEASE_NOTES.md
+                  files: dist/timeline_card.js
                   prerelease: ${{ contains(github.ref, '-') }}
