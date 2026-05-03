@@ -25,6 +25,7 @@ const DEFAULT_CONFIG = {
     osm_api_key: null,
     stay_radius_m: 75,
     min_stay_minutes: 10,
+    max_reasonable_speed_kmh: 300,
     map_appearance: "auto",
     map_height_px: 200,
     distance_unit: "metric",

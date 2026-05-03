@@ -48,6 +48,10 @@ export function getConfigFormSchema() {
                                 name: "min_stay_minutes",
                                 selector: {number: {min: 1, step: 1, mode: "box"}},
                             },
+                            {
+                                name: "max_reasonable_speed_kmh",
+                                selector: {number: {min: 0, step: 1, mode: "box"}},
+                            },
                         ],
                     },
                 ],

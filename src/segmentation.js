@@ -28,6 +28,31 @@ export function segmentTimeline(points, config, zones) {
     return segments;
 }
 
+function filterSpeedOutliers(points, maxSpeed) {
+    if (points.length < 3 || maxSpeed === 0) {
+        return points;
+    }
+    const filtered = [points[0]];
+    let index = 1;
+    while (index < points.length) {
+        const a = filtered[filtered.length - 1];
+        const b = points[index];
+        const c = points[index + 1];
+
+        if (!(b && c && speedBetweenPoints(a, b) > maxSpeed && speedBetweenPoints(a, c) <= maxSpeed)) {
+            filtered.push(b);
+        }
+        index += 1;
+    }
+    return filtered;
+}
+
+function speedBetweenPoints(a, b) {
+    const distanceKm = haversineMeters(toLatLon(a), toLatLon(b)) / 1000;
+    const durationH = (b.timestamp - a.timestamp) / (60 * 60 * 1000);
+    return distanceKm / durationH;
+}
+
 function detectStays(points, config) {
     const stayRadius = Math.max(10, config.stay_radius_m || 75);
     const minStayMs = Math.max(1, config.min_stay_minutes || 10) * 60000;
@@ -247,7 +272,8 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
         entityEntries.map(async (entry) => {
             const entityId = entry.entity;
             const rawStates = await fetchEntityHistory(hass, entityId, date);
-            const points = rawStates.map((state) => toPoint(state)).filter(Boolean);
+            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean);
+            const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
 
             const placeEntityId = entry.places_entity || null;
             const placeStates = placeEntityId ? await fetchEntityHistory(hass, placeEntityId, date) : [];
