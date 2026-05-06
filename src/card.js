@@ -86,6 +86,7 @@ class TimelineCard extends HTMLElement {
         this._setDarkMode();
         this._renderEntitySelector();
         if (!this._config.entity) return;
+        this._config.entity = normalizeEntityEntries(this._config, this._hass);
         const dateKey = formatDate(this._selectedDate);
         if (!this._cache.has(dateKey)) {
             this._ensureDay(this._selectedDate);
@@ -94,7 +95,6 @@ class TimelineCard extends HTMLElement {
             this._render();
             this._rendered = true;
         }
-        this._config.entity = normalizeEntityEntries(this._config, this._hass);
     }
 
     // noinspection JSUnusedGlobalSymbols
