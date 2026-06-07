@@ -32,6 +32,7 @@ const DEFAULT_CONFIG = {
     colors: [],
     hide_current_location: false,
     hide_moving: false,
+    reverse_timeline_order: false,
     collapse_timeline: false,
     timeline_use_entity_color: false,
     debug: false,

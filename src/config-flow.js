@@ -95,6 +95,7 @@ export function getConfigFormSchema() {
                         schema: [
                             {name: "hide_current_location", selector: {boolean: {}}},
                             {name: "hide_moving", selector: {boolean: {}}},
+                            {name: "reverse_timeline_order", selector: {boolean: {}}},
                         ],
                     },
                     {
