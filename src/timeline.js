@@ -6,22 +6,27 @@ export function renderTimeline(segments, locale, config) {
         return `<div class="empty">${localize("timeline.empty")}</div>`;
     }
 
-    const firstIsStay = segments[0]?.type === "stay";
-    const lastIsStay = segments[segments.length - 1]?.type === "stay";
+    const entries = segments.map((segment, index) => ({segment, index}));
+    if (config.reverse_timeline_order) {
+        entries.reverse();
+    }
+
+    const firstIsStay = entries[0]?.segment?.type === "stay";
+    const lastIsStay = entries[entries.length - 1]?.segment?.type === "stay";
     const timelineClass = ["timeline", firstIsStay ? "trim-spine-top" : "", lastIsStay ? "trim-spine-bottom" : ""];
 
     return `
     <div class="${timelineClass.join(" ")}">
       <div class="spine"></div>
-      ${segments
-          .map((segment, index) =>
+      ${entries
+          .map(({segment, index}) =>
               renderSegment(segment, index, {
                   locale: locale,
                   iconMap: config.activity_icon_map || {},
                   distanceUnit: config.distance_unit || "metric",
                   hideMoving: Boolean(config.hide_moving),
-                  hideStartTime: index === 0 && firstIsStay,
-                  hideEndTime: index === segments.length - 1 && lastIsStay,
+                  hideStartTime: index === 0 && segment.type === "stay",
+                  hideEndTime: index === segments.length - 1 && segment.type === "stay",
               }),
           )
           .join("")}
