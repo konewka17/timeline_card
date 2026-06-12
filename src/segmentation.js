@@ -272,7 +272,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
         entityEntries.map(async (entry) => {
             const entityId = entry.entity;
             const rawStates = await fetchEntityHistory(hass, entityId, date);
-            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean);
+            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean).filter((p) => p.lat !== 0 || p.lon !== 0);
             const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
 
             const placeEntityId = entry.places_entity || null;
