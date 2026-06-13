@@ -191,8 +191,8 @@ async function fetchEntityHistory(hass, entityId, date) {
     const historyPadding = 6 * 60 * 60 * 1000;
     const message = {
         type: "history/history_during_period",
-        start_time: new Date(startOfDay(date) - historyPadding).toISOString(),
-        end_time: new Date(endOfDay(date) + historyPadding).toISOString(),
+        start_time: new Date(startOfDay(date).getTime() - historyPadding).toISOString(),
+        end_time: new Date(endOfDay(date).getTime() + historyPadding).toISOString(),
         entity_ids: [entityId],
         minimal_response: false,
         no_attributes: false,
