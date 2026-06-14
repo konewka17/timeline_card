@@ -1,5 +1,6 @@
 import {endOfDay, haversineMeters, startOfDay, toLatLon, toPoint} from "./utils.js";
 import {resolveStaySegments} from "./reverse-geocoding.js";
+import {snapMoveSegments} from "./osrm.js";
 import {resolveActivities} from "./activity.js";
 
 export function segmentTimeline(points, config, zones) {
@@ -283,6 +284,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
 
             const baseSegments = segmentTimeline(points, config, zones);
             resolveStaySegments(baseSegments, placeStates, date, config.osm_api_key, onQueueUpdate);
+            if (config.snap_to_road) snapMoveSegments(baseSegments, onQueueUpdate);
             const segments = resolveActivities(baseSegments, activityStates, date, config.activity_icon_map, zones);
             return {entityId, placeEntityId, activityEntityId, points, segments};
         }),

@@ -15,6 +15,7 @@ import {
 } from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
+import {clearOsrmQueue} from "./osrm.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 import {localize} from "./localize/localize.js";
@@ -23,6 +24,7 @@ const DEFAULT_CONFIG = {
     entity: [],
     places_entity: [],
     osm_api_key: null,
+    snap_to_road: false,
     stay_radius_m: 75,
     min_stay_minutes: 10,
     max_reasonable_speed_kmh: 300,
@@ -150,6 +152,7 @@ class TimelineCard extends HTMLElement {
     // Actions
     _shiftDate(direction) {
         clearReverseGeocodingQueue();
+        clearOsrmQueue();
 
         const today = startOfDay(new Date());
         if (direction > 0 && this._selectedDate >= today) {

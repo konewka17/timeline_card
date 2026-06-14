@@ -107,6 +107,7 @@ export function getConfigFormSchema() {
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
                         ]
                     },
+                    {name: "snap_to_road", selector: {boolean: {}}},
                     {name: "colors", selector: {text: {multiple: true}}},
                     {
                         name: "activity_icon_map",

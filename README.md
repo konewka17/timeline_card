@@ -102,6 +102,7 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
 | `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
 | `colors`                    | string[] | `[]`         | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables.            |
+| `snap_to_road`              | boolean  | `false`      | Snap move segment GPS traces to the road network via OSRM. See [Snap to Road](#snap-to-road) below.                                                                     |
 | **Misc**                    |          |              |                                                                                                                                                                         |
 | `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
 
@@ -141,6 +142,28 @@ osm_api_key: me@example.com
 ```
 
 If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
+
+## Snap to Road
+
+When `snap_to_road: true` is set, the card sends each move segment's GPS trace to [OSRM](https://project-osrm.org/) (Open Source Routing Machine) to snap the raw coordinates onto the road network. This produces cleaner map polylines that follow actual roads instead of straight point-to-point lines.
+
+- No API key required — the public OSRM demo server is used automatically.
+- Requests are rate-limited to one per second per the server's usage guidelines.
+- Results are cached in the browser (localStorage) so repeated views of the same day don't trigger new API calls.
+- Raw polylines are shown immediately; each move segment updates progressively as its snapped route arrives.
+- Move distances are recalculated from the snapped route, which is generally more accurate than straight-line haversine estimates.
+- Long move segments with more than 100 GPS points are downsampled before sending to stay within OSRM's coordinate limit.
+
+Example:
+
+```yaml
+type: custom:location-timeline-card
+entity:
+    - device_tracker.my_phone
+snap_to_road: true
+```
+
+Note: The public OSRM server is intended for demo and testing use. For heavy or privacy-sensitive use, consider running a [self-hosted OSRM instance](https://github.com/Project-OSRM/osrm-backend).
 
 ## Notes
 
