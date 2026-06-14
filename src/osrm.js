@@ -3,7 +3,7 @@ import {haversineMeters, sleep} from "./utils.js";
 const OSRM_BASE_URL = "https://router.project-osrm.org";
 const PERSISTENT_CACHE_KEY = "location_timeline_osrm_cache_v1";
 const MAX_PERSISTENT_CACHE_ENTRIES = 200;
-const MAX_COORDINATES = 100;
+const MAX_COORDINATES = 10;
 const REQUEST_INTERVAL_MS = 1000;
 
 const queuedRequests = [];
@@ -82,6 +82,7 @@ async function resolveQueuedRequest(request, sessionAtStart) {
         url.searchParams.set("geometries", "geojson");
         url.searchParams.set("overview", "full");
         url.searchParams.set("annotations", "false");
+        url.searchParams.set("gaps", "ignore")
 
         const response = await fetch(url.toString());
 
