@@ -55,6 +55,7 @@ class TimelineCard extends HTMLElement {
         this._activeEntityIndex = 0;
         this._timelineCollapsed = false;
         this._updateIntervalId = null;
+        this._mapFitPending = false;
         this._resetMapFitMode();
         this._addEventListeners();
     }
@@ -172,6 +173,7 @@ class TimelineCard extends HTMLElement {
         } else {
             this._mapFitMode = "selected_entity_path";
         }
+        this._mapFitPending = true;
     }
 
     _refreshCurrentDay() {
@@ -369,7 +371,10 @@ class TimelineCard extends HTMLElement {
             this._touchStart = null;
 
             this._updateMapFitButton();
-            this._fitMapToCurrentMode();
+            if (this._mapFitPending) {
+                this._fitMapToCurrentMode();
+                this._mapFitPending = false;
+            }
         } catch (err) {
             this._setCurrentDayError(err);
             this._render();
@@ -506,6 +511,7 @@ class TimelineCard extends HTMLElement {
             return;
         }
         this._activeEntityIndex = index;
+        this._mapFitPending = true;
         this._renderEntitySelector(true);
         this._render();
     }
