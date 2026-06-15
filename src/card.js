@@ -15,7 +15,7 @@ import {
 } from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
-import {clearOsrmQueue} from "./osrm.js";
+import {clearOsrmCache, clearOsrmQueue} from "./osrm.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 import {localize} from "./localize/localize.js";
@@ -68,6 +68,7 @@ class TimelineCard extends HTMLElement {
         this._cache.clear();
         if (this._config.debug) {
             clearPersistentCache();
+            clearOsrmCache();
         }
 
         this._activeEntityIndex = 0;

@@ -194,3 +194,8 @@ function setPersistentCache(key, coords, distanceM) {
         // ignore storage errors
     }
 }
+
+export function clearOsrmCache() {
+    persistentCache.clear();
+    localStorage.removeItem(PERSISTENT_CACHE_KEY);
+}
