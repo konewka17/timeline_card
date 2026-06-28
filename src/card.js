@@ -15,6 +15,7 @@ import {
 } from "./utils.js";
 import {TimelineLeafletMap} from "./leaflet-map.js";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
+import {clearOsrmCache, clearOsrmQueue} from "./osrm.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
 import {localize} from "./localize/localize.js";
@@ -23,6 +24,7 @@ const DEFAULT_CONFIG = {
     entity: [],
     places_entity: [],
     osm_api_key: null,
+    snap_to_road: false,
     stay_radius_m: 75,
     min_stay_minutes: 10,
     max_reasonable_speed_kmh: 300,
@@ -53,6 +55,7 @@ class TimelineCard extends HTMLElement {
         this._activeEntityIndex = 0;
         this._timelineCollapsed = false;
         this._updateIntervalId = null;
+        this._mapFitPending = false;
         this._resetMapFitMode();
         this._addEventListeners();
     }
@@ -65,6 +68,7 @@ class TimelineCard extends HTMLElement {
         this._cache.clear();
         if (this._config.debug) {
             clearPersistentCache();
+            clearOsrmCache();
         }
 
         this._activeEntityIndex = 0;
@@ -150,6 +154,7 @@ class TimelineCard extends HTMLElement {
     // Actions
     _shiftDate(direction) {
         clearReverseGeocodingQueue();
+        clearOsrmQueue();
 
         const today = startOfDay(new Date());
         if (direction > 0 && this._selectedDate >= today) {
@@ -169,6 +174,7 @@ class TimelineCard extends HTMLElement {
         } else {
             this._mapFitMode = "selected_entity_path";
         }
+        this._mapFitPending = true;
     }
 
     _refreshCurrentDay() {
@@ -366,7 +372,10 @@ class TimelineCard extends HTMLElement {
             this._touchStart = null;
 
             this._updateMapFitButton();
-            this._fitMapToCurrentMode();
+            if (this._mapFitPending) {
+                this._fitMapToCurrentMode();
+                this._mapFitPending = false;
+            }
         } catch (err) {
             this._setCurrentDayError(err);
             this._render();
@@ -503,6 +512,7 @@ class TimelineCard extends HTMLElement {
             return;
         }
         this._activeEntityIndex = index;
+        this._mapFitPending = true;
         this._renderEntitySelector(true);
         this._render();
     }
