@@ -97,15 +97,9 @@ export function getConfigFormSchema() {
                             {name: "hide_unselected_on_map", selector: {boolean: {}}},
                             {name: "hide_moving", selector: {boolean: {}}},
                             {name: "reverse_timeline_order", selector: {boolean: {}}},
-                        ],
-                    },
-                    {
-                        type: "grid",
-                        name: "",
-                        flatten: true,
-                        schema: [
                             {name: "collapse_timeline", selector: {boolean: {}}},
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
+                            {name: "snap_to_road", selector: {boolean: {}}},
                         ]
                     },
                     {name: "colors", selector: {text: {multiple: true}}},
