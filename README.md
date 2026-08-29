@@ -96,6 +96,8 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
 | `map_appearance`            | string   | `"auto"`     | Map appearance: `auto` (align with HA theme), `light`, or `dark`.                                                                                                       |
 | `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
+| `map_tile_url`              | string   | `null`       | Raster tile URL template for the fallback base map (see [Base map](#base-map)). Only used when vector tiles are unavailable.                                             |
+| `map_attribution`           | string   | `null`       | Attribution shown for a custom `map_tile_url`. Defaults to OpenStreetMap.                                                                                               |
 | `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
 | `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
 | `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
@@ -150,6 +152,23 @@ Places v3 is a breaking change in the Places integration itself: attributes such
 - Keep pointing `places_entity` at the **main** Places sensor. On v3, the card automatically detects and reads the `..._place_name` child sensor (enabled by default in Places v3). Pointing `places_entity` directly at the `..._place_name` sensor also works.
 - With a top-level `places_entity` list, v2 sensors are matched to trackers via their `devicetracker_entityid` attribute. That attribute no longer exists in v3, so the card falls back to matching by list position — make sure the list has the same length and order as `entity` (as was already documented).
 - History from before the v3 upgrade keeps working: for those periods the card still reads the old attributes.
+
+## Base map
+
+The card draws the base map the same way Home Assistant's own map does since 2026.9: [Shortbread vector tiles](https://vector.openstreetmap.org/) from the OpenStreetMap Foundation, rendered with MapLibre GL. The style, glyphs and sprites are the ones Home Assistant serves at `/static/map/`, so nothing extra is downloaded from a third party and dark mode uses a real dark style instead of an inverted light one.
+
+The card falls back to raster tiles when those assets are missing (Home Assistant older than 2026.9) or when the browser has no WebGL2. That fallback is CARTO's raster service, which now watermarks tiles requested without an API key and is being retired. Two ways out on an older Home Assistant:
+
+```yaml
+# Your own free CARTO key (https://carto.com/basemaps/apikey)
+map_tile_url: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=YOUR_KEY
+```
+
+```yaml
+# Or any other raster tile server
+map_tile_url: https://tile.example.org/{z}/{x}/{y}.png
+map_attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+```
 
 ## Notes
 

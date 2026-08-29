@@ -1,5 +1,6 @@
 import css from "./card.css";
 import leafletCss from "leaflet/dist/leaflet.css";
+import maplibreCss from "maplibre-gl/dist/maplibre-gl.css";
 import {getSegmentedTracks} from "./segmentation.js";
 import {
     escapeHtml,
@@ -28,6 +29,8 @@ const DEFAULT_CONFIG = {
     max_reasonable_speed_kmh: 300,
     map_appearance: "auto",
     map_height_px: 200,
+    map_tile_url: null,
+    map_attribution: null,
     distance_unit: "metric",
     colors: [],
     hide_current_location: false,
@@ -249,7 +252,7 @@ class TimelineCard extends HTMLElement {
         this._baseLayoutReady = true;
 
         this.shadowRoot.innerHTML = `
-          <style>${css}\n${leafletCss}</style>
+          <style>${css}\n${leafletCss}\n${maplibreCss}</style>
           <ha-card>
             <div class="card">
               <div class="map-wrap">
@@ -339,7 +342,10 @@ class TimelineCard extends HTMLElement {
 
         this._isLoadingMap = true;
         try {
-            this._mapView = new TimelineLeafletMap(container, this._getHomeZoneCenter());
+            this._mapView = new TimelineLeafletMap(container, this._getHomeZoneCenter(), {
+                mapTileUrl: this._config.map_tile_url,
+                mapAttribution: this._config.map_attribution,
+            });
             this._setDarkMode();
             this._drawMapPaths();
         } catch (err) {
