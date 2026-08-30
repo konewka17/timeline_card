@@ -55,6 +55,37 @@ async function loadMapStyle(url) {
     return style;
 }
 
+// @maplibre/maplibre-gl-leaflet defers its zoom and resize handling to an animation
+// frame and only reads the map inside that frame. It guards `_update` against a
+// detached layer but not `_transitionEnd` or `_zoomEnd`, so swapping to raster after a
+// lost WebGL context strands any frame that is still queued and it throws on a null
+// `_map`. These replacements mirror version 0.1.4 with the check moved inside the
+// frame, where it actually holds.
+function guardDetachedFrames(layer) {
+    const isAttached = (instance) => Boolean(instance._map && instance._glMap);
+
+    layer._zoomEnd = function () {
+        if (!isAttached(this)) return;
+        const scale = this._map.getZoomScale(this._map.getZoom());
+        Leaflet.DomUtil.setTransform(this._glMap._actualCanvas, null, scale);
+        this._zooming = false;
+        this._update();
+    };
+
+    layer._transitionEnd = function () {
+        Leaflet.Util.requestAnimFrame(function () {
+            if (!isAttached(this)) return;
+            const zoom = this._map.getZoom();
+            const center = this._map.getCenter();
+            const offset = this._map.latLngToContainerPoint(this._map.getBounds().getNorthWest());
+            this._resizeContainer();
+            Leaflet.DomUtil.setTransform(this._glMap._actualCanvas, offset, 1);
+            this._glMap.once("moveend", () => this._zoomEnd());
+            this._glMap.jumpTo({center, zoom: zoom - 1});
+        }, this);
+    };
+}
+
 export class TimelineLeafletMap {
     constructor(mapElement, homeZoneCenter = null, options = {}) {
         if (!mapElement?.isConnected) {
@@ -108,6 +139,9 @@ export class TimelineLeafletMap {
             const style = await loadMapStyle(VECTOR_STYLES[this._darkMode ? "dark" : "light"]);
             if (this._destroyed) return false;
             layer = maplibreGL({style, localIdeographFontFamily: "sans-serif"});
+            // Must happen before `addTo`: `onAdd` registers `_transitionEnd` as a DOM
+            // listener and captures the function reference as it is then.
+            guardDetachedFrames(layer);
             // The adapter builds the MapLibre map in `onAdd`, so a refused context or a
             // blocked worker throws here — inside the guard, or raster is never reached.
             layer.addTo(this._leafletMap);
