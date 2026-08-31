@@ -1,10 +1,62 @@
 import Leaflet from "leaflet";
+import {maplibreGL} from "@maplibre/maplibre-gl-leaflet";
 import {getTrackColor} from "./utils.js";
 
 const DEFAULT_ZOOM = 13;
+const MAP_MIN_ZOOM = 1;
+const MAP_MAX_ZOOM = 20;
+
+// Shortbread vector tiles from the OpenStreetMap Foundation, through the style,
+// glyphs and sprites the Home Assistant frontend serves itself (2026.9 and up).
+// Older installs have no /static/map, so the raster layer stays as a fallback.
+const VECTOR_STYLES = {
+    light: "/static/map/light.json",
+    dark: "/static/map/dark.json",
+};
+
+// Fallback only: CARTO watermarks tiles requested without an API key and is
+// retiring this service, so `map_tile_url` exists to point somewhere else (or at
+// the same URL with `?key=...` appended).
+const RASTER_TILE_URL = "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const CARTO_ATTRIBUTION = `${OSM_ATTRIBUTION}, &copy; <a href="https://carto.com/attributions">CARTO</a>`;
+
+// A backgrounded tab also drops the WebGL context, and that one comes back, so
+// only a loss that outlives the grace period falls back to raster tiles.
+const CONTEXT_RESTORE_GRACE = 2000;
+
+let webGL2Supported;
+
+function supportsWebGL2() {
+    if (webGL2Supported === undefined) {
+        try {
+            const context = document.createElement("canvas").getContext("webgl2");
+            webGL2Supported = Boolean(context);
+            // Contexts are scarce, so the probe must not hold on to one.
+            context?.getExtension("WEBGL_lose_context")?.loseContext();
+        } catch {
+            webGL2Supported = false;
+        }
+    }
+    return webGL2Supported;
+}
+
+// MapLibre rejects a relative sprite URL, while the glyph URL must be left alone:
+// encoding it would mangle its {fontstack} and {range} placeholders.
+async function loadMapStyle(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Map style ${url} unavailable (${response.status})`);
+    const style = await response.json();
+    if (typeof style.sprite === "string") {
+        style.sprite = new URL(style.sprite, location.href).href;
+    } else if (Array.isArray(style.sprite)) {
+        style.sprite = style.sprite.map((sprite) => ({...sprite, url: new URL(sprite.url, location.href).href}));
+    }
+    return style;
+}
 
 export class TimelineLeafletMap {
-    constructor(mapElement, homeZoneCenter = null) {
+    constructor(mapElement, homeZoneCenter = null, options = {}) {
         if (!mapElement?.isConnected) {
             throw new Error("Cannot setup Leaflet map on disconnected element");
         }
@@ -12,18 +64,23 @@ export class TimelineLeafletMap {
         this._Leaflet = Leaflet;
         this._mapElement = mapElement;
         this._homeZoneCenter = homeZoneCenter;
-        this._leafletMap = Leaflet.map(mapElement, {zoomControl: true});
+        this._leafletMap = Leaflet.map(mapElement, {zoomControl: true, minZoom: MAP_MIN_ZOOM, maxZoom: MAP_MAX_ZOOM});
 
-        const attribution =
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>';
-        const tileLayer = Leaflet.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png`, {
-            attribution,
-            subdomains: "abcd",
-            minZoom: 0,
-            maxZoom: 20,
-            referrerPolicy: "no-referrer-when-downgrade",
-        });
-        tileLayer.addTo(this._leafletMap);
+        this._rasterTileUrl = options.mapTileUrl || RASTER_TILE_URL;
+        this._rasterAttribution = options.mapAttribution
+            || (options.mapTileUrl ? OSM_ATTRIBUTION : CARTO_ATTRIBUTION);
+        this._vectorLayer = null;
+        this._destroyed = false;
+        this._darkMode = false;
+        this._styleRequest = 0;
+        this._appliedDarkMode = false;
+        this._contextLost = false;
+        this._fallbackTimeout = undefined;
+        this._handleVisibilityChange = () => {
+            if (this._contextLost) this._scheduleRasterFallback();
+        };
+        // Deferred so the caller's setDarkMode() lands before the style is picked.
+        Promise.resolve().then(() => this._setupBaseLayer());
 
         if (this._homeZoneCenter) this._leafletMap.setView(this._homeZoneCenter, DEFAULT_ZOOM);
 
@@ -39,11 +96,103 @@ export class TimelineLeafletMap {
         requestAnimationFrame(() => this._leafletMap.invalidateSize());
     }
 
+    async _setupBaseLayer() {
+        if (this._destroyed) return;
+        if (supportsWebGL2() && (await this._createVectorLayer())) return;
+        this._createRasterLayer();
+    }
+
+    async _createVectorLayer() {
+        let layer;
+        try {
+            const style = await loadMapStyle(VECTOR_STYLES[this._darkMode ? "dark" : "light"]);
+            if (this._destroyed) return false;
+            layer = maplibreGL({style, localIdeographFontFamily: "sans-serif"});
+            // The adapter builds the MapLibre map in `onAdd`, so a refused context or a
+            // blocked worker throws here — inside the guard, or raster is never reached.
+            layer.addTo(this._leafletMap);
+        } catch {
+            try {
+                layer?.remove();
+            } catch {
+                // May never have finished being added.
+            }
+            return false;
+        }
+
+        this._vectorLayer = layer;
+        this._appliedDarkMode = this._darkMode;
+        this._mapElement?.classList.remove("raster-tiles");
+
+        const glMap = layer.getMaplibreMap();
+        glMap.on("webglcontextlost", () => {
+            this._contextLost = true;
+            this._scheduleRasterFallback();
+        });
+        glMap.on("webglcontextrestored", () => {
+            this._contextLost = false;
+            clearTimeout(this._fallbackTimeout);
+        });
+        document.addEventListener("visibilitychange", this._handleVisibilityChange);
+        return true;
+    }
+
+    _createRasterLayer() {
+        if (this._destroyed) return;
+        this._mapElement?.classList.add("raster-tiles");
+        Leaflet.tileLayer(this._rasterTileUrl, {
+            attribution: this._rasterAttribution,
+            subdomains: "abcd",
+            minZoom: MAP_MIN_ZOOM,
+            maxZoom: MAP_MAX_ZOOM,
+            referrerPolicy: "no-referrer-when-downgrade",
+        }).addTo(this._leafletMap);
+    }
+
+    _scheduleRasterFallback() {
+        clearTimeout(this._fallbackTimeout);
+        if (!this._vectorLayer || document.hidden) return;
+        this._fallbackTimeout = setTimeout(() => this._swapToRaster(), CONTEXT_RESTORE_GRACE);
+    }
+
+    _swapToRaster() {
+        const layer = this._vectorLayer;
+        this._vectorLayer = null;
+        document.removeEventListener("visibilitychange", this._handleVisibilityChange);
+        try {
+            layer?.remove();
+        } catch {
+            // Nothing left to detach.
+        }
+        this._createRasterLayer();
+        // The raster layer has no dark variant; the CSS filter takes over again.
+        this._mapElement?.classList.toggle("dark", this._darkMode);
+    }
+
     setDarkMode(isDarkMode) {
-        this._mapElement?.classList.toggle("dark", Boolean(isDarkMode));
+        const darkMode = Boolean(isDarkMode);
+        this._darkMode = darkMode;
+        this._mapElement?.classList.toggle("dark", darkMode);
+        if (!this._vectorLayer || darkMode === this._appliedDarkMode) return;
+
+        // Styles are fetched, so only the newest request may touch the map.
+        const request = ++this._styleRequest;
+        loadMapStyle(VECTOR_STYLES[darkMode ? "dark" : "light"])
+            .then((style) => {
+                if (request !== this._styleRequest || !this._vectorLayer) return;
+                this._appliedDarkMode = darkMode;
+                this._vectorLayer.getMaplibreMap()?.setStyle(style);
+            })
+            .catch(() => {
+                // Keep showing the style that is up; the next toggle retries.
+            });
     }
 
     destroy() {
+        this._destroyed = true;
+        clearTimeout(this._fallbackTimeout);
+        document.removeEventListener("visibilitychange", this._handleVisibilityChange);
+        this._vectorLayer = null;
         this._leafletMap.remove();
         this._mapLayers = [];
         this._fullDayPath = [];

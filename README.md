@@ -96,6 +96,8 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
 | `map_appearance`            | string   | `"auto"`     | Map appearance: `auto` (align with HA theme), `light`, or `dark`.                                                                                                       |
 | `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
+| `map_tile_url`              | string   | `null`       | Raster tile URL template for the fallback base map (see [Base map](#base-map)). Only used when vector tiles are unavailable.                                             |
+| `map_attribution`           | string   | `null`       | Attribution shown for a custom `map_tile_url`. Defaults to OpenStreetMap.                                                                                               |
 | `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
 | `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
 | `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
@@ -152,6 +154,23 @@ Places v3 is a breaking change in the Places integration itself: attributes such
 - History from before the v3 upgrade keeps working: for those periods the card still reads the old attributes.
 - The main v3 sensor's state is not an address but the string built from your Places *display options*. The card only uses it when it reads as a name (e.g. with the `formatted_place` option); a raw field list such as `not_home, house, 13, Beatrixstraat` is ignored, and the stay is named from the `..._place_name` sensor or from reverse geocoding (`osm_api_key`) instead.
 - Places' `show_time` option appends `(since HH:MM)` to the state, or `(since MM/DD)` once it is over a day old. Both are stripped before the name is used, so stays are not labelled with the moment the sensor happened to change.
+
+## Base map
+
+The card draws the base map the same way Home Assistant's own map does since 2026.9: [Shortbread vector tiles](https://vector.openstreetmap.org/) from the OpenStreetMap Foundation, rendered with MapLibre GL. The style, glyphs and sprites are the ones Home Assistant serves at `/static/map/`, so nothing extra is downloaded from a third party and dark mode uses a real dark style instead of an inverted light one.
+
+The card falls back to raster tiles when those assets are missing (Home Assistant older than 2026.9) or when the browser has no WebGL2. That fallback is CARTO's raster service, which now watermarks tiles requested without an API key and is being retired. Two ways out on an older Home Assistant:
+
+```yaml
+# Your own free CARTO key (https://carto.com/basemaps/apikey)
+map_tile_url: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=YOUR_KEY
+```
+
+```yaml
+# Or any other raster tile server
+map_tile_url: https://tile.example.org/{z}/{x}/{y}.png
+map_attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+```
 
 ## Notes
 
