@@ -57,6 +57,7 @@ class TimelineCard extends HTMLElement {
         this._activeEntityIndex = 0;
         this._timelineCollapsed = false;
         this._updateIntervalId = null;
+        this._teardownTimeout = null;
         this._resetMapFitMode();
         this._addEventListeners();
     }
@@ -114,6 +115,8 @@ class TimelineCard extends HTMLElement {
 
     // noinspection JSUnusedGlobalSymbols
     connectedCallback() {
+        clearTimeout(this._teardownTimeout);
+        this._teardownTimeout = null;
         if (!this._config) return;
         // disconnectedCallback stops the interval and setConfig is the only other place that
         // starts one, so without this a card that Home Assistant re-attaches never refreshes.
@@ -131,8 +134,19 @@ class TimelineCard extends HTMLElement {
 
         // ha-map has always done this; the card never has. Without it every replaced card
         // strands a WebGL context, and browsers cap how many may live at once.
-        this._mapView?.destroy();
-        this._mapView = null;
+        //
+        // Deferred by a task, which is the one place this departs from ha-map: Home Assistant
+        // moves cards around the DOM and a move arrives here as a disconnect immediately
+        // followed by a reconnect. Tearing down synchronously would drop and rebuild the
+        // context, and refetch the style, on every move. A view's map is not moved that way,
+        // so ha-map has no such case to handle.
+        clearTimeout(this._teardownTimeout);
+        this._teardownTimeout = setTimeout(() => {
+            this._teardownTimeout = null;
+            if (this.isConnected) return;
+            this._mapView?.destroy();
+            this._mapView = null;
+        }, 0);
     }
 
     _checkConfig() {
