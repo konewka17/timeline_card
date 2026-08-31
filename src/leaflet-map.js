@@ -134,6 +134,14 @@ export class TimelineLeafletMap {
             clearTimeout(this._fallbackTimeout);
         });
         document.addEventListener("visibilitychange", this._handleVisibilityChange);
+        // Tied to the map's own teardown rather than to a caller remembering, the same way
+        // the frontend does it: otherwise the timer revives a map that is already gone, and
+        // the listener keeps the whole graph — and its WebGL context — alive for the
+        // lifetime of the page.
+        this._leafletMap.on("unload", () => {
+            clearTimeout(this._fallbackTimeout);
+            document.removeEventListener("visibilitychange", this._handleVisibilityChange);
+        });
         return true;
     }
 
