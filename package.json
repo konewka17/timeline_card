@@ -3,7 +3,8 @@
   "module": "dist/timeline_card.js",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "test": "node --test"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.2",

@@ -1,9 +1,11 @@
 :host {
   display: block;
+  height: 100%;
   font-family: var(--ha-card-header-font-family, "Helvetica Neue", Arial, sans-serif);
 }
 
 ha-card {
+  height: 100%;
   overflow: hidden;
 }
 
@@ -127,6 +129,13 @@ ha-card {
   overflow: hidden;
 }
 
+/* Panel views resolve a real height on every ancestor, so drop the .body cap the grid/stack case needs. */
+.card.panel-fill .timeline-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .timeline-section.collapsed {
   grid-template-rows: 0fr;
   opacity: 0;
@@ -172,9 +181,15 @@ ha-card {
 
 .body {
   padding: 8px 16px 16px;
-  max-height: 420px;
+  max-height: var(--timeline-max-height, 420px);
   overflow: auto;
   touch-action: pan-y;
+}
+
+.card.panel-fill .body {
+  flex: 1 1 auto;
+  min-height: 0;
+  --timeline-max-height: none;
 }
 
 .loading,
