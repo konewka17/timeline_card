@@ -1,5 +1,7 @@
 :host {
   display: block;
+  container-type: inline-size;
+  container-name: timeline-card;
   font-family: var(--ha-card-header-font-family, "Helvetica Neue", Arial, sans-serif);
 }
 
@@ -8,9 +10,80 @@ ha-card {
 }
 
 .card {
+  display: grid;
+  grid-template-areas: "map" "timeline";
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+
+/* .card above IS the timeline-bottom layout, so that class needs no rule of its own. */
+.card.timeline-top {
+  grid-template-areas: "timeline" "map";
+  grid-template-rows: 1fr auto;
+}
+
+.map-pills-group {
+  grid-area: map;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.map-pills-group .map-wrap {
+  order: 1;
+}
+
+.map-pills-group .selector-row {
+  order: 2;
+}
+
+.map-pills-group.pills-above .map-wrap {
+  order: 2;
+}
+
+.map-pills-group.pills-above .selector-row {
+  order: 1;
+}
+
+/* Two-column layouts only exist above the breakpoint; below it the stacked .card rules stand. */
+@container timeline-card (width > 600px) {
+  /* Floor the grid: the map column is a pure percentage chain, so a collapsed or empty
+     timeline column would otherwise resolve the whole card to 0 and clip its own controls. */
+  .card.timeline-left,
+  .card.timeline-right {
+    min-height: var(--map-height);
+  }
+
+  .card.timeline-left {
+    grid-template-areas: "timeline map";
+    grid-template-columns: var(--timeline-size) 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .card.timeline-right {
+    grid-template-areas: "map timeline";
+    grid-template-columns: 1fr var(--timeline-size);
+    grid-template-rows: 1fr;
+  }
+
+  .card.timeline-left .map-pills-group,
+  .card.timeline-right .map-pills-group {
+    height: 100%;
+  }
+
+  /* Fill the column instead of using the configured map height. */
+  .card.timeline-left .map-wrap,
+  .card.timeline-right .map-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .card.timeline-left #overview-map,
+  .card.timeline-right #overview-map {
+    height: 100%;
+  }
 }
 
 .header {
@@ -116,6 +189,9 @@ ha-card {
 
 .timeline-section {
   display: grid;
+  grid-area: timeline;
+  min-width: 0;
+  min-height: 0;
   grid-template-rows: 1fr;
   transition:
     grid-template-rows 260ms ease,
@@ -325,8 +401,17 @@ ha-card {
 }
 
 #overview-map {
-  height: 200px;
+  height: var(--map-height, 200px);
   --map-filter: invert(0);
+}
+
+@container timeline-card (width <= 600px) {
+  /* Leaflet claims single-finger drags, so keep non-map area on screen to scroll the page with.
+     Scoped to the layouts this PR adds; bottom/top keep whatever map_height_px they always had. */
+  .card.timeline-left #overview-map,
+  .card.timeline-right #overview-map {
+    max-height: 50vh;
+  }
 }
 
 #overview-map.dark {

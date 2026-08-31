@@ -231,3 +231,22 @@ export function capitalizeFirst(text) {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+export const TIMELINE_POSITIONS = ["top", "bottom", "left", "right"];
+export const PILLS_POSITIONS = ["above", "below"];
+export const TIMELINE_SIZE = {min: 10, max: 90, default: 30};
+
+export function validateLayoutConfig(config) {
+    if (!TIMELINE_POSITIONS.includes(config.timeline_position)) {
+        throw new Error(`timeline_position must be one of ${TIMELINE_POSITIONS.join(", ")}`);
+    }
+    if (!PILLS_POSITIONS.includes(config.pills_position)) {
+        throw new Error(`pills_position must be one of ${PILLS_POSITIONS.join(", ")}`);
+    }
+}
+
+export function clampTimelineSize(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return TIMELINE_SIZE.default;
+    return Math.min(TIMELINE_SIZE.max, Math.max(TIMELINE_SIZE.min, num));
+}

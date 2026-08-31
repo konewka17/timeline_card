@@ -1,3 +1,5 @@
+import {PILLS_POSITIONS, TIMELINE_POSITIONS, TIMELINE_SIZE} from "./utils.js";
+
 export function getConfigFormSchema() {
     return {
         schema: [
@@ -83,6 +85,40 @@ export function getConfigFormSchema() {
                                 },
                             },
                         ],
+                    },
+                    {
+                        type: "grid",
+                        name: "",
+                        flatten: true,
+                        schema: [
+                            {
+                                name: "timeline_position",
+                                selector: {
+                                    select: {
+                                        options: TIMELINE_POSITIONS,
+                                        mode: "dropdown",
+                                    },
+                                },
+                            },
+                            {
+                                name: "pills_position",
+                                selector: {
+                                    select: {options: PILLS_POSITIONS, mode: "dropdown"},
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        name: "timeline_size",
+                        selector: {
+                            number: {
+                                min: TIMELINE_SIZE.min,
+                                max: TIMELINE_SIZE.max,
+                                step: 1,
+                                unit_of_measurement: "%",
+                                mode: "box",
+                            },
+                        },
                     },
                     {
                         name: "map_height_px",

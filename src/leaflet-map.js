@@ -36,7 +36,10 @@ export class TimelineLeafletMap {
         this._isTravelHighlightActive = false;
 
         this.setDarkMode(false);
-        requestAnimationFrame(() => this._leafletMap.invalidateSize());
+        // Re-measure on any box change: the layout breakpoint, the entity selector row and the HA
+        // sidebar all resize the map without a window resize, which is all Leaflet tracks itself.
+        this._resizeObserver = new ResizeObserver(() => this._leafletMap.invalidateSize());
+        this._resizeObserver.observe(mapElement);
     }
 
     setDarkMode(isDarkMode) {
@@ -44,6 +47,7 @@ export class TimelineLeafletMap {
     }
 
     destroy() {
+        this._resizeObserver?.disconnect();
         this._leafletMap.remove();
         this._mapLayers = [];
         this._fullDayPath = [];

@@ -1,15 +1,21 @@
-import en from "./languages/en.json";
-import nl from "./languages/nl.json";
+import en from "./languages/en.json" with {type: "json"};
+import nl from "./languages/nl.json" with {type: "json"};
 
 const languages = {en, nl};
 
 export function localize(string, search = "", replace = "") {
-    let lang = localStorage.getItem("selectedLanguage")
-    if (!lang || lang === "null") {
-        const _hass = document.querySelector("home-assistant").hass
-        lang = _hass.selectedLanguage || _hass.language || _hass.locale?.language || "en";
+    let lang = "en";
+    // Outside a HA frontend (unit tests, a detached card) there is no storage or host element to read.
+    try {
+        lang = localStorage.getItem("selectedLanguage");
+        if (!lang || lang === "null") {
+            const _hass = document.querySelector("home-assistant").hass;
+            lang = _hass.selectedLanguage || _hass.language || _hass.locale?.language || "en";
+        }
+    } catch {
+        lang = "en";
     }
-    lang = lang.replace(/['"]+/g, "").replace("-", "_");
+    lang = String(lang).replace(/['"]+/g, "").replace("-", "_");
 
     let translated;
     try {
