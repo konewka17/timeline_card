@@ -151,6 +151,7 @@ Places v3 is a breaking change in the Places integration itself: attributes such
 - With a top-level `places_entity` list, v2 sensors are matched to trackers via their `devicetracker_entityid` attribute. That attribute no longer exists in v3, so the card falls back to matching by list position — make sure the list has the same length and order as `entity` (as was already documented).
 - History from before the v3 upgrade keeps working: for those periods the card still reads the old attributes.
 - The main v3 sensor's state is not an address but the string built from your Places *display options*. The card only uses it when it reads as a name (e.g. with the `formatted_place` option); a raw field list such as `not_home, house, 13, Beatrixstraat` is ignored, and the stay is named from the `..._place_name` sensor or from reverse geocoding (`osm_api_key`) instead.
+- Places' `show_time` option appends `(since HH:MM)` to the state, or `(since MM/DD)` once it is over a day old. Both are stripped before the name is used, so stays are not labelled with the moment the sensor happened to change.
 
 ## Notes
 

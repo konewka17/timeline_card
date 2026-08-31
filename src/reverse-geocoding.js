@@ -13,6 +13,12 @@ const V2_ADDRESS_ATTRIBUTES = ["place_name", "street", "street_number", "city", 
 // `secondary`, `charging_station`) or a bare house number (`13`, `2a`).
 const RAW_OPTION_TOKEN = /^([a-z][a-z0-9]*(_[a-z0-9]+)*|\d+[a-z]?)$/;
 
+// Places appends this when its `show_time` option is on, swapping the time for a date
+// once the state is over a day old. Both forms are plain f-strings in the integration,
+// never translated, so matching `since` literally is safe. Same pattern as Places' own
+// `helpers.clear_since_from_state`; the `[:/]` class is what covers the date form.
+const SINCE_SUFFIX = /\s*\(since \d\d[:/]\d\d\)$/;
+
 let reverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
     request_interval_ms: 1000,
@@ -178,17 +184,26 @@ function buildIntervals(states, date, displayNameFn) {
 
 function placeDisplayName(state) {
     const attrs = state.a || {};
+    // Stripped up front so both branches are free of it: `show_time` is a Places option,
+    // not a v3 one, so a v2 sensor falling through to its state carries the suffix too.
+    const sensorState = stripSinceSuffix(state.s);
+
     if (V2_ADDRESS_ATTRIBUTES.some((key) => attrs[key])) {
         const streetAddress = [attrs.street, attrs.street_number].filter(Boolean).join(" ");
         const formatted_address = streetAddress ? [streetAddress, attrs.city].filter(Boolean).join(", ") : null;
-        return attrs.place_name || formatted_address || state.s || attrs.formatted_address || null;
+        return attrs.place_name || formatted_address || sensorState || attrs.formatted_address || null;
     }
 
     // Places v3: no address attributes left, so the state is whatever the user's display
     // options render. With `formatted_place` that is a readable name, but a plain field
     // list yields raw OSM tokens ("not_home, house, 13, Beatrixstraat"), which must not be
     // shown as an address — fall through to the place_name sensor or reverse geocoding.
-    return cleanDisplayOptionsState(state.s);
+    return cleanDisplayOptionsState(sensorState);
+}
+
+function stripSinceSuffix(value) {
+    if (typeof value !== "string") return value;
+    return value.trim().replace(SINCE_SUFFIX, "");
 }
 
 function cleanDisplayOptionsState(value) {
