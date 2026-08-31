@@ -382,3 +382,39 @@ ha-card {
 .leaflet-bottom {
   z-index: 1 !important;
 }
+
+/* Leaflet draws popup chrome on a white background in both themes, so these stay dark on light
+   deliberately and are not wired to the HA theme like the rest of the card. */
+.timeline-popup-place {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #212121;
+}
+
+.timeline-popup-time {
+  color: #555555;
+}
+
+.timeline-popup-date {
+  font-size: 0.8rem;
+  color: #777777;
+}
+
+.entry.map-focus {
+  background-color: color-mix(in srgb, var(--timeline-color, var(--primary-color)) 35%, transparent);
+  border-radius: 8px;
+}
+
+/* Lets _scrollTimelineToSegment call scrollTo() without picking a behavior itself. */
+.body {
+  scroll-behavior: smooth;
+}
+
+/* MAP_FOCUS_FLASH_MS in card.js must outlast this fade. */
+.entry {
+  transition: background-color 1.2s ease-out;
+}
+
+.entry.map-focus {
+  transition: background-color 0s;
+}

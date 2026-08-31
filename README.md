@@ -106,6 +106,12 @@ When multiple entities are configured, the card renders all tracks on the map an
 | **Misc**                    |          |              |                                                                                                                                                                         |
 | `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
 
+## Map interactions
+
+- Clicking a **stay** marker on the map opens a popup with the place name and the time spent there. Click it again, or click elsewhere on the map, to close it.
+- Clicking a **stay** marker or the selected entity's **route line** scrolls the timeline to the matching entry and briefly flashes it, expanding the list if collapsed. Clicking another entity's route line switches to that entity instead.
+- A popup closes whenever the map redraws, on the next hover or data refresh.
+
 ## Reverse Geocoding
 
 For stays that are not clearly inside a Home Assistant zone, the card can resolve a human-friendly location name. This process is called **reverse geocoding**: converting latitude/longitude coordinates into an address or place label.
