@@ -113,11 +113,26 @@ class TimelineCard extends HTMLElement {
     }
 
     // noinspection JSUnusedGlobalSymbols
+    connectedCallback() {
+        if (!this._config) return;
+        // disconnectedCallback stops the interval and setConfig is the only other place that
+        // starts one, so without this a card that Home Assistant re-attaches never refreshes.
+        this._setupUpdateInterval();
+        // Only after a teardown; the first map is attached by the render pass.
+        if (this._rendered && !this._mapView) this._attachMapCard();
+    }
+
+    // noinspection JSUnusedGlobalSymbols
     disconnectedCallback() {
         if (this._updateIntervalId) {
             clearInterval(this._updateIntervalId);
             this._updateIntervalId = null;
         }
+
+        // ha-map has always done this; the card never has. Without it every replaced card
+        // strands a WebGL context, and browsers cap how many may live at once.
+        this._mapView?.destroy();
+        this._mapView = null;
     }
 
     _checkConfig() {
