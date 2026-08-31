@@ -102,9 +102,14 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
 | `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
 | `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
+| `animate_highlighted_path`  | boolean  | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
 | `colors`                    | string[] | `[]`         | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables.            |
 | **Misc**                    |          |              |                                                                                                                                                                         |
 | `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
+
+## Map interactions
+
+- Hovering a timeline entry (desktop) highlights the matching segment on the map. A highlighted **move** segment animates ("marching ants") to show direction of travel when `animate_highlighted_path` is enabled (default).
 
 ## Reverse Geocoding
 

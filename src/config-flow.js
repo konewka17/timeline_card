@@ -106,7 +106,8 @@ export function getConfigFormSchema() {
                         schema: [
                             {name: "collapse_timeline", selector: {boolean: {}}},
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
-                        ]
+                            {name: "animate_highlighted_path", selector: {boolean: {}}},
+                        ],
                     },
                     {name: "colors", selector: {text: {multiple: true}}},
                     {

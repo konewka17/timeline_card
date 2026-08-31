@@ -382,3 +382,17 @@ ha-card {
 .leaflet-bottom {
   z-index: 1 !important;
 }
+
+.timeline-marching-ants {
+  stroke-dasharray: 14 10;
+  animation: timeline-marching-ants 1s linear infinite;
+}
+
+/* -24px is the negated sum of the dash pattern above; keep the two in step.
+   Do not rewrite this as a calc() over custom properties: an unresolved calc() is not
+   interpolatable, so the dashes jump between endpoints once per cycle instead of sliding. */
+@keyframes timeline-marching-ants {
+  to {
+    stroke-dashoffset: -24px;
+  }
+}
