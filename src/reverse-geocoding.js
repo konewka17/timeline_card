@@ -5,6 +5,20 @@ const LOADING_LOCATION = "Loading address...";
 const PERSISTENT_CACHE_KEY = "location_timeline_reverse_geocode_cache_v1";
 const MAX_PERSISTENT_CACHE_ENTRIES = 300;
 
+// Attributes that only Places v2 puts on the main sensor. Places v3 moved all of them
+// to child sensors, leaving the main sensor with just coordinates.
+const V2_ADDRESS_ATTRIBUTES = ["place_name", "street", "street_number", "city", "formatted_address", "formatted_place", "devicetracker_entityid"];
+
+// A single display-option field rendered raw by Places: an OSM token (`not_home`, `house`,
+// `secondary`, `charging_station`) or a bare house number (`13`, `2a`).
+const RAW_OPTION_TOKEN = /^([a-z][a-z0-9]*(_[a-z0-9]+)*|\d+[a-z]?)$/;
+
+// Places appends this when its `show_time` option is on, swapping the time for a date
+// once the state is over a day old. Both forms are plain f-strings in the integration,
+// never translated, so matching `since` literally is safe. Same pattern as Places' own
+// `helpers.clear_since_from_state`; the `[:/]` class is what covers the date form.
+const SINCE_SUFFIX = /\s*\(since \d\d[:/]\d\d\)$/;
+
 let reverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
     request_interval_ms: 1000,
@@ -170,14 +184,47 @@ function buildIntervals(states, date, displayNameFn) {
 
 function placeDisplayName(state) {
     const attrs = state.a || {};
-    const formatted_address = attrs.street ? `${attrs.street} ${attrs.street_number || ""}, ${attrs.city}` : null;
-    return attrs.place_name || formatted_address || state.s || attrs.formatted_address || null;
+    // Stripped up front so both branches are free of it: `show_time` is a Places option,
+    // not a v3 one, so a v2 sensor falling through to its state carries the suffix too.
+    const sensorState = stripSinceSuffix(state.s);
+
+    if (V2_ADDRESS_ATTRIBUTES.some((key) => attrs[key])) {
+        const streetAddress = [attrs.street, attrs.street_number].filter(Boolean).join(" ");
+        const formatted_address = streetAddress ? [streetAddress, attrs.city].filter(Boolean).join(", ") : null;
+        return attrs.place_name || formatted_address || sensorState || attrs.formatted_address || null;
+    }
+
+    // Places v3: no address attributes left, so the state is whatever the user's display
+    // options render. With `formatted_place` that is a readable name, but a plain field
+    // list yields raw OSM tokens ("not_home, house, 13, Beatrixstraat"), which must not be
+    // shown as an address — fall through to the place_name sensor or reverse geocoding.
+    return cleanDisplayOptionsState(sensorState);
+}
+
+function stripSinceSuffix(value) {
+    if (typeof value !== "string") return value;
+    return value.trim().replace(SINCE_SUFFIX, "");
+}
+
+function cleanDisplayOptionsState(value) {
+    const text = normalizeSensorState(value);
+    if (!text || looksLikeRawDisplayOptions(text)) return null;
+    return text.split(",").map((part) => part.trim()).filter(Boolean).join(", ");
+}
+
+function looksLikeRawDisplayOptions(name) {
+    const parts = String(name).split(",").map((part) => part.trim()).filter(Boolean);
+    return !parts.length || parts.some((part) => RAW_OPTION_TOKEN.test(part));
 }
 
 function placeNameSensorDisplayName(state) {
-    const value = typeof state.s === "string" ? state.s.trim() : "";
-    if (!value || value === "unknown" || value === "unavailable") return null;
-    return value;
+    return normalizeSensorState(state.s);
+}
+
+function normalizeSensorState(value) {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (!text || text === "unknown" || text === "unavailable" || text === "none") return null;
+    return text;
 }
 
 function pickPlaceName(intervals, start, end) {
@@ -212,7 +259,9 @@ function loadPersistentCache() {
         if (!raw) return new Map();
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return new Map();
-        return new Map(parsed);
+        // Drop entries cached before raw Places v3 display-options strings were rejected,
+        // otherwise those names keep being served from the cache forever.
+        return new Map(parsed.filter(([, value]) => !looksLikeRawDisplayOptions(value?.placeName || "")));
     } catch {
         return new Map();
     }
