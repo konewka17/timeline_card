@@ -1,5 +1,6 @@
 import Leaflet from "leaflet";
 import {maplibreGL} from "@maplibre/maplibre-gl-leaflet";
+import {setRTLTextPlugin} from "maplibre-gl";
 import {getTrackColor} from "./utils.js";
 
 const DEFAULT_ZOOM = 13;
@@ -37,6 +38,14 @@ async function loadMapStyle(url) {
         style.sprite = style.sprite.map((sprite) => ({...sprite, url: new URL(sprite.url, location.href).href}));
     }
     return style;
+}
+
+let rtlTextPluginRequested = false;
+
+function ensureRTLTextPlugin() {
+    if (rtlTextPluginRequested) return;
+    rtlTextPluginRequested = true;
+    setRTLTextPlugin(new URL("/static/map/mapbox-gl-rtl-text.js", location.href).href, true).catch(() => {});
 }
 
 export class TimelineLeafletMap {
@@ -117,6 +126,7 @@ export class TimelineLeafletMap {
                 this._refreshTilesToken(),
             ]);
             if (this._destroyed) return false;
+            ensureRTLTextPlugin();
             layer = maplibreGL({
                 style,
                 localIdeographFontFamily: "sans-serif",
