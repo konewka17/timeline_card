@@ -82,11 +82,15 @@ export function getConfigFormSchema() {
                                     },
                                 },
                             },
+                            {
+                                name: "map_height_px",
+                                selector: {number: {unit_of_measurement: "px"}},
+                            },
+                            {
+                                name: "default_zoom",
+                                selector: {number: {min: 1, max: 20, mode: "box"}},
+                            },
                         ],
-                    },
-                    {
-                        name: "map_height_px",
-                        selector: {number: {unit_of_measurement: "px"}},
                     },
                     {
                         type: "grid",
@@ -97,13 +101,6 @@ export function getConfigFormSchema() {
                             {name: "hide_unselected_on_map", selector: {boolean: {}}},
                             {name: "hide_moving", selector: {boolean: {}}},
                             {name: "reverse_timeline_order", selector: {boolean: {}}},
-                        ],
-                    },
-                    {
-                        type: "grid",
-                        name: "",
-                        flatten: true,
-                        schema: [
                             {name: "collapse_timeline", selector: {boolean: {}}},
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
                             {name: "animate_highlighted_path", selector: {boolean: {}}},

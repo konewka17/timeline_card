@@ -29,6 +29,7 @@ const DEFAULT_CONFIG = {
     max_reasonable_speed_kmh: 300,
     map_appearance: "auto",
     map_height_px: 200,
+    default_zoom: 14,
     animate_highlighted_path: true,
     map_tile_url: null,
     map_attribution: null,
@@ -153,6 +154,9 @@ class TimelineCard extends HTMLElement {
         }
         if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
             throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
+        }
+        if (!(this._config.default_zoom >= 1 && this._config.default_zoom <= 20)) {
+            throw new Error("default_zoom must be a number between 1 and 20");
         }
     }
 
@@ -366,6 +370,7 @@ class TimelineCard extends HTMLElement {
             this._mapView = new TimelineLeafletMap(container, this._getHomeZoneCenter(), {
                 mapTileUrl: this._config.map_tile_url,
                 mapAttribution: this._config.map_attribution,
+                defaultZoom: this._config.default_zoom,
                 fetchMapTilesToken: async () =>
                     (await this._hass.connection.sendMessagePromise({type: "map_tiles/access_token"})).token,
             });

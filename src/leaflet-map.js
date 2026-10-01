@@ -3,7 +3,6 @@ import {maplibreGL} from "@maplibre/maplibre-gl-leaflet";
 import {setRTLTextPlugin} from "maplibre-gl";
 import {getTrackColor} from "./utils.js";
 
-const DEFAULT_ZOOM = 13;
 const MAP_MIN_ZOOM = 1;
 const MAP_MAX_ZOOM = 20;
 
@@ -57,6 +56,7 @@ export class TimelineLeafletMap {
         this._Leaflet = Leaflet;
         this._mapElement = mapElement;
         this._homeZoneCenter = homeZoneCenter;
+        this._defaultZoom = options.defaultZoom;
         this._leafletMap = Leaflet.map(mapElement, {zoomControl: true, minZoom: MAP_MIN_ZOOM, maxZoom: MAP_MAX_ZOOM});
 
         this._rasterTileUrl = options.mapTileUrl || "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
@@ -81,7 +81,7 @@ export class TimelineLeafletMap {
         // Deferred so the caller's setDarkMode() lands before the style is picked.
         Promise.resolve().then(() => this._setupBaseLayer());
 
-        if (this._homeZoneCenter) this._leafletMap.setView(this._homeZoneCenter, DEFAULT_ZOOM);
+        if (this._homeZoneCenter) this._leafletMap.setView(this._homeZoneCenter, this._defaultZoom);
 
         this._mapLayers = [];
         this._fullDayPaths = [];
@@ -332,7 +332,7 @@ export class TimelineLeafletMap {
             bounds = this._fullDayPath?.points?.map((point) => point.point) || [];
         }
         if (!bounds.length) {
-            if (this._homeZoneCenter) this._leafletMap.setView(this._homeZoneCenter, DEFAULT_ZOOM);
+            if (this._homeZoneCenter) this._leafletMap.setView(this._homeZoneCenter, this._defaultZoom);
             return;
         }
         const normalizedBounds = bounds
@@ -340,7 +340,7 @@ export class TimelineLeafletMap {
             .filter((point) => point && Number.isFinite(point.lat) && Number.isFinite(point.lng));
         if (!normalizedBounds.length) return;
         const paddedBounds = this._Leaflet.latLngBounds(normalizedBounds).pad(0.1);
-        this._leafletMap.fitBounds(paddedBounds, {maxZoom: 14});
+        this._leafletMap.fitBounds(paddedBounds, {maxZoom: this._defaultZoom});
     }
 
     _drawMapSegments(segments) {
