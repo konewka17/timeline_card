@@ -162,7 +162,7 @@ export class TimelineLeafletMap {
             if (status !== undefined && status !== 403 && status !== 404) return;
             if (Date.now() - this._lastTokenRecovery < 30000) return;
             this._lastTokenRecovery = Date.now();
-            this._refreshTilesToken().then(() => this._applyStyle());
+            this._refreshTilesToken().then(() => this._applyStyle({diff: false}));
         });
         document.addEventListener("visibilitychange", this._handleVisibilityChange);
         this._tokenInterval = setInterval(() => this._refreshTilesToken(), 20 * 60 * 1000);
@@ -213,14 +213,14 @@ export class TimelineLeafletMap {
         this._applyStyle();
     }
 
-    _applyStyle() {
+    _applyStyle(options) {
         const darkMode = this._darkMode;
         const request = ++this._styleRequest;
         loadMapStyle(VECTOR_STYLES[darkMode ? "dark" : "light"])
             .then((style) => {
                 if (request !== this._styleRequest || !this._vectorLayer) return;
                 this._appliedDarkMode = darkMode;
-                this._vectorLayer.getMaplibreMap()?.setStyle(style);
+                this._vectorLayer.getMaplibreMap()?.setStyle(style, options);
             })
             .catch(() => {
                 // Keep the current style.
