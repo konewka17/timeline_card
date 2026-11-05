@@ -11,7 +11,6 @@ import {
     normalizeList,
     startOfDay,
     today,
-    toLatLon,
 } from "./utils.js";
 import {TimelineMap} from "./timeline-map.ts";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
@@ -199,6 +198,15 @@ class TimelineCard extends HTMLElement {
         console.log(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
     }
 
+    _debugLog(message) {
+        if (!this._config.debug) return;
+        this._hass.callService("system_log", "write", {
+            logger: "timeline_card",
+            level: "warning",
+            message: `[${new Date().toLocaleTimeString()}] ${message}`,
+        });
+    }
+
     _setupUpdateInterval() {
         if (this._updateIntervalId) {
             clearInterval(this._updateIntervalId);
@@ -358,6 +366,7 @@ class TimelineCard extends HTMLElement {
             this._mapView = new TimelineMap(container, this._hass, {
                 themeMode: this._config.map_appearance,
                 zoom: this._config.default_zoom,
+                debugLog: (message) => this._debugLog(message),
             });
             this._drawMapPaths();
         } catch (err) {
@@ -525,22 +534,19 @@ class TimelineCard extends HTMLElement {
             return;
         }
         this._activeEntityIndex = index;
+        if (this._mapFitMode === "segment") {
+            this._resetMapFitMode();
+        }
         this._renderEntitySelector(true);
         this._render();
-    }
-
-    _getHomeZoneCenter() {
-        const state = this._hass?.states?.["zone.home"];
-        const lat = Number(state?.attributes?.latitude);
-        const lng = Number(state?.attributes?.longitude);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-        return {lat, lng};
     }
 
     _fitMapToCurrentMode() {
         let bounds = null;
         if (isToday(this._selectedDate) && this._mapFitMode === "current_location") {
-            bounds = this._getCurrentEntityLocations().map((point) => point.point);
+            bounds = this._getCurrentEntityLocations()
+                .filter((location) => location.isActive)
+                .map((location) => location.point);
         }
         this._mapView.fitMap(bounds);
     }
@@ -686,13 +692,13 @@ class TimelineCard extends HTMLElement {
         this._mapFitMode = "segment";
         this._updateMapFitButton();
         if (segment.type === "stay") {
-            this._mapView?.fitMap([segment.center]);
+            this._mapView?.fitMap([[segment.center.lat, segment.center.lon]]);
         } else if (segment.type === "move") {
             const segmentPoints = track.points.filter(
                 (point) => point.timestamp >= segment.start && point.timestamp <= segment.end,
             );
             if (segmentPoints.length < 2) return;
-            this._mapView?.fitMap(segmentPoints.map(toLatLon));
+            this._mapView?.fitMap(segmentPoints.map((point) => point.point));
         }
     }
 
