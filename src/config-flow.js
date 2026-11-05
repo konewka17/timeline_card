@@ -1,3 +1,5 @@
+import {MAP_STYLES} from "./ha-frontend/src/common/map/map-styles";
+
 export function getConfigFormSchema() {
     return {
         schema: [
@@ -74,10 +76,28 @@ export function getConfigFormSchema() {
                                 },
                             },
                             {
-                                name: "map_appearance",
+                                name: "theme_mode",
                                 selector: {
                                     select: {
                                         options: ["auto", "light", "dark"],
+                                        mode: "dropdown",
+                                    },
+                                },
+                            },
+                            {
+                                name: "map_style",
+                                selector: {
+                                    select: {
+                                        options: [...MAP_STYLES],
+                                        mode: "dropdown",
+                                    },
+                                },
+                            },
+                            {
+                                name: "current_location_marker",
+                                selector: {
+                                    select: {
+                                        options: ["default", "entity"],
                                         mode: "dropdown",
                                     },
                                 },
@@ -99,6 +119,9 @@ export function getConfigFormSchema() {
                         schema: [
                             {name: "hide_current_location", selector: {boolean: {}}},
                             {name: "hide_unselected_on_map", selector: {boolean: {}}},
+                            {name: "show_zones", selector: {boolean: {}}},
+                            {name: "cluster", selector: {boolean: {}}},
+                            {name: "scale_ruler", selector: {boolean: {}}},
                             {name: "hide_moving", selector: {boolean: {}}},
                             {name: "reverse_timeline_order", selector: {boolean: {}}},
                             {name: "collapse_timeline", selector: {boolean: {}}},

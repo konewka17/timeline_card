@@ -160,6 +160,11 @@ export function normalizeEntityEntries(config, hass = null) {
                 if (typeof item.icon === "string" && item.icon.trim()) {
                     entry.icon = item.icon.trim();
                 }
+                ["name", "label_mode", "attribute", "unit"].forEach((key) => {
+                    if (typeof item[key] === "string" && item[key].trim()) {
+                        entry[key] = item[key].trim();
+                    }
+                });
                 return entry;
             }
             return null;

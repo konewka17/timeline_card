@@ -13,7 +13,7 @@ import type {
     MapMarkerHandle,
     MapPath,
 } from "./ha-frontend/src/common/map/map-engine";
-import { resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
+import { type MapStyleConfig, resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
 import { readMapThemeColors } from "./ha-frontend/src/common/map/map-theme-colors";
 import { deepEqual } from "./ha-frontend/src/common/util/deep-equal";
 import { createZoneMarkerElement, ZONE_CIRCLE_SIZE } from "./ha-frontend/src/common/map/zone-marker";
@@ -54,6 +54,9 @@ type ThemeMode = "auto" | "light" | "dark";
 
 interface TimelineMapOptions {
     themeMode: ThemeMode;
+    mapStyle?: MapStyleConfig;
+    scaleRuler: boolean;
+    currentLocationMarker: "default" | "entity";
     zoom: number;
     showZones: boolean;
     cluster: boolean;
@@ -74,6 +77,8 @@ interface ClusterData {
     title: string;
     picture?: string;
     label: string;
+    showIcon: boolean;
+    unit: string;
     color: string;
     isActive: boolean;
     zoneId?: string;
@@ -82,6 +87,7 @@ interface ClusterData {
 interface CurrentLocation {
     entityIndex: number;
     entityId: string;
+    config: { name?: string; label_mode?: "state" | "attribute" | "icon"; attribute?: string; unit?: string };
     point: MapLatLng;
     color: string;
     isActive: boolean;
@@ -142,6 +148,9 @@ export class TimelineMap {
     private _lastFit?: () => void;
 
     private _hasFitted = false;
+
+    // Entity markers float this many pixels above their location; fits keep that room at the top.
+    private _markerLift = 0;
 
     private _dayPaths: DayPath[] = [];
 
@@ -257,7 +266,11 @@ export class TimelineMap {
         if (this._deferIfUnsized(() => this._fitBounds(points))) {
             return;
         }
-        this._engine.fitBounds(points, { maxZoom: this._options.zoom, animate: this._hasFitted });
+        this._engine.fitBounds(points, {
+            maxZoom: this._options.zoom,
+            padding: { top: this._markerLift },
+            animate: this._hasFitted,
+        });
         this._hasFitted = true;
     }
 
@@ -327,7 +340,8 @@ export class TimelineMap {
                 this._handles.push(engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [22, 22], interactive: false }));
             });
 
-        if (this._currentLocations.length === 1) {
+        this._markerLift = 0;
+        if (this._currentLocations.length === 1 && this._options.currentLocationMarker === "default") {
             this._handles.push(
                 engine.addMarker(createCurrentLocationDot(), this._currentLocations[0].point, {
                     size: [20, 20],
@@ -338,6 +352,9 @@ export class TimelineMap {
         } else {
             const markerSize = parseFloat(getComputedStyle(this._container).getPropertyValue("--ha-marker-size")) || 48;
             this._currentLocations.forEach((location) => this._addEntityMarker(location, markerSize));
+            if (this._currentLocations.length) {
+                this._markerLift = floatingMarkerFootprint(markerSize, false).anchor[1];
+            }
         }
         engine.setClustering(
             this._options.cluster
@@ -385,19 +402,28 @@ export class TimelineMap {
     // Ported from the entity part of ha-map.ts _drawEntities.
     private _addEntityMarker(location: CurrentLocation, markerSize: number): void {
         const stateObj = this._hass.states[location.entityId];
-        const title = this._hass.formatEntityName(stateObj);
+        const entity = location.config;
+        const title = entity.name ?? this._hass.formatEntityName(stateObj);
         const { entity_picture: entityPicture, gps_accuracy: gpsAccuracy } = stateObj.attributes;
         const color = this._resolveColor(location.color);
 
         const marker = this._takeEntityMarker(this._entityMarkers, location.entityIndex, location.entityId);
         marker.stateObj = stateObj;
         marker.entityId = location.entityId;
-        marker.entityName = title
-            .split(" ")
-            .map((part) => part[0])
-            .join("")
-            .substr(0, 3);
-        marker.entityPicture = entityPicture ? this._hass.hassUrl(entityPicture) : "";
+        marker.entityName =
+            entity.label_mode === "state"
+                ? this._hass.formatEntityState(stateObj)
+                : entity.label_mode === "attribute" && entity.attribute !== undefined
+                  ? this._hass.formatEntityAttributeValue(stateObj, entity.attribute)
+                  : (entity.name ??
+                    title
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .substr(0, 3));
+        marker.showIcon = entity.label_mode === "icon";
+        marker.entityUnit = entity.unit && entity.label_mode === "attribute" ? entity.unit : "";
+        marker.entityPicture = entityPicture && !entity.label_mode ? this._hass.hassUrl(entityPicture) : "";
         marker.entityColor = color;
         setActiveFrame(marker, location.isActive ? color : undefined, "3px");
         marker.floating = true;
@@ -421,6 +447,8 @@ export class TimelineMap {
             title,
             picture: marker.entityPicture || undefined,
             label: marker.entityName,
+            showIcon: marker.showIcon,
+            unit: marker.entityUnit,
             color,
             isActive: location.isActive,
             zoneId,
@@ -499,6 +527,8 @@ export class TimelineMap {
             avatar.stateObj = this._hass.states[member.entityId];
             avatar.entityId = member.entityId;
             avatar.entityName = member.label;
+            avatar.entityUnit = member.unit;
+            avatar.showIcon = member.showIcon;
             avatar.entityPicture = member.picture ?? "";
             avatar.entityColor = member.color;
             setActiveFrame(avatar, member.isActive ? member.color : undefined, "2px");
@@ -651,7 +681,7 @@ export class TimelineMap {
     }
 
     private get _resolvedMapStyle() {
-        return this._resolveMapStyle(undefined, this._darkMode, this._themeColors);
+        return this._resolveMapStyle(this._options.mapStyle, this._darkMode, this._themeColors);
     }
 
     private _updateMapAppearance(): void {
@@ -754,6 +784,9 @@ export class TimelineMap {
             }
             this._engine = engine;
             this._updateMapAppearance();
+            engine.setScaleRuler(
+                this._options.scaleRuler ? { metric: this._hass.config.unit_system.length === "km" } : null,
+            );
             this._draw();
             this._runPendingFit();
         } finally {

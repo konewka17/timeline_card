@@ -25,7 +25,7 @@ const DEFAULT_CONFIG = {
     stay_radius_m: 75,
     min_stay_minutes: 10,
     max_reasonable_speed_kmh: 300,
-    map_appearance: "auto",
+    theme_mode: "auto",
     map_height_px: 200,
     default_zoom: 14,
     animate_highlighted_path: true,
@@ -35,6 +35,8 @@ const DEFAULT_CONFIG = {
     hide_unselected_on_map: false,
     show_zones: false,
     cluster: true,
+    scale_ruler: false,
+    current_location_marker: "default",
     hide_moving: false,
     reverse_timeline_order: false,
     collapse_timeline: false,
@@ -152,8 +154,11 @@ class TimelineCard extends HTMLElement {
         if (!["metric", "imperial"].includes(this._config.distance_unit)) {
             throw new Error("distance_unit must be either 'metric' or 'imperial'");
         }
-        if (!["auto", "light", "dark"].includes(this._config.map_appearance)) {
-            throw new Error("map_appearance must be one of 'auto', 'light', or 'dark'");
+        if (!["auto", "light", "dark"].includes(this._config.theme_mode)) {
+            throw new Error("theme_mode must be one of 'auto', 'light', or 'dark'");
+        }
+        if (!["default", "entity"].includes(this._config.current_location_marker)) {
+            throw new Error("current_location_marker must be either 'default' or 'entity'");
         }
         if (!(this._config.default_zoom >= 1 && this._config.default_zoom <= 20)) {
             throw new Error("default_zoom must be a number between 1 and 20");
@@ -342,8 +347,8 @@ class TimelineCard extends HTMLElement {
         const icon = fitToggleBtn.querySelector("ha-icon");
 
         const darkMode =
-            this._config.map_appearance === "dark" ||
-            (this._config.map_appearance === "auto" && Boolean(this._hass?.themes?.darkMode));
+            this._config.theme_mode === "dark" ||
+            (this._config.theme_mode === "auto" && Boolean(this._hass?.themes?.darkMode));
         this.shadowRoot.getElementById("map-buttons").style.color = darkMode ? "#ffffff" : "#000000";
         const clusterBtn = this.shadowRoot.getElementById("map-cluster");
         clusterBtn.toggleAttribute("hidden", this._getCurrentEntityLocations().length < 2);
@@ -380,7 +385,10 @@ class TimelineCard extends HTMLElement {
         this._isLoadingMap = true;
         try {
             this._mapView = new TimelineMap(container, this._hass, {
-                themeMode: this._config.map_appearance,
+                themeMode: this._config.theme_mode,
+                mapStyle: this._config.map_style,
+                scaleRuler: this._config.scale_ruler,
+                currentLocationMarker: this._config.current_location_marker,
                 showZones: this._config.show_zones,
                 cluster: this._mapCluster,
                 zoom: this._config.default_zoom,
@@ -596,6 +604,7 @@ class TimelineCard extends HTMLElement {
                 return {
                     entityIndex: index,
                     entityId,
+                    config: this._config.entity[index],
                     point: [lat, lon],
                     color: getTrackColor(index, this._config?.colors, this._config.entity[index]?.color),
                     isActive: index === this._activeEntityIndex,
