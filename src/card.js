@@ -1,6 +1,5 @@
 import css from "./card.css";
-import leafletCss from "leaflet/dist/leaflet.css";
-import maplibreCss from "maplibre-gl/dist/maplibre-gl.css";
+import {haMapStyles} from "./ha-map-styles.ts";
 import {getSegmentedTracks} from "./segmentation.js";
 import {
     escapeHtml,
@@ -14,7 +13,7 @@ import {
     today,
     toLatLon,
 } from "./utils.js";
-import {TimelineLeafletMap} from "./leaflet-map.js";
+import {TimelineMap} from "./timeline-map.ts";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
 import {getConfigFormSchema} from "./config-flow.js";
@@ -31,8 +30,6 @@ const DEFAULT_CONFIG = {
     map_height_px: 200,
     default_zoom: 14,
     animate_highlighted_path: true,
-    map_tile_url: null,
-    map_attribution: null,
     distance_unit: "metric",
     colors: [],
     hide_current_location: false,
@@ -78,7 +75,8 @@ class TimelineCard extends HTMLElement {
         this._timelineCollapsed = Boolean(this._config.collapse_timeline);
         this._selectedDate = startOfDay(new Date());
         this._resetMapFitMode();
-        this._setDarkMode();
+        this._mapView?.destroy();
+        this._mapView = null;
         this._renderEntitySelector(true);
         this._applyMapHeight();
         if (this._hass) {
@@ -91,7 +89,7 @@ class TimelineCard extends HTMLElement {
     // noinspection JSUnusedGlobalSymbols
     set hass(hass) {
         this._hass = hass;
-        this._setDarkMode();
+        this._mapView?.setHass(hass);
         this._renderEntitySelector();
         if (!this._config.entity) return;
         this._config.entity = normalizeEntityEntries(this._config, this._hass);
@@ -158,16 +156,6 @@ class TimelineCard extends HTMLElement {
         if (!(this._config.default_zoom >= 1 && this._config.default_zoom <= 20)) {
             throw new Error("default_zoom must be a number between 1 and 20");
         }
-    }
-
-    _setDarkMode() {
-        let darkMode = Boolean(this._hass?.themes?.darkMode);
-        if (this._config.map_appearance === "dark") {
-            darkMode = true;
-        } else if (this._config.map_appearance === "light") {
-            darkMode = false;
-        }
-        this._mapView?.setDarkMode(darkMode);
     }
 
     _applyMapHeight() {
@@ -277,7 +265,7 @@ class TimelineCard extends HTMLElement {
         this._baseLayoutReady = true;
 
         this.shadowRoot.innerHTML = `
-          <style>${css}\n${leafletCss}\n${maplibreCss}</style>
+          <style>${css}\n${haMapStyles}</style>
           <ha-card>
             <div class="card">
               <div class="map-wrap">
@@ -359,7 +347,7 @@ class TimelineCard extends HTMLElement {
 
     _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
-        if (!container || this._mapView || this._isLoadingMap) return;
+        if (!container || !this._hass || this._mapView || this._isLoadingMap) return;
         if (!this.isConnected || !container.isConnected) {
             requestAnimationFrame(() => this._attachMapCard());
             return;
@@ -367,14 +355,10 @@ class TimelineCard extends HTMLElement {
 
         this._isLoadingMap = true;
         try {
-            this._mapView = new TimelineLeafletMap(container, this._getHomeZoneCenter(), {
-                mapTileUrl: this._config.map_tile_url,
-                mapAttribution: this._config.map_attribution,
-                defaultZoom: this._config.default_zoom,
-                fetchMapTilesToken: async () =>
-                    (await this._hass.connection.sendMessagePromise({type: "map_tiles/access_token"})).token,
+            this._mapView = new TimelineMap(container, this._hass, {
+                themeMode: this._config.map_appearance,
+                zoom: this._config.default_zoom,
             });
-            this._setDarkMode();
             this._drawMapPaths();
         } catch (err) {
             console.warn("Timeline card: map setup failed", err);
