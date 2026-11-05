@@ -204,6 +204,7 @@ for what can get simpler.
 4. Path patch in both engines: border, marching ants, click.
 5. Test the Leaflet fallback (WebGL disabled in the browser).
 6. Entity markers + clustering + zones as HA.
-7. Config options; update the editor.
+7. Map buttons as in `hui-map-card` (fit-mode button under the zoom buttons, cluster
+   toggle); config options; update the editor.
 8. Sync script + `UPSTREAM`; one trial sync to a newer tag.
 9. Release v2.0.0, minimum version in `hacs.json`, README.

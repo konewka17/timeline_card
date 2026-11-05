@@ -180,6 +180,11 @@ export class TimelineMap {
         this._draw();
     }
 
+    public setCluster(cluster: boolean): void {
+        this._options.cluster = cluster;
+        this._draw();
+    }
+
     public destroy(): void {
         this._destroyed = true;
         this._resizeObserver.disconnect();

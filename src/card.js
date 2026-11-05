@@ -76,6 +76,7 @@ class TimelineCard extends HTMLElement {
         this._timelineCollapsed = Boolean(this._config.collapse_timeline);
         this._selectedDate = startOfDay(new Date());
         this._resetMapFitMode();
+        this._mapCluster = this._config.cluster;
         this._mapView?.destroy();
         this._mapView = null;
         this._renderEntitySelector(true);
@@ -280,8 +281,11 @@ class TimelineCard extends HTMLElement {
             <div class="card">
               <div class="map-wrap">
                 <div id="overview-map"></div>
-                <ha-icon-button id="map-fit-mode" class="map-reset" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
-                <ha-icon-button id="timeline-collapse-map" class="map-reset map-reset-left" data-action="toggle-timeline-collapse" hidden>
+                <div id="map-buttons">
+                  <ha-icon-button id="map-cluster" data-action="toggle-map-cluster" label="Toggle grouping" hidden><ha-icon></ha-icon></ha-icon-button>
+                  <ha-icon-button id="map-fit-mode" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
+                </div>
+                <ha-icon-button id="timeline-collapse-map" class="map-reset" data-action="toggle-timeline-collapse" hidden>
                   <ha-icon></ha-icon>
                 </ha-icon-button>
               </div>
@@ -337,6 +341,16 @@ class TimelineCard extends HTMLElement {
         if (!fitToggleBtn) return;
         const icon = fitToggleBtn.querySelector("ha-icon");
 
+        const darkMode =
+            this._config.map_appearance === "dark" ||
+            (this._config.map_appearance === "auto" && Boolean(this._hass?.themes?.darkMode));
+        this.shadowRoot.getElementById("map-buttons").style.color = darkMode ? "#ffffff" : "#000000";
+        const clusterBtn = this.shadowRoot.getElementById("map-cluster");
+        clusterBtn.toggleAttribute("hidden", this._getCurrentEntityLocations().length < 2);
+        clusterBtn
+            .querySelector("ha-icon")
+            .setAttribute("icon", this._mapCluster ? "mdi:google-circles-communities" : "mdi:dots-hexagon");
+
         if (this._mapFitMode === "segment") {
             fitToggleBtn.toggleAttribute("hidden", false);
             icon.setAttribute("icon", "mdi:magnify-scan");
@@ -368,7 +382,7 @@ class TimelineCard extends HTMLElement {
             this._mapView = new TimelineMap(container, this._hass, {
                 themeMode: this._config.map_appearance,
                 showZones: this._config.show_zones,
-                cluster: this._config.cluster,
+                cluster: this._mapCluster,
                 zoom: this._config.default_zoom,
                 debugLog: (message) => this._debugLog(message),
             });
@@ -619,6 +633,10 @@ class TimelineCard extends HTMLElement {
                 this._refreshCurrentDay();
             } else if (action === "update-map-fit-mode") {
                 this._updateMapFitMode();
+            } else if (action === "toggle-map-cluster") {
+                this._mapCluster = !this._mapCluster;
+                this._mapView?.setCluster(this._mapCluster);
+                this._updateMapFitButton();
             } else if (action === "debug") {
                 this._logCacheToConsole();
             } else if (action === "open-date-picker") {
