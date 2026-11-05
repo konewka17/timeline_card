@@ -27,6 +27,9 @@ Location Timeline Card is a custom Lovelace card that builds a **timeline–styl
 - Supports reverse geocoding for stays outside zones
 - Keeps a per-day in-memory cache for snappy day-to-day navigation
 - Runs fully in the frontend (no extra backend integration required)
+- Draws the map with Home Assistant's own map engine, so it looks and behaves like HA's map card
+
+Requires Home Assistant **2026.11** or newer.
 
 ## Installation (HACS)
 
@@ -79,6 +82,30 @@ places_entity:
 
 When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
 
+### Per-entity options
+
+Entities can also be given as objects (YAML mode), with the same marker options as Home Assistant's map card:
+
+```yaml
+type: custom:location-timeline-card
+entity:
+    - entity: person.alice
+      color: "#e91e63"
+    - entity: device_tracker.bobs_car
+      name: Car
+      label_mode: icon
+```
+
+| Name             | Description                                                                                          |
+|------------------|------------------------------------------------------------------------------------------------------|
+| `entity`         | The `device_tracker`/`person` entity.                                                                |
+| `color`          | Track and marker color for this entity.                                                              |
+| `name`           | Name on the marker, instead of the entity's initials.                                                |
+| `label_mode`     | Marker content instead of the picture: `state`, `attribute` or `icon`, as in HA's map card.          |
+| `attribute`      | Attribute shown with `label_mode: attribute`.                                                        |
+| `unit`           | Unit after the attribute with `label_mode: attribute`.                                               |
+| `places_entity`  | Places sensor for this entity, instead of the top-level list.                                        |
+
 ## Configuration options
 
 | Name                        | Type     | Default      | Description                                                                                                                                                             |
@@ -94,12 +121,15 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
 | **Map display**             |          |              |                                                                                                                                                                         |
 | `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
-| `map_appearance`            | string   | `"auto"`     | Map appearance: `auto` (align with HA theme), `light`, or `dark`.                                                                                                       |
+| `theme_mode`                | string   | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
+| `map_style`                 | string   | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                      |
 | `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
 | `default_zoom`              | number   | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
-| `map_tile_url`              | string   | `null`       | Raster tile URL template for the fallback base map (see [Base map](#base-map)). Only used when vector tiles are unavailable.                                             |
-| `map_attribution`           | string   | `null`       | Attribution shown for a custom `map_tile_url`. Defaults to OpenStreetMap.                                                                                               |
 | `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
+| `current_location_marker`   | string   | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                  |
+| `show_zones`                | boolean  | `false`      | Draw all (non-passive) zones on the map, as HA's map card does.                                                                                                         |
+| `cluster`                   | boolean  | `true`       | Group nearby entity markers into one bubble, as HA's map card does. Can also be toggled with the button on the map.                                                    |
+| `scale_ruler`               | boolean  | `false`      | Show a scale ruler, in your unit system.                                                                                                                                |
 | `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
 | `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
 | `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
@@ -113,6 +143,8 @@ When multiple entities are configured, the card renders all tracks on the map an
 ## Map interactions
 
 - Hovering a timeline entry (desktop) highlights the matching segment on the map. A highlighted **move** segment animates ("marching ants") to show direction of travel when `animate_highlighted_path` is enabled (default).
+- Clicking another entity's track, or its marker, selects that entity.
+- The buttons under the zoom controls switch the map fit (full path, current location) and toggle marker grouping.
 
 ## Reverse Geocoding
 
@@ -163,20 +195,14 @@ Places v3 is a breaking change in the Places integration itself: attributes such
 
 ## Base map
 
-The card draws the base map the same way Home Assistant's own map does since 2026.9: [Shortbread vector tiles](https://vector.openstreetmap.org/) from the OpenStreetMap Foundation, rendered with MapLibre GL. The style, glyphs and sprites are the ones Home Assistant serves at `/static/map/`, so nothing extra is downloaded from a third party and dark mode uses a real dark style instead of an inverted light one.
+The map runs on Home Assistant's own map engine, taken from the Home Assistant frontend: the same vector map styles, controls, markers and clustering as HA's map card, rendered with MapLibre GL. Browsers without WebGL2 get HA's raster fallback through Home Assistant's tile proxy. Nothing is downloaded from a third party beyond what HA's own map loads.
 
-The card falls back to raster tiles when those assets are missing (Home Assistant older than 2026.9) or when the browser has no WebGL2. That fallback is CARTO's raster service, which now watermarks tiles requested without an API key and is being retired. Two ways out on an older Home Assistant:
+## Upgrading from v1
 
-```yaml
-# Your own free CARTO key (https://carto.com/basemaps/apikey)
-map_tile_url: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=YOUR_KEY
-```
-
-```yaml
-# Or any other raster tile server
-map_tile_url: https://tile.example.org/{z}/{x}/{y}.png
-map_attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-```
+- `map_appearance` is now `theme_mode`, with the same values.
+- `map_tile_url` and `map_attribution` are gone: the map uses HA's own map styles and tile proxy.
+- The marker `icon` per entity no longer changes the map marker; use `label_mode: icon`.
+- Home Assistant 2026.11 or newer is required.
 
 ## Notes
 
