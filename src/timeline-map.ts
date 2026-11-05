@@ -1,6 +1,7 @@
 import memoizeOne from "memoize-one";
 import { supportsVectorMaps } from "./ha-frontend/src/common/map/base-layer";
-import type { MapEngine, MapItemHandle, MapLatLng } from "./ha-frontend/src/common/map/map-engine";
+import { hexBlend } from "./ha-frontend/src/common/color/hex";
+import type { MapEngine, MapItemHandle, MapLatLng, MapPath } from "./ha-frontend/src/common/map/map-engine";
 import { resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
 import { readMapThemeColors } from "./ha-frontend/src/common/map/map-theme-colors";
 import { deepEqual } from "./ha-frontend/src/common/util/deep-equal";
@@ -8,6 +9,8 @@ import { ensureMapTilesToken } from "./ha-frontend/src/data/map_tiles";
 import { getTrackColor } from "./utils.js";
 
 const DRAWN_FALLBACK = 3000;
+
+const pathBorder = (color: string, width: number) => ({ color: hexBlend("#000", color, 30), width });
 
 type ThemeMode = "auto" | "light" | "dark";
 
@@ -18,12 +21,14 @@ interface TimelineMapOptions {
 }
 
 interface DayPath {
+    entityIndex: number;
     isActive: boolean;
     points: MapLatLng[];
     color: string;
 }
 
 interface CurrentLocation {
+    entityIndex: number;
     point: MapLatLng;
     picture: string | null;
     icon: string | null;
@@ -63,6 +68,8 @@ export class TimelineMap {
 
     private _handles: MapItemHandle[] = [];
 
+    private _highlightHandles: MapItemHandle[] = [];
+
     private _pendingFit?: () => void;
 
     private _lastFit?: () => void;
@@ -76,6 +83,10 @@ export class TimelineMap {
     private _highlightedPath: MapLatLng[] = [];
 
     private _highlightedStay: any = null;
+
+    private _onTrackClick: (entityIndex: number) => void = () => undefined;
+
+    private _animateHighlightedPath = false;
 
     public _currentLocations: CurrentLocation[] = [];
 
@@ -99,6 +110,7 @@ export class TimelineMap {
     public destroy(): void {
         this._destroyed = true;
         this._resizeObserver.disconnect();
+        this._clearHandles();
         this._engine?.destroy();
         this._engine = undefined;
         this._setupAttempt++;
@@ -109,10 +121,13 @@ export class TimelineMap {
 
     public setDaySegments(
         tracks: any[],
-        { activeEntityIndex = 0, colors = [], hideUnselected = false }: any = {},
+        { activeEntityIndex = 0, onTrackClick, colors = [], hideUnselected = false, animateHighlightedPath = false }: any = {},
     ): void {
+        this._onTrackClick = onTrackClick;
+        this._animateHighlightedPath = animateHighlightedPath;
         this._dayPaths = tracks
             .map((track, index) => ({
+                entityIndex: index,
                 isActive: index === activeEntityIndex,
                 points: track.segments.flatMap((segment) => {
                     if (segment.type === "stay") return [[segment.center.lat, segment.center.lon]];
@@ -127,19 +142,17 @@ export class TimelineMap {
         this._draw();
     }
 
-    public highlightSegment(segment: any, segments: any[]): void {
-        this._segments = segments;
+    public highlightSegment(segment: any): void {
         this._highlightedStay = segment.type === "stay" ? segment : null;
         this._highlightedPath = segment.type === "move" ? segment.points.map((point) => point.point) : [];
-        this._draw();
+        this._drawHighlight();
     }
 
-    public clearHighlight(segments: any[]): void {
+    public clearHighlight(): void {
         if (!this._highlightedPath.length && !this._highlightedStay) return;
-        this._segments = segments;
         this._highlightedPath = [];
         this._highlightedStay = null;
-        this._draw();
+        this._drawHighlight();
     }
 
     public fitMap(bounds: MapLatLng[] | null = null): void {
@@ -204,34 +217,30 @@ export class TimelineMap {
         this._handles.forEach((handle) => handle.remove());
         this._handles = [];
 
-        const style = getComputedStyle(this._container);
-        const resolveColor = (color: string) => {
-            const variable = color.match(/^var\((--[\w-]+)\)$/)?.[1];
-            return variable ? style.getPropertyValue(variable).trim() : color;
+        const addDayPath = (path: DayPath) => {
+            const color = this._resolveColor(path.color);
+            this._addPath(
+                path.points,
+                {
+                    color,
+                    width: 4,
+                    border: path.isActive ? pathBorder(color, 7) : undefined,
+                    onClick: () => this._onTrackClick(path.entityIndex),
+                },
+                path.isActive ? 1 : 0.8,
+                this._handles,
+            );
         };
-        const addPath = (points: MapLatLng[], color: string, opacity: number) => {
-            if (points.length < 2) return;
-            this._handles.push(engine.addPath({ color: resolveColor(color), segments: [{ points, opacity }], markers: [] }));
-        };
+        this._dayPaths.filter((path) => !path.isActive).forEach(addDayPath);
+        this._dayPaths.filter((path) => path.isActive).forEach(addDayPath);
 
         const activeColor = this._activePath?.color ?? "var(--primary-color)";
-        this._dayPaths.filter((path) => !path.isActive).forEach((path) => addPath(path.points, path.color, 0.8));
-        this._dayPaths.filter((path) => path.isActive).forEach((path) => addPath(path.points, path.color, 1));
-        addPath(this._highlightedPath, "var(--accent-color)", 1);
-
         this._segments
             .filter((segment) => segment.type === "stay")
             .forEach((stay) => {
                 const element = createStayMarker(stay.zoneIcon, 18, 14, activeColor, "2px");
                 this._handles.push(engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [22, 22], interactive: false }));
             });
-        if (this._highlightedStay) {
-            const stay = this._highlightedStay;
-            const element = createStayMarker(stay.zoneIcon, 22, 22, "var(--accent-color)", "0");
-            this._handles.push(
-                engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [26, 26], interactive: false, raised: true }),
-            );
-        }
 
         if (this._currentLocations.length === 1) {
             this._handles.push(
@@ -243,15 +252,70 @@ export class TimelineMap {
             );
         } else {
             this._currentLocations.forEach((location) => {
+                const element = createEntityMarker(location);
+                element.style.cursor = "pointer";
+                element.addEventListener("click", () => this._onTrackClick(location.entityIndex));
                 this._handles.push(
-                    engine.addMarker(createEntityMarker(location), location.point, {
+                    engine.addMarker(element, location.point, {
                         size: [48, 48],
-                        interactive: false,
+                        title: location.name,
                         raised: location.isActive,
                     }),
                 );
             });
         }
+
+        this._drawHighlight();
+    }
+
+    // Own handles: redrawing everything on hover makes the paths flicker.
+    private _drawHighlight(): void {
+        const engine = this._engine;
+        if (!engine) return;
+        this._highlightHandles.forEach((handle) => handle.remove());
+        this._highlightHandles = [];
+
+        const accentColor = this._resolveColor("var(--accent-color)");
+        this._addPath(
+            this._highlightedPath,
+            {
+                color: accentColor,
+                width: 7,
+                border: pathBorder(accentColor, 10),
+                animated: this._animateHighlightedPath,
+            },
+            1,
+            this._highlightHandles,
+        );
+        if (this._highlightedStay) {
+            const stay = this._highlightedStay;
+            const element = createStayMarker(stay.zoneIcon, 22, 22, "var(--accent-color)", "0");
+            this._highlightHandles.push(
+                engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [26, 26], interactive: false, raised: true }),
+            );
+        }
+    }
+
+    private _clearHandles(): void {
+        [...this._handles, ...this._highlightHandles].forEach((handle) => handle.remove());
+        this._handles = [];
+        this._highlightHandles = [];
+    }
+
+    private _addPath(
+        points: MapLatLng[],
+        path: Omit<MapPath, "segments" | "markers">,
+        opacity: number,
+        handles: MapItemHandle[],
+    ): void {
+        if (points.length < 2) return;
+        handles.push(this._engine!.addPath({ ...path, segments: [{ points, opacity }], markers: [] }));
+    }
+
+    // MapLibre cannot read CSS variables.
+    private _resolveColor(color: string): string {
+        const variable = color.match(/^var\((--[\w-]+)\)$/)?.[1];
+        return variable ? getComputedStyle(this._container).getPropertyValue(variable).trim() : color;
     }
 
     private get _darkMode(): boolean {
@@ -396,9 +460,9 @@ export class TimelineMap {
             this._startingEngine?.destroy();
             return;
         }
+        this._clearHandles();
         this._engine?.destroy();
         this._engine = undefined;
-        this._handles = [];
         this._hasFitted = false;
         this._pendingFit = this._lastFit;
         this._loadMap();

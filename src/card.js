@@ -576,6 +576,7 @@ class TimelineCard extends HTMLElement {
                 if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
                 return {
+                    entityIndex: index,
                     point: [lat, lon],
                     picture: state?.attributes?.entity_picture || null,
                     icon: this._config.entity[index]?.icon || state?.attributes?.icon || null,
@@ -666,18 +667,14 @@ class TimelineCard extends HTMLElement {
         const segment = track.segments[segmentIndex];
         if (!segment || !this._mapView) return;
 
-        const segments = Array.isArray(track.segments) ? track.segments : [];
         this._touchStart = null;
-        this._mapView.highlightSegment(segment, segments);
+        this._mapView.highlightSegment(segment);
     }
 
     _clearHoverHighlight() {
         if (!this._mapView) return;
-        const dayData = this._getCurrentDayData();
-        const track = this._getCurrentTrackDayData(dayData);
-        const segments = Array.isArray(track?.segments) ? track.segments : [];
         this._touchStart = null;
-        this._mapView.clearHighlight(segments);
+        this._mapView.clearHighlight();
     }
 
     _handleSegmentClick(segmentIndex) {

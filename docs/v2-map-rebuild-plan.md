@@ -80,10 +80,11 @@ One contained change, shaped as an upstream PR.
 
 **Paths.** `MapPath` gets optional fields: line width, border (colour + width), an
 animated dash, and a click callback. `addPath` in both engines draws them:
-- MapLibre: an extra `line` layer under the path for the border; dash animation by
-  stepping `line-dasharray` per frame (MapLibre doesn't interpolate dash offset);
+- MapLibre: an extra `line` layer under the path for the border, round caps and
+  joins; the dash animation steps `line-dasharray` per frame, with butt caps (MapLibre
+  has no dash offset, and round caps turn a zero-length dash into a dot);
   click via `map.on("click", layerId)`.
-- Leaflet: a second polyline for the border, a CSS class for the animation (as now),
+- Leaflet: a second polyline for the border, the animation by moving `dashOffset`,
   `interactive: true` + click.
 
 We pass `markers: []`, so HA's tooltip dots don't appear. Without the patch it can't
