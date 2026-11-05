@@ -141,18 +141,20 @@ version. The minimum version in `hacs.json` follows the pinned tag. The first ta
 `20261028.4`.
 
 - `src/ha-frontend/UPSTREAM`: pinned tag + commit SHA.
-- `scripts/sync-ha-frontend.sh <new-tag>`:
+- `scripts/sync-ha-frontend.mjs <new-tag>` (Node: import parsing and `fetch`):
   1. for every file taken over: fetch the upstream version at the old SHA (base) and
      at the new tag (theirs);
   2. `git merge-file` with our version (ours): changes without conflicts come along
      automatically, clashes with the patch get conflict markers;
   3. find new imports in the updated files (a missing file gets added to the list);
-  4. report: upstream commits between both tags for `src/common/map`,
-     `src/data/map_tiles.ts` and, for information only, `ha-map.ts`,
-     `ha-entity-marker.ts` and `hui-map-card.ts`. That last part shows which card
-     features or orchestrator changes to port by hand;
+  4. write `sync-report.md`: conflicts, files gone or added, files merged, and the
+     upstream diffs of `ha-map.ts`, `ha-entity-marker.ts` and `hui-map-card.ts` with
+     the files they were ported into. It compares contents, because GitHub's compare
+     diffs from the merge base, and release tags sit on a release branch;
   5. update `UPSTREAM`.
 - If the patch is accepted upstream, it disappears at the next sync.
+- The steps, including working through the script's `sync-report.md`, are in
+  `docs/syncing-ha-frontend.md`.
 
 ## Config
 
