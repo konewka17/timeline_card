@@ -29,7 +29,6 @@ import {
 } from "./ha-map-styles";
 import { findFirstActiveZone } from "./ha-frontend/src/common/entity/get_entity_location";
 import { clearMarkerAccessibility, setMarkerAccessibility } from "./ha-frontend/src/common/map/marker-accessibility";
-import { getTrackColor } from "./utils.js";
 
 const DRAWN_FALLBACK = 3000;
 // Fixes this good (meters) draw a soft disc without an outline
@@ -208,7 +207,7 @@ export class TimelineMap {
 
     public setDaySegments(
         tracks: any[],
-        { activeEntityIndex = 0, onTrackClick, colors = [], hideUnselected = false, animateHighlightedPath = false }: any = {},
+        { activeEntityIndex = 0, onTrackClick, colors, hideUnselected = false, animateHighlightedPath = false }: any = {},
     ): void {
         this._onTrackClick = onTrackClick;
         this._animateHighlightedPath = animateHighlightedPath;
@@ -220,7 +219,7 @@ export class TimelineMap {
                     if (segment.type === "stay") return [[segment.center.lat, segment.center.lon]];
                     return segment.points.map((point) => point.point);
                 }),
-                color: getTrackColor(index, colors),
+                color: colors[index],
             }))
             .filter((path) => !hideUnselected || path.isActive);
         this._segments = tracks[activeEntityIndex]?.segments || [];
@@ -424,7 +423,7 @@ export class TimelineMap {
         marker.entityUnit = entity.unit && entity.label_mode === "attribute" ? entity.unit : "";
         marker.entityPicture = entityPicture && !entity.label_mode ? this._hass.hassUrl(entityPicture) : "";
         marker.entityColor = color;
-        setActiveFrame(marker, location.isActive ? color : undefined, "3px");
+        marker.style.setProperty("--ha-marker-opacity", location.isActive ? "1" : "0.7");
         marker.floating = true;
 
         let zoneId: string | undefined;
@@ -481,7 +480,6 @@ export class TimelineMap {
             return cached;
         }
         const marker = document.createElement("timeline-entity-marker");
-        marker.style.cursor = "pointer";
         marker.addEventListener("click", (ev) => {
             ev.stopPropagation();
             this._onTrackClick(entityIndex);
@@ -530,7 +528,9 @@ export class TimelineMap {
             avatar.showIcon = member.showIcon;
             avatar.entityPicture = member.picture ?? "";
             avatar.entityColor = member.color;
-            setActiveFrame(avatar, member.isActive ? member.color : undefined, "2px");
+            // Same width on every frame, so the picture keeps its size when the active entity changes.
+            avatar.style.setProperty("--ha-marker-border-width", "2px");
+            avatar.style.setProperty("--ha-marker-color", member.isActive ? member.color : "transparent");
             // In an expanded bubble each avatar is reachable on its own
             clearMarkerAccessibility(avatar);
             if (expanded) {
@@ -827,17 +827,6 @@ function createStayMarker(zoneIcon: string | undefined, iconSize: number, color:
         `box-sizing: border-box; background-color: ${color}; border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, ${color}); display: flex; align-items: center; justify-content: center;`,
     );
     return iconDiv;
-}
-
-// Only the active entity's frame takes its color, matching it to its path. Every frame
-// keeps the same width, so the picture does not shrink when the active entity changes.
-function setActiveFrame(marker: HaEntityMarker, color: string | undefined, width: string) {
-    marker.style.setProperty("--ha-marker-border-width", width);
-    if (color) {
-        marker.style.setProperty("--ha-marker-color", color);
-    } else {
-        marker.style.removeProperty("--ha-marker-color");
-    }
 }
 
 function createCurrentLocationDot() {

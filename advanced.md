@@ -13,7 +13,7 @@ Each item in the `entity` list can be a plain string (entity ID) or an object. T
 | `entity`          | **Yes**  | The `device_tracker` or `person` entity ID.                                                                                                                          |
 | `activity_entity` | No       | A `sensor` entity that tracks the current activity (e.g. walking, running, cycling). When set, move segments display the resolved activity name instead of "Moving". |
 | `places_entity`   | No       | A `sensor` entity from the [Places integration](https://github.com/custom-components/places). Takes precedence over the top-level `places_entity` for this entity.   |
-| `color`           | No       | An override color code (like `#ff0000`, `red`, or `var(--orange-color)`) specifically for this entity. Overrides global map display `colors` array.                  |
+| `color`           | No       | A color code (like `#ff0000`, `red`, or `var(--orange-color)`) for this entity's track and marker.                                                                      |
 
 ### Examples
 

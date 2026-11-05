@@ -1,5 +1,5 @@
 // Port of ha-entity-marker.ts (HA frontend, see src/ha-frontend/UPSTREAM). Own tag, as HA defines
-// ha-entity-marker itself; the map sets stateObj and handles the tap.
+// ha-entity-marker itself; the map sets stateObj and handles the tap, and can dim a marker.
 import type { HassEntity } from "home-assistant-js-websocket";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -117,9 +117,10 @@ export class HaEntityMarker extends LitElement {
       align-items: center;
       /* One shadow for the whole pin, so the frame casts none onto the tail */
       filter: var(
-        --ha-cluster-shadow,
-        drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12))
-      );
+          --ha-cluster-shadow,
+          drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12))
+        )
+        opacity(var(--ha-marker-opacity, 1));
     }
     :host([floating]) {
       pointer-events: none;
@@ -127,6 +128,10 @@ export class HaEntityMarker extends LitElement {
     :host([floating]) .marker,
     :host([floating]) .tail {
       pointer-events: auto;
+    }
+    .marker,
+    .tail {
+      cursor: pointer;
     }
     :host([floating]) .marker {
       position: relative;

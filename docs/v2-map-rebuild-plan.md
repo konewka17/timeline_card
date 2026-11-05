@@ -189,7 +189,9 @@ Not taken over:
 | `default_zoom`, `map_height_px` | stay |
 | — | `current_location_marker`: `default` (blue dot) or `entity` (HA's entity marker); single entity only |
 
-Migrating old configs: separate plan, later.
+Old configs: `setConfig` reads `map_appearance` as `theme_mode` (an explicit
+`theme_mode` wins) and ignores `map_tile_url` and `map_attribution`. A form editor
+cannot rewrite the saved config, so the old names stay readable.
 
 ## Phases
 

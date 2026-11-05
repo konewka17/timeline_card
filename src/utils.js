@@ -108,13 +108,9 @@ export function toPoint(state) {
     return {point: [lat, lon], timestamp: new Date(state.lu * 1000)};
 }
 
-export function getTrackColor(index, colors = [], specificColor = null) {
-    if (specificColor) {
-        return specificColor;
-    }
-
-    if (colors.length) {
-        return colors[index % colors.length];
+export function getTrackColor(index, color) {
+    if (color) {
+        return color;
     }
 
     if (index === 0) {
@@ -128,51 +124,11 @@ export function escapeHtml(text) {
     return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
-export function normalizeList(value) {
-    if (!value) return [];
-    const list = Array.isArray(value) ? value : [value];
-    return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
-}
-
 export function normalizeEntityEntries(config, hass = null) {
-    const value = config.entity;
-    if (!value) return [];
-    const list = Array.isArray(value) ? value : [value];
-    const entries = list
-        .map((item) => {
-            if (typeof item === "string") {
-                const trimmed = item.trim();
-                return trimmed ? {entity: trimmed} : null;
-            }
-            if (item && typeof item === "object" && typeof item.entity === "string") {
-                const entity = item.entity.trim();
-                if (!entity) return null;
-                const entry = {entity};
-                if (typeof item.activity_entity === "string" && item.activity_entity.trim()) {
-                    entry.activity_entity = item.activity_entity.trim();
-                }
-                if (typeof item.places_entity === "string" && item.places_entity.trim()) {
-                    entry.places_entity = item.places_entity.trim();
-                }
-                if (typeof item.color === "string" && item.color.trim()) {
-                    entry.color = item.color.trim();
-                }
-                if (typeof item.icon === "string" && item.icon.trim()) {
-                    entry.icon = item.icon.trim();
-                }
-                ["name", "label_mode", "attribute", "unit"].forEach((key) => {
-                    if (typeof item[key] === "string" && item[key].trim()) {
-                        entry[key] = item[key].trim();
-                    }
-                });
-                return entry;
-            }
-            return null;
-        })
-        .filter(Boolean);
+    const entries = config.entity.map((item) => (typeof item === "string" ? {entity: item} : {...item}));
 
     if (hass) {
-        const placeEntityIds = Array.isArray(config.places_entity) ? config.places_entity : [];
+        const placeEntityIds = config.places_entity;
         const trackedEntities = new Set(entries.map((e) => e.entity));
 
         const topLevelPlacesMap = new Map();

@@ -63,7 +63,8 @@ Add the card in the Lovelace UI editor or with manual YAML.
 
 ```yaml
 type: custom:location-timeline-card
-entity: device_tracker.my_phone
+entity:
+    - device_tracker.my_phone
 ```
 
 The entity must expose latitude/longitude attributes.
@@ -82,7 +83,41 @@ places_entity:
 
 When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
 
-### Per-entity options
+## Configuration options
+
+| Name                        | Type     | Default      | Description                                                                                                                                                             |
+|-----------------------------|----------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `entity`                    | string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from.                                                                                                |
+| **Reverse geocoding**       |          |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
+| `places_entity`             | string[] | `[]`         | Optional list of `sensor` entities from the Places integration, used first for reverse geocoding. Must match `entity` order/count when provided.                       |
+| `osm_api_key`               | string   | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
+| _Advanced mode_             | yaml     |              | Reverse geocoding also supports advanced mode, see [`advanced.md`](advanced.md)                                                                                         |
+| **Detection parameters**    |          |              |                                                                                                                                                                         |
+| `stay_radius_m`             | number   | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
+| `min_stay_minutes`          | number   | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
+| `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
+| **Map display**             |          |              |                                                                                                                                                                         |
+| `theme_mode`                | string   | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
+| `map_style`                 | string   | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                      |
+| `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
+| `default_zoom`              | number   | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
+| `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
+| `current_location_marker`   | string   | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                  |
+| `show_zones`                | boolean  | `false`      | Draw all (non-passive) zones on the map, as HA's map card does.                                                                                                         |
+| `cluster`                   | boolean  | `true`       | Group nearby entity markers into one bubble, as HA's map card does. Can also be toggled with the button on the map.                                                    |
+| `scale_ruler`               | boolean  | `false`      | Show a scale ruler, in your unit system.                                                                                                                                |
+| `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
+| `animate_highlighted_path`  | boolean  | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
+| **Timeline display**        |          |              |                                                                                                                                                                         |
+| `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
+| `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
+| `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
+| `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
+| `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
+| **Misc**                    |          |              |                                                                                                                                                                         |
+| `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
+
+## Per-entity options
 
 Entities can also be given as objects (YAML mode), with the same marker options as Home Assistant's map card:
 
@@ -99,46 +134,12 @@ entity:
 | Name             | Description                                                                                          |
 |------------------|------------------------------------------------------------------------------------------------------|
 | `entity`         | The `device_tracker`/`person` entity.                                                                |
-| `color`          | Track and marker color for this entity.                                                              |
+| `color`          | Track and marker color for this entity. Without it, the card's default colors are used.             |
 | `name`           | Name on the marker, instead of the entity's initials.                                                |
 | `label_mode`     | Marker content instead of the picture: `state`, `attribute` or `icon`, as in HA's map card.          |
 | `attribute`      | Attribute shown with `label_mode: attribute`.                                                        |
 | `unit`           | Unit after the attribute with `label_mode: attribute`.                                               |
 | `places_entity`  | Places sensor for this entity, instead of the top-level list.                                        |
-
-## Configuration options
-
-| Name                        | Type     | Default      | Description                                                                                                                                                             |
-|-----------------------------|----------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `entity`                    | string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from.                                                                                                |
-| **Reverse geocoding**       |          |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
-| `places_entity`             | string[] | `[]`         | Optional `sensor` entity (or list) from Places integration used first for reverse geocoding. Lists must match `entity` order/count when provided.                       |
-| `osm_api_key`               | string   | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
-| _Advanced mode_             | yaml     |              | Reverse geocoding also supports advanced mode, see [`advanced.md`](advanced.md)                                                                                         |
-| **Detection parameters**    |          |              |                                                                                                                                                                         |
-| `stay_radius_m`             | number   | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
-| `min_stay_minutes`          | number   | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
-| `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
-| **Map display**             |          |              |                                                                                                                                                                         |
-| `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
-| `theme_mode`                | string   | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
-| `map_style`                 | string   | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                      |
-| `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
-| `default_zoom`              | number   | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
-| `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
-| `current_location_marker`   | string   | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                  |
-| `show_zones`                | boolean  | `false`      | Draw all (non-passive) zones on the map, as HA's map card does.                                                                                                         |
-| `cluster`                   | boolean  | `true`       | Group nearby entity markers into one bubble, as HA's map card does. Can also be toggled with the button on the map.                                                    |
-| `scale_ruler`               | boolean  | `false`      | Show a scale ruler, in your unit system.                                                                                                                                |
-| `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
-| `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
-| `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
-| `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
-| `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
-| `animate_highlighted_path`  | boolean  | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
-| `colors`                    | string[] | `[]`         | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables.            |
-| **Misc**                    |          |              |                                                                                                                                                                         |
-| `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
 
 ## Map interactions
 
@@ -199,10 +200,12 @@ The map runs on Home Assistant's own map engine, taken from the Home Assistant f
 
 ## Upgrading from v1
 
-- `map_appearance` is now `theme_mode`, with the same values.
-- `map_tile_url` and `map_attribution` are gone: the map uses HA's own map styles and tile proxy.
-- The marker `icon` per entity no longer changes the map marker; use `label_mode: icon`.
 - Home Assistant 2026.11 or newer is required.
+- `entity` and `places_entity` must be lists, also with a single entity.
+- `map_appearance` is renamed to `theme_mode`, with the same values.
+- `map_tile_url` and `map_attribution` are removed: the map uses HA's own map styles and tile proxy.
+- `colors` is removed: set `color` per entity instead (see [Per-entity options](#per-entity-options)).
+- The per-entity `icon` is removed; use `label_mode: icon` to show the entity's icon on the map.
 
 ## Notes
 
@@ -210,24 +213,6 @@ The map runs on Home Assistant's own map engine, taken from the Home Assistant f
 - Zone labels are resolved from `zone.*` entities.
 - All timeline processing happens in the browser.
 - [Discussion post](https://community.home-assistant.io/t/location-timeline-card-to-easily-show-location-history/989513) on the Community
-
-### Fix GUI form not displaying `entity` or `places_entity` when card was set up prior to `v1.6.0`
-
-If your configuration form does not display `entity` or `places_entity` and you first set up your card prior to `v1.6.0`, this is due to a breaking change where the card now supports multiple users.
-You can fix this by manually changing the YAML from
-
-```
-entity: person.my_person
-```
-
-to
-
-```
-entity:
-- person.my_person
-```
-
-You can replace `entity: null` or `places_entity: null` with `entity: []`
 
 ## Debug mode
 In some cases for me to properly debug issues, you will need to enable debug mode and send me the logs. If this is necessary, please follow these steps:

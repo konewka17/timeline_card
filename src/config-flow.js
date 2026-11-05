@@ -1,8 +1,16 @@
 import {MAP_STYLES} from "./ha-frontend/src/common/map/map-styles";
 
-export function getConfigFormSchema() {
+// The form shows a default while the option is unset, so a toggle that defaults on shows on.
+const withDefaults = (schema, defaults) =>
+    schema.map((item) => ({
+        ...item,
+        ...(item.schema && {schema: withDefaults(item.schema, defaults)}),
+        ...(defaults[item.name] !== undefined && typeof defaults[item.name] !== "object" && {default: defaults[item.name]}),
+    }));
+
+export function getConfigFormSchema(defaults) {
     return {
-        schema: [
+        schema: withDefaults([
             {
                 name: "entity",
                 required: true,
@@ -70,12 +78,6 @@ export function getConfigFormSchema() {
                         flatten: true,
                         schema: [
                             {
-                                name: "distance_unit",
-                                selector: {
-                                    select: {options: ["metric", "imperial"], mode: "dropdown"},
-                                },
-                            },
-                            {
                                 name: "theme_mode",
                                 selector: {
                                     select: {
@@ -122,14 +124,34 @@ export function getConfigFormSchema() {
                             {name: "show_zones", selector: {boolean: {}}},
                             {name: "cluster", selector: {boolean: {}}},
                             {name: "scale_ruler", selector: {boolean: {}}},
+                            {name: "animate_highlighted_path", selector: {boolean: {}}},
+                        ],
+                    },
+                ],
+            },
+            {
+                type: "expandable",
+                name: "",
+                title: "Timeline display",
+                flatten: true,
+                schema: [
+                    {
+                        name: "distance_unit",
+                        selector: {
+                            select: {options: ["metric", "imperial"], mode: "dropdown"},
+                        },
+                    },
+                    {
+                        type: "grid",
+                        name: "",
+                        flatten: true,
+                        schema: [
                             {name: "hide_moving", selector: {boolean: {}}},
                             {name: "reverse_timeline_order", selector: {boolean: {}}},
                             {name: "collapse_timeline", selector: {boolean: {}}},
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
-                            {name: "animate_highlighted_path", selector: {boolean: {}}},
                         ],
                     },
-                    {name: "colors", selector: {text: {multiple: true}}},
                     {
                         name: "activity_icon_map",
                         selector: {
@@ -153,7 +175,7 @@ export function getConfigFormSchema() {
                     },
                 ],
             },
-        ],
+        ], defaults),
         assertConfig: (config) => {
             const entities = Array.isArray(config.entity) ? config.entity : [];
             if (entities.some((e) => e && typeof e === "object")) {

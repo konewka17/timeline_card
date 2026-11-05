@@ -8,7 +8,6 @@ import {
     getTrackColor,
     isToday,
     normalizeEntityEntries,
-    normalizeList,
     startOfDay,
     today,
 } from "./utils.js";
@@ -30,7 +29,6 @@ const DEFAULT_CONFIG = {
     default_zoom: 14,
     animate_highlighted_path: true,
     distance_unit: "metric",
-    colors: [],
     hide_current_location: false,
     hide_unselected_on_map: false,
     show_zones: false,
@@ -109,7 +107,7 @@ class TimelineCard extends HTMLElement {
 
     // noinspection JSUnusedGlobalSymbols
     static getConfigForm() {
-        return getConfigFormSchema();
+        return getConfigFormSchema(DEFAULT_CONFIG);
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -145,12 +143,13 @@ class TimelineCard extends HTMLElement {
     }
 
     _checkConfig() {
-        this._config.entity = normalizeEntityEntries(this._config);
-        this._config.places_entity = normalizeList(this._config.places_entity);
-        this._config.colors = normalizeList(this._config.colors);
-        if (this._config.entity.length === 0) {
-            throw new Error("You need to define an entity");
+        if (!Array.isArray(this._config.entity) || this._config.entity.length === 0) {
+            throw new Error("entity must be a list with at least one entity");
         }
+        if (!Array.isArray(this._config.places_entity)) {
+            throw new Error("places_entity must be a list");
+        }
+        this._config.entity = normalizeEntityEntries(this._config);
         if (!["metric", "imperial"].includes(this._config.distance_unit)) {
             throw new Error("distance_unit must be either 'metric' or 'imperial'");
         }
@@ -256,8 +255,7 @@ class TimelineCard extends HTMLElement {
 
         const activeEntityColor = getTrackColor(
             this._activeEntityIndex,
-            this._config?.colors,
-            this._config?.entity?.[this._activeEntityIndex]?.color,
+            this._config.entity[this._activeEntityIndex].color,
         );
         if (this._config.timeline_use_entity_color) {
             this.shadowRoot.querySelector(".card")?.style.setProperty("--timeline-color", activeEntityColor);
@@ -285,7 +283,7 @@ class TimelineCard extends HTMLElement {
                   <ha-icon-button id="map-cluster" data-action="toggle-map-cluster" label="Toggle grouping" hidden><ha-icon></ha-icon></ha-icon-button>
                   <ha-icon-button id="map-fit-mode" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
                 </div>
-                <ha-icon-button id="timeline-collapse-map" class="map-reset" data-action="toggle-timeline-collapse" hidden>
+                <ha-icon-button id="timeline-collapse-map" class="map-collapse" data-action="toggle-timeline-collapse" hidden>
                   <ha-icon></ha-icon>
                 </ha-icon-button>
               </div>
@@ -401,7 +399,7 @@ class TimelineCard extends HTMLElement {
             this._mapView.setDaySegments(tracks, {
                 activeEntityIndex: this._activeEntityIndex,
                 onTrackClick: (entityIndex) => this._setActiveEntityIndex(entityIndex),
-                colors: this._config.colors,
+                colors: this._config.entity.map((entry, index) => getTrackColor(index, entry.color)),
                 hideUnselected: this._config.hide_unselected_on_map,
                 animateHighlightedPath: this._config.animate_highlighted_path,
             });
@@ -435,12 +433,12 @@ class TimelineCard extends HTMLElement {
                 const state = this._hass?.states?.[entityId];
                 const picture = state?.attributes?.entity_picture;
                 const entityDef = this._config.entity[index];
-                const icon = entityDef?.icon || state?.attributes?.icon || "mdi:account-circle";
+                const icon = state?.attributes?.icon || "mdi:account-circle";
                 const name = state?.attributes?.friendly_name || entityId;
                 const escapedName = escapeHtml(name);
                 const escapedPicture = escapeHtml(picture || "");
                 const escapedIcon = escapeHtml(icon);
-                const trackColor = getTrackColor(index, this._config?.colors, entityDef?.color);
+                const trackColor = getTrackColor(index, entityDef.color);
                 return `
               <button type="button" style="--entity-track-color:${trackColor};" class="entity-chip ${index === this._activeEntityIndex ? "active" : ""}" data-action="select-entity" data-entity-index="${index}">
                 ${picture ? `<img src="${escapedPicture}" alt="${escapedName}">` : `<ha-icon class="entity-avatar-icon" icon="${escapedIcon}"></ha-icon>`}
@@ -593,7 +591,7 @@ class TimelineCard extends HTMLElement {
                     entityId,
                     config: this._config.entity[index],
                     point: [lat, lon],
-                    color: getTrackColor(index, this._config?.colors, this._config.entity[index]?.color),
+                    color: getTrackColor(index, this._config.entity[index].color),
                     isActive: index === this._activeEntityIndex,
                 };
             })

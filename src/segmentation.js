@@ -199,9 +199,8 @@ async function fetchEntityHistory(hass, entityId, date) {
         significant_changes_only: false,
     };
 
-    const response = await callWS(hass, message);
-    const states = extractEntityStates(response, entityId);
-    return clampHistoryToDay(states, date);
+    const response = await hass.callWS(message);
+    return clampHistoryToDay(response[entityId] ?? [], date);
 }
 
 function clampHistoryToDay(states, date) {
@@ -240,29 +239,6 @@ function clampHistoryToDay(states, date) {
     return currentDayStates;
 }
 
-async function callWS(hass, message) {
-    if (typeof hass.callWS === "function") {
-        return hass.callWS(message);
-    }
-    if (hass.connection && typeof hass.connection.sendMessagePromise === "function") {
-        return hass.connection.sendMessagePromise(message);
-    }
-    throw new Error("Home Assistant connection not available");
-}
-
-function extractEntityStates(response, entityId) {
-    if (!response) return [];
-    if (!Array.isArray(response) && typeof response === "object") {
-        const list = response[entityId];
-        return Array.isArray(list) ? list : [];
-    }
-    if (!Array.isArray(response)) return [];
-    if (response.length === 0) return [];
-    if (Array.isArray(response[0])) {
-        return response[0] || [];
-    }
-    return response.filter((state) => state.entity_id === entityId);
-}
 
 export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
     const entityEntries = config.entity;
@@ -272,7 +248,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
         entityEntries.map(async (entry) => {
             const entityId = entry.entity;
             const rawStates = await fetchEntityHistory(hass, entityId, date);
-            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean).filter((p) => p.lat !== 0 || p.lon !== 0);
+            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean).filter((p) => p.point[0] !== 0 || p.point[1] !== 0);
             const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
 
             const placeEntityId = entry.places_entity || null;
