@@ -6,9 +6,14 @@ import { resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
 import { readMapThemeColors } from "./ha-frontend/src/common/map/map-theme-colors";
 import { deepEqual } from "./ha-frontend/src/common/util/deep-equal";
 import { ensureMapTilesToken } from "./ha-frontend/src/data/map_tiles";
+import { floatingMarkerFootprint, type HaEntityMarker } from "./ha-entity-marker";
 import { getTrackColor } from "./utils.js";
 
 const DRAWN_FALLBACK = 3000;
+// Circle radius (meters) for a selected marker without a reported accuracy
+const NOMINAL_ACCURACY = 2.5;
+// Fixes this good (meters) draw a soft disc without an outline
+const PRECISE_GPS_ACCURACY = 10;
 
 const pathBorder = (color: string, width: number) => ({ color: hexBlend("#000", color, 30), width });
 
@@ -29,10 +34,8 @@ interface DayPath {
 
 interface CurrentLocation {
     entityIndex: number;
+    entityId: string;
     point: MapLatLng;
-    picture: string | null;
-    icon: string | null;
-    name: string;
     color: string;
     isActive: boolean;
 }
@@ -69,6 +72,9 @@ export class TimelineMap {
     private _handles: MapItemHandle[] = [];
 
     private _highlightHandles: MapItemHandle[] = [];
+
+    // Marker elements survive redraws, so pictures do not reload.
+    private _entityMarkers = new Map<string, HaEntityMarker>();
 
     private _pendingFit?: () => void;
 
@@ -251,18 +257,8 @@ export class TimelineMap {
                 }),
             );
         } else {
-            this._currentLocations.forEach((location) => {
-                const element = createEntityMarker(location);
-                element.style.cursor = "pointer";
-                element.addEventListener("click", () => this._onTrackClick(location.entityIndex));
-                this._handles.push(
-                    engine.addMarker(element, location.point, {
-                        size: [48, 48],
-                        title: location.name,
-                        raised: location.isActive,
-                    }),
-                );
-            });
+            const markerSize = parseFloat(getComputedStyle(this._container).getPropertyValue("--ha-marker-size")) || 48;
+            this._currentLocations.forEach((location) => this._addEntityMarker(location, markerSize));
         }
 
         this._drawHighlight();
@@ -294,6 +290,45 @@ export class TimelineMap {
                 engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [26, 26], interactive: false, raised: true }),
             );
         }
+    }
+
+    // Ported from the entity part of ha-map.ts _drawEntities.
+    private _addEntityMarker(location: CurrentLocation, markerSize: number): void {
+        const stateObj = this._hass.states[location.entityId];
+        const title = this._hass.formatEntityName(stateObj);
+        const { entity_picture: entityPicture, gps_accuracy: gpsAccuracy } = stateObj.attributes;
+        const color = this._resolveColor(location.color);
+
+        const cached = this._entityMarkers.get(location.entityId);
+        const marker = cached && !cached.isConnected ? cached : document.createElement("timeline-entity-marker");
+        if (marker !== cached) {
+            marker.addEventListener("click", () => this._onTrackClick(location.entityIndex));
+            this._entityMarkers.set(location.entityId, marker);
+        }
+        marker.stateObj = stateObj;
+        marker.entityId = location.entityId;
+        marker.entityName = title
+            .split(" ")
+            .map((part) => part[0])
+            .join("")
+            .substr(0, 3);
+        marker.entityPicture = entityPicture ? this._hass.hassUrl(entityPicture) : "";
+        marker.entityColor = color;
+        marker.selected = location.isActive;
+        marker.floating = true;
+
+        const accuracy = gpsAccuracy || (marker.selected ? NOMINAL_ACCURACY : 0);
+        this._handles.push(
+            this._engine!.addMarker(marker, location.point, {
+                ...floatingMarkerFootprint(markerSize, marker.selected),
+                title,
+                raised: marker.selected,
+                decoration:
+                    accuracy > 0
+                        ? { radius: accuracy, color, outline: accuracy > PRECISE_GPS_ACCURACY }
+                        : undefined,
+            }),
+        );
     }
 
     private _clearHandles(): void {
@@ -479,45 +514,6 @@ function createStayMarker(zoneIcon: string | undefined, markerSize: number, icon
     iconDiv.setAttribute(
         "style",
         `height: ${markerSize}px; width: ${markerSize}px; background-color: ${color}; border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, ${color}); display: flex;`,
-    );
-    return iconDiv;
-}
-
-function createEntityMarker(location: CurrentLocation) {
-    let icon: HTMLElement;
-    if (location.picture) {
-        const picture = document.createElement("img");
-        picture.src = location.picture;
-        picture.alt = location.name;
-        picture.setAttribute("style", "height: 42px; width: 42px; border-radius: 50%; object-fit: cover;");
-        icon = picture;
-    } else if (location.icon) {
-        icon = document.createElement("ha-icon");
-        icon.setAttribute("icon", location.icon);
-        icon.setAttribute(
-            "style",
-            "height: 42px; width: 42px; display: flex; align-items: center; justify-content: center; color: white; --mdc-icon-size: 26px;",
-        );
-    } else {
-        const getAbbreviation = (name: string) => {
-            const words = name.split(" ");
-            if (words.length === 1) {
-                return words[0].charAt(0).toUpperCase() + words[0].charAt(1);
-            }
-            return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-        };
-        icon = document.createElement("div");
-        icon.innerHTML = getAbbreviation(location.name);
-        icon.setAttribute(
-            "style",
-            "height: 42px; width: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold; color: white;",
-        );
-    }
-    const iconDiv = document.createElement("div");
-    iconDiv.appendChild(icon);
-    iconDiv.setAttribute(
-        "style",
-        `height: 42px; width: 42px; border-radius: 50%; border: 3px solid color-mix(in srgb, black 30%, ${location.color}); overflow: hidden; background-color: ${location.color}`,
     );
     return iconDiv;
 }

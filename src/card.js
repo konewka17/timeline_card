@@ -577,10 +577,8 @@ class TimelineCard extends HTMLElement {
 
                 return {
                     entityIndex: index,
+                    entityId,
                     point: [lat, lon],
-                    picture: state?.attributes?.entity_picture || null,
-                    icon: this._config.entity[index]?.icon || state?.attributes?.icon || null,
-                    name: state?.attributes?.friendly_name || entityId,
                     color: getTrackColor(index, this._config?.colors, this._config.entity[index]?.color),
                     isActive: index === this._activeEntityIndex,
                 };
