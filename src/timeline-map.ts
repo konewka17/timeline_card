@@ -3,11 +3,14 @@ import { supportsVectorMaps } from "./ha-frontend/src/common/map/base-layer";
 import { hexBlend } from "./ha-frontend/src/common/color/hex";
 import { computeDomain } from "./ha-frontend/src/common/entity/compute_domain";
 import { zoneColor } from "./ha-frontend/src/common/map/entity-map-colors";
+import { distanceMeters } from "./ha-frontend/src/common/map/map-engine";
 import type {
     MapCircleHandle,
+    MapClusterIcon,
     MapEngine,
     MapItemHandle,
     MapLatLng,
+    MapMarkerHandle,
     MapPath,
 } from "./ha-frontend/src/common/map/map-engine";
 import { resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
@@ -16,14 +19,34 @@ import { deepEqual } from "./ha-frontend/src/common/util/deep-equal";
 import { createZoneMarkerElement, ZONE_CIRCLE_SIZE } from "./ha-frontend/src/common/map/zone-marker";
 import { type EntityRegistryEntry, subscribeEntityRegistry } from "./ha-frontend/src/data/entity/entity_registry";
 import { ensureMapTilesToken } from "./ha-frontend/src/data/map_tiles";
-import { floatingMarkerFootprint, type HaEntityMarker } from "./ha-entity-marker";
+import { FLOATING_LIFT, floatingMarkerFootprint, type HaEntityMarker } from "./ha-entity-marker";
+import {
+    CLUSTER_AVATAR_SIZE,
+    CLUSTER_BUBBLE_GAP,
+    CLUSTER_BUBBLE_PADDING,
+    CLUSTER_MORE_WIDTH,
+    CLUSTER_TAIL_SIZE,
+} from "./ha-map-styles";
+import { findFirstActiveZone } from "./ha-frontend/src/common/entity/get_entity_location";
+import { clearMarkerAccessibility, setMarkerAccessibility } from "./ha-frontend/src/common/map/marker-accessibility";
 import { getTrackColor } from "./utils.js";
 
 const DRAWN_FALLBACK = 3000;
-// Circle radius (meters) for a selected marker without a reported accuracy
-const NOMINAL_ACCURACY = 2.5;
 // Fixes this good (meters) draw a soft disc without an outline
 const PRECISE_GPS_ACCURACY = 10;
+
+// Beyond this the last slot becomes a count
+const CLUSTER_MAX_AVATARS = 4;
+const CLUSTER_MORE_MAX = 99;
+// Space an opened bubble keeps from the map edges
+const CLUSTER_BUBBLE_MARGIN = 12;
+// The tail is a rotated square on the bubble's bottom edge, reaching half its diagonal below
+const CLUSTER_TAIL_HEIGHT = Math.round((CLUSTER_TAIL_SIZE * Math.SQRT2) / 2);
+const CLUSTER_ZONE_SPACING = 2;
+const CLUSTER_RADIUS = 40;
+// Same-zone markers share the zone's bubble while they span at most this many
+// pixels; further apart they show their actual positions
+const ZONE_GROUP_RADIUS = 160;
 
 const pathBorder = (color: string, width: number) => ({ color: hexBlend("#000", color, 30), width });
 
@@ -33,6 +56,7 @@ interface TimelineMapOptions {
     themeMode: ThemeMode;
     zoom: number;
     showZones: boolean;
+    cluster: boolean;
     debugLog: (message: string) => void;
 }
 
@@ -41,6 +65,18 @@ interface DayPath {
     isActive: boolean;
     points: MapLatLng[];
     color: string;
+}
+
+// Data carried by entity markers for rendering cluster bubbles
+interface ClusterData {
+    entityIndex: number;
+    entityId: string;
+    title: string;
+    picture?: string;
+    label: string;
+    color: string;
+    isActive: boolean;
+    zoneId?: string;
 }
 
 interface CurrentLocation {
@@ -86,6 +122,12 @@ export class TimelineMap {
 
     // Marker elements survive redraws, so pictures do not reload.
     private _entityMarkers = new Map<string, HaEntityMarker>();
+
+    private _clusterAvatars = new Map<string, HaEntityMarker>();
+
+    private _zonePositions: Record<string, MapLatLng> = {};
+
+    private _zoneRadii: Record<string, number> = {};
 
     // Updated in place, so redraws do not flash the circles.
     private _zoneCircleHandles: MapCircleHandle[] = [];
@@ -249,6 +291,8 @@ export class TimelineMap {
         this._handles.forEach((handle) => handle.remove());
         this._handles = [];
 
+        this._zonePositions = {};
+        this._zoneRadii = {};
         if (this._options.showZones) {
             this._drawZones();
         }
@@ -261,7 +305,7 @@ export class TimelineMap {
                     color,
                     width: 4,
                     border: path.isActive ? pathBorder(color, 7) : undefined,
-                    onClick: () => this._onTrackClick(path.entityIndex),
+                    onClick: path.isActive ? undefined : () => this._onTrackClick(path.entityIndex),
                 },
                 path.isActive ? 1 : 0.8,
                 this._handles,
@@ -274,7 +318,7 @@ export class TimelineMap {
         this._segments
             .filter((segment) => segment.type === "stay")
             .forEach((stay) => {
-                const element = createStayMarker(stay.zoneIcon, 18, 14, activeColor, "2px");
+                const element = createStayMarker(stay.zoneIcon, 14, activeColor);
                 this._handles.push(engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [22, 22], interactive: false }));
             });
 
@@ -290,6 +334,17 @@ export class TimelineMap {
             const markerSize = parseFloat(getComputedStyle(this._container).getPropertyValue("--ha-marker-size")) || 48;
             this._currentLocations.forEach((location) => this._addEntityMarker(location, markerSize));
         }
+        engine.setClustering(
+            this._options.cluster
+                ? {
+                      radius: CLUSTER_RADIUS,
+                      iconBuilder: this._createClusterBubble,
+                      // Everyone in a zone shares its bubble until zooming spreads them
+                      groupKey: (marker) => (marker.clusterData as ClusterData)?.zoneId,
+                      groupRadius: ZONE_GROUP_RADIUS,
+                  }
+                : null,
+        );
 
         this._drawHighlight();
     }
@@ -315,7 +370,7 @@ export class TimelineMap {
         );
         if (this._highlightedStay) {
             const stay = this._highlightedStay;
-            const element = createStayMarker(stay.zoneIcon, 22, 22, "var(--accent-color)", "0");
+            const element = createStayMarker(stay.zoneIcon, 22, "var(--accent-color)");
             this._highlightHandles.push(
                 engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [26, 26], interactive: false, raised: true }),
             );
@@ -329,12 +384,7 @@ export class TimelineMap {
         const { entity_picture: entityPicture, gps_accuracy: gpsAccuracy } = stateObj.attributes;
         const color = this._resolveColor(location.color);
 
-        const cached = this._entityMarkers.get(location.entityId);
-        const marker = cached && !cached.isConnected ? cached : document.createElement("timeline-entity-marker");
-        if (marker !== cached) {
-            marker.addEventListener("click", () => this._onTrackClick(location.entityIndex));
-            this._entityMarkers.set(location.entityId, marker);
-        }
+        const marker = this._takeEntityMarker(this._entityMarkers, location.entityIndex, location.entityId);
         marker.stateObj = stateObj;
         marker.entityId = location.entityId;
         marker.entityName = title
@@ -344,15 +394,41 @@ export class TimelineMap {
             .substr(0, 3);
         marker.entityPicture = entityPicture ? this._hass.hassUrl(entityPicture) : "";
         marker.entityColor = color;
-        marker.selected = location.isActive;
+        setActiveFrame(marker, location.isActive ? color : undefined, "3px");
         marker.floating = true;
 
-        const accuracy = gpsAccuracy || (marker.selected ? NOMINAL_ACCURACY : 0);
+        let zoneId: string | undefined;
+        if (["person", "device_tracker"].includes(computeDomain(location.entityId))) {
+            const inZones: string[] | undefined = stateObj.attributes.in_zones;
+            if (Array.isArray(inZones) && inZones.length > 0) {
+                const activeZone = findFirstActiveZone(inZones, this._hass.states);
+                if (activeZone && this._zonePositions[activeZone.entity_id]) {
+                    zoneId = activeZone.entity_id;
+                }
+            } else if (!Array.isArray(inZones) || !["not_home", "unknown", "unavailable"].includes(stateObj.state)) {
+                zoneId = this._zoneContaining(location.point, gpsAccuracy);
+            }
+        }
+
+        const clusterData: ClusterData = {
+            entityIndex: location.entityIndex,
+            entityId: location.entityId,
+            title,
+            picture: marker.entityPicture || undefined,
+            label: marker.entityName,
+            color,
+            isActive: location.isActive,
+            zoneId,
+        };
+
+        const accuracy = gpsAccuracy || 0;
         this._handles.push(
             this._engine!.addMarker(marker, location.point, {
-                ...floatingMarkerFootprint(markerSize, marker.selected),
+                ...floatingMarkerFootprint(markerSize, false),
                 title,
-                raised: marker.selected,
+                cluster: true,
+                raised: location.isActive,
+                clusterData,
                 decoration:
                     accuracy > 0
                         ? { radius: accuracy, color, outline: accuracy > PRECISE_GPS_ACCURACY }
@@ -360,6 +436,119 @@ export class TimelineMap {
             }),
         );
     }
+
+    // The cached element serves again once it left the screen; Leaflet keeps an
+    // outgoing bubble on screen during its zoom animation
+    private _takeEntityMarker(
+        cache: Map<string, HaEntityMarker>,
+        entityIndex: number,
+        entityId: string,
+    ): HaEntityMarker {
+        const cached = cache.get(entityId);
+        if (cached && !cached.isConnected) {
+            return cached;
+        }
+        const marker = document.createElement("timeline-entity-marker");
+        marker.style.cursor = "pointer";
+        marker.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            this._onTrackClick(entityIndex);
+        });
+        cache.set(entityId, marker);
+        return marker;
+    }
+
+    private _zoneContaining(position: MapLatLng, gpsAccuracy = 0): string | undefined {
+        let found: string | undefined;
+        let foundRadius = Infinity;
+        let foundDistance = Infinity;
+        for (const [zoneId, radius] of Object.entries(this._zoneRadii)) {
+            const distance = distanceMeters(position, this._zonePositions[zoneId]);
+            if (
+                distance - gpsAccuracy < radius &&
+                (radius < foundRadius || (radius === foundRadius && distance < foundDistance))
+            ) {
+                found = zoneId;
+                foundRadius = radius;
+                foundDistance = distance;
+            }
+        }
+        return found;
+    }
+
+    // Renders a marker cluster as a bubble of its members' avatars
+    private _createClusterBubble = (
+        members: MapMarkerHandle[],
+        _location: MapLatLng,
+        zoneId?: string,
+        expanded = false,
+    ): MapClusterIcon => {
+        const data = members.map((member) => member.clusterData as ClusterData);
+        const shown = expanded || data.length <= CLUSTER_MAX_AVATARS ? data : data.slice(0, CLUSTER_MAX_AVATARS - 1);
+        const hidden = data.length - shown.length;
+
+        const bubble = document.createElement("div");
+        bubble.className = "cluster-bubble";
+        for (const member of shown) {
+            const avatar = this._takeEntityMarker(this._clusterAvatars, member.entityIndex, member.entityId);
+            avatar.stateObj = this._hass.states[member.entityId];
+            avatar.entityId = member.entityId;
+            avatar.entityName = member.label;
+            avatar.entityPicture = member.picture ?? "";
+            avatar.entityColor = member.color;
+            setActiveFrame(avatar, member.isActive ? member.color : undefined, "2px");
+            // In an expanded bubble each avatar is reachable on its own
+            clearMarkerAccessibility(avatar);
+            if (expanded) {
+                setMarkerAccessibility(avatar, member.title, true);
+            }
+            bubble.appendChild(avatar);
+        }
+
+        // An expanded bubble wraps once a row would not fit the map
+        const perRow = expanded
+            ? Math.max(
+                  1,
+                  Math.floor(
+                      (this._container.offsetWidth -
+                          2 * CLUSTER_BUBBLE_MARGIN -
+                          2 * CLUSTER_BUBBLE_PADDING +
+                          CLUSTER_BUBBLE_GAP) /
+                          (CLUSTER_AVATAR_SIZE + CLUSTER_BUBBLE_GAP),
+                  ),
+              )
+            : shown.length;
+        const columns = Math.min(shown.length, perRow);
+        const rows = Math.ceil(shown.length / perRow);
+        let width = columns * CLUSTER_AVATAR_SIZE + (columns - 1) * CLUSTER_BUBBLE_GAP + 2 * CLUSTER_BUBBLE_PADDING;
+        if (hidden > 0) {
+            const more = document.createElement("span");
+            more.className = "more";
+            more.textContent = hidden > CLUSTER_MORE_MAX ? `${CLUSTER_MORE_MAX}+` : `+${hidden}`;
+            bubble.appendChild(more);
+            width += CLUSTER_MORE_WIDTH + CLUSTER_BUBBLE_GAP;
+        }
+
+        const height =
+            rows * CLUSTER_AVATAR_SIZE +
+            (rows - 1) * CLUSTER_BUBBLE_GAP +
+            2 * CLUSTER_BUBBLE_PADDING +
+            CLUSTER_TAIL_HEIGHT;
+        const root = document.createElement("div");
+        root.className = "cluster-marker";
+        const tail = document.createElement("div");
+        tail.className = "cluster-bubble-tail";
+        root.append(bubble, tail);
+
+        // A cluster of one zone's occupants floats above that zone's circle
+        const zonePosition = zoneId ? this._zonePositions[zoneId] : undefined;
+        return {
+            element: root,
+            size: [width, height],
+            location: zonePosition,
+            anchor: [width / 2, height + (zonePosition ? ZONE_CIRCLE_SIZE / 2 + CLUSTER_ZONE_SPACING : FLOATING_LIFT)],
+        };
+    };
 
     // Ported from the zone part of ha-map.ts _drawEntities.
     private _drawZones(): void {
@@ -371,6 +560,10 @@ export class TimelineMap {
             if (computeDomain(stateObj.entity_id) !== "zone" || passive) continue;
             if (typeof latitude !== "number" || typeof longitude !== "number") continue;
             const position: MapLatLng = [latitude, longitude];
+            this._zonePositions[stateObj.entity_id] = position;
+            if (typeof radius === "number") {
+                this._zoneRadii[stateObj.entity_id] = radius;
+            }
             const title = this._hass.formatEntityName(stateObj);
             const markerColor = zoneColor(stateObj.entity_id, false, this._entityReg, computedStyles);
 
@@ -588,18 +781,29 @@ export class TimelineMap {
     }
 }
 
-function createStayMarker(zoneIcon: string | undefined, markerSize: number, iconSize: number, color: string, padding: string) {
+function createStayMarker(zoneIcon: string | undefined, iconSize: number, color: string) {
     const haIcon = document.createElement("ha-icon");
     haIcon.setAttribute("icon", zoneIcon || "mdi:map-marker");
-    haIcon.setAttribute("style", `color: white; --mdc-icon-size: ${iconSize}px; padding: ${padding}`);
+    haIcon.setAttribute("style", `display: flex; color: white; --mdc-icon-size: ${iconSize}px;`);
 
     const iconDiv = document.createElement("div");
     iconDiv.appendChild(haIcon);
     iconDiv.setAttribute(
         "style",
-        `height: ${markerSize}px; width: ${markerSize}px; background-color: ${color}; border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, ${color}); display: flex;`,
+        `box-sizing: border-box; background-color: ${color}; border-radius: 50%; border: 2px solid color-mix(in srgb, black 30%, ${color}); display: flex; align-items: center; justify-content: center;`,
     );
     return iconDiv;
+}
+
+// Only the active entity's frame takes its color, matching it to its path. Every frame
+// keeps the same width, so the picture does not shrink when the active entity changes.
+function setActiveFrame(marker: HaEntityMarker, color: string | undefined, width: string) {
+    marker.style.setProperty("--ha-marker-border-width", width);
+    if (color) {
+        marker.style.setProperty("--ha-marker-color", color);
+    } else {
+        marker.style.removeProperty("--ha-marker-color");
+    }
 }
 
 function createCurrentLocationDot() {

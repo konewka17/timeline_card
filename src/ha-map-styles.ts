@@ -1,12 +1,13 @@
-// Port of the static styles of ha-map.ts (HA frontend, see src/ha-frontend/UPSTREAM); its :host rule is left out.
+// Port of the static styles of ha-map.ts (HA frontend, see src/ha-frontend/UPSTREAM); its :host rule is left out,
+// and the marker tag is timeline-entity-marker.
 import { editableCircleStyles } from "./ha-frontend/src/common/map/editable-circle";
 import { zoneMarkerStyles } from "./ha-frontend/src/common/map/zone-marker";
 
-const CLUSTER_AVATAR_SIZE = 32;
-const CLUSTER_BUBBLE_PADDING = 6;
-const CLUSTER_BUBBLE_GAP = 4;
-const CLUSTER_MORE_WIDTH = 28;
-const CLUSTER_TAIL_SIZE = 10;
+export const CLUSTER_AVATAR_SIZE = 32;
+export const CLUSTER_BUBBLE_PADDING = 6;
+export const CLUSTER_BUBBLE_GAP = 4;
+export const CLUSTER_MORE_WIDTH = 28;
+export const CLUSTER_TAIL_SIZE = 10;
 
 export const haMapStyles = `
   #map {
@@ -251,7 +252,7 @@ export const haMapStyles = `
     font-size: var(--ha-font-size-s);
     font-weight: var(--ha-font-weight-medium);
   }
-  .cluster-bubble ha-entity-marker {
+  .cluster-bubble timeline-entity-marker {
     flex: none;
   }
   ${zoneMarkerStyles}
