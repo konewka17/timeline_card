@@ -1,10 +1,20 @@
 import memoizeOne from "memoize-one";
 import { supportsVectorMaps } from "./ha-frontend/src/common/map/base-layer";
 import { hexBlend } from "./ha-frontend/src/common/color/hex";
-import type { MapEngine, MapItemHandle, MapLatLng, MapPath } from "./ha-frontend/src/common/map/map-engine";
+import { computeDomain } from "./ha-frontend/src/common/entity/compute_domain";
+import { zoneColor } from "./ha-frontend/src/common/map/entity-map-colors";
+import type {
+    MapCircleHandle,
+    MapEngine,
+    MapItemHandle,
+    MapLatLng,
+    MapPath,
+} from "./ha-frontend/src/common/map/map-engine";
 import { resolveMapStyle } from "./ha-frontend/src/common/map/map-styles";
 import { readMapThemeColors } from "./ha-frontend/src/common/map/map-theme-colors";
 import { deepEqual } from "./ha-frontend/src/common/util/deep-equal";
+import { createZoneMarkerElement, ZONE_CIRCLE_SIZE } from "./ha-frontend/src/common/map/zone-marker";
+import { type EntityRegistryEntry, subscribeEntityRegistry } from "./ha-frontend/src/data/entity/entity_registry";
 import { ensureMapTilesToken } from "./ha-frontend/src/data/map_tiles";
 import { floatingMarkerFootprint, type HaEntityMarker } from "./ha-entity-marker";
 import { getTrackColor } from "./utils.js";
@@ -22,6 +32,7 @@ type ThemeMode = "auto" | "light" | "dark";
 interface TimelineMapOptions {
     themeMode: ThemeMode;
     zoom: number;
+    showZones: boolean;
     debugLog: (message: string) => void;
 }
 
@@ -76,6 +87,14 @@ export class TimelineMap {
     // Marker elements survive redraws, so pictures do not reload.
     private _entityMarkers = new Map<string, HaEntityMarker>();
 
+    // Updated in place, so redraws do not flash the circles.
+    private _zoneCircleHandles: MapCircleHandle[] = [];
+
+    // Registry creation order decides the zone colors
+    private _entityReg: EntityRegistryEntry[] = [];
+
+    private _unsubscribeRegistry?: () => void;
+
     private _pendingFit?: () => void;
 
     private _lastFit?: () => void;
@@ -102,6 +121,12 @@ export class TimelineMap {
         private _options: TimelineMapOptions,
     ) {
         this._resizeObserver.observe(this._container);
+        if (_options.showZones) {
+            this._unsubscribeRegistry = subscribeEntityRegistry(_hass.connection, (entries) => {
+                this._entityReg = entries;
+                this._draw();
+            });
+        }
         this._loadMap();
     }
 
@@ -116,6 +141,7 @@ export class TimelineMap {
     public destroy(): void {
         this._destroyed = true;
         this._resizeObserver.disconnect();
+        this._unsubscribeRegistry?.();
         this._clearHandles();
         this._engine?.destroy();
         this._engine = undefined;
@@ -222,6 +248,10 @@ export class TimelineMap {
         if (!engine) return;
         this._handles.forEach((handle) => handle.remove());
         this._handles = [];
+
+        if (this._options.showZones) {
+            this._drawZones();
+        }
 
         const addDayPath = (path: DayPath) => {
             const color = this._resolveColor(path.color);
@@ -331,10 +361,64 @@ export class TimelineMap {
         );
     }
 
+    // Ported from the zone part of ha-map.ts _drawEntities.
+    private _drawZones(): void {
+        const engine = this._engine!;
+        const computedStyles = getComputedStyle(this._container);
+        let zoneCircleCount = 0;
+        for (const stateObj of Object.values<any>(this._hass.states)) {
+            const { passive, icon, radius, latitude, longitude } = stateObj.attributes;
+            if (computeDomain(stateObj.entity_id) !== "zone" || passive) continue;
+            if (typeof latitude !== "number" || typeof longitude !== "number") continue;
+            const position: MapLatLng = [latitude, longitude];
+            const title = this._hass.formatEntityName(stateObj);
+            const markerColor = zoneColor(stateObj.entity_id, false, this._entityReg, computedStyles);
+
+            if (radius) {
+                const circleOptions = { radius, color: markerColor };
+                const circle = this._zoneCircleHandles[zoneCircleCount];
+                if (circle) {
+                    circle.update(position, circleOptions);
+                } else {
+                    this._zoneCircleHandles.push(engine.addCircle(position, circleOptions));
+                }
+                zoneCircleCount++;
+            }
+
+            const circleEl = createZoneMarkerElement({ color: markerColor, icon, name: title });
+            const openMoreInfo = (ev: Event) => {
+                ev.stopPropagation();
+                circleEl.dispatchEvent(
+                    new CustomEvent("hass-more-info", {
+                        detail: { entityId: stateObj.entity_id },
+                        bubbles: true,
+                        composed: true,
+                    }),
+                );
+            };
+            circleEl.addEventListener("click", openMoreInfo);
+            circleEl.addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter" || ev.key === " ") {
+                    ev.preventDefault();
+                    openMoreInfo(ev);
+                }
+            });
+            this._handles.push(
+                engine.addMarker(circleEl, position, {
+                    size: [ZONE_CIRCLE_SIZE, ZONE_CIRCLE_SIZE],
+                    interactive: true,
+                    title,
+                }),
+            );
+        }
+        this._zoneCircleHandles.splice(zoneCircleCount).forEach((handle) => handle.remove());
+    }
+
     private _clearHandles(): void {
-        [...this._handles, ...this._highlightHandles].forEach((handle) => handle.remove());
+        [...this._handles, ...this._highlightHandles, ...this._zoneCircleHandles].forEach((handle) => handle.remove());
         this._handles = [];
         this._highlightHandles = [];
+        this._zoneCircleHandles = [];
     }
 
     private _addPath(

@@ -33,6 +33,7 @@ const DEFAULT_CONFIG = {
     colors: [],
     hide_current_location: false,
     hide_unselected_on_map: false,
+    show_zones: false,
     hide_moving: false,
     reverse_timeline_order: false,
     collapse_timeline: false,
@@ -365,6 +366,7 @@ class TimelineCard extends HTMLElement {
         try {
             this._mapView = new TimelineMap(container, this._hass, {
                 themeMode: this._config.map_appearance,
+                showZones: this._config.show_zones,
                 zoom: this._config.default_zoom,
                 debugLog: (message) => this._debugLog(message),
             });

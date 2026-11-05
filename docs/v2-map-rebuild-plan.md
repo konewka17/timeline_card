@@ -166,7 +166,9 @@ Marker content as in HA: the picture if there is one, otherwise initials, unless
 fit mode easily.
 
 **Map level**, taken from HA's `MapCardConfig`: `theme_mode`, `map_style`,
-`default_zoom`, `cluster`, `scale_ruler`, `fit_zones`, `show_zone_radius`.
+`default_zoom`, `cluster`, `scale_ruler`. Plus our own `show_zones`: the entity list
+holds the tracked entities, so zones cannot be listed there as in HA. Zones always
+show their radius, as in HA's card outside the panel layout.
 
 Not taken over:
 - `hours_to_show`, `show_all`, `geo_location_sources`: the map shows one day of the
@@ -181,7 +183,7 @@ Not taken over:
 | `map_appearance` | `theme_mode` (as HA) |
 | `map_tile_url`, `map_attribution` | removed |
 | — | `map_style` (HA's styles + custom colours) |
-| — | `cluster`, `scale_ruler`, `fit_zones`, `show_zone_radius` (as HA) |
+| — | `cluster`, `scale_ruler` (as HA), `show_zones` |
 | `default_zoom`, `map_height_px` | stay |
 | — | `current_location_marker`: `default` (blue dot) or `entity` (HA's entity marker); single entity only |
 
