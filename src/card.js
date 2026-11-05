@@ -206,9 +206,13 @@ class TimelineCard extends HTMLElement {
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
-    _logCacheToConsole() {
-        console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;");
-        console.log(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
+    _debugLog(message) {
+        if (!this._config.debug) return;
+        this._hass.callService("system_log", "write", {
+            logger: "timeline_card",
+            level: "warning",
+            message: `[${new Date().toLocaleTimeString()}] ${message}`,
+        });
     }
 
     _setupUpdateInterval() {
@@ -373,6 +377,7 @@ class TimelineCard extends HTMLElement {
                 defaultZoom: this._config.default_zoom,
                 fetchMapTilesToken: async () =>
                     (await this._hass.connection.sendMessagePromise({type: "map_tiles/access_token"})).token,
+                debugLog: (message) => this._debugLog(message),
             });
             this._setDarkMode();
             this._drawMapPaths();
@@ -627,7 +632,7 @@ class TimelineCard extends HTMLElement {
             } else if (action === "update-map-fit-mode") {
                 this._updateMapFitMode();
             } else if (action === "debug") {
-                this._logCacheToConsole();
+                this._debugLog(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
             } else if (action === "open-date-picker") {
                 this._openDatePicker();
             } else if (action === "select-entity") {

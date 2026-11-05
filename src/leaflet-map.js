@@ -66,6 +66,7 @@ export class TimelineLeafletMap {
                 : `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>`);
         this._vectorLayer = null;
         this._fetchTilesToken = options.fetchMapTilesToken;
+        this._debugLog = options.debugLog;
         this._tilesToken = undefined;
         this._tokenInterval = undefined;
         this._destroyed = false;
@@ -76,6 +77,8 @@ export class TimelineLeafletMap {
         this._lastTokenRecovery = 0;
         this._fallbackTimeout = undefined;
         this._handleVisibilityChange = () => {
+            const glMap = this._vectorLayer?.getMaplibreMap();
+            this._debugLog(`Map visibility ${document.visibilityState}, loaded=${glMap?.loaded()}, tilesLoaded=${glMap?.areTilesLoaded()}, contextLost=${this._contextLost}`);
             if (this._contextLost) this._scheduleRasterFallback();
         };
         // Deferred so the caller's setDarkMode() lands before the style is picked.
@@ -98,15 +101,19 @@ export class TimelineLeafletMap {
 
     async _setupBaseLayer() {
         if (this._destroyed) return;
+        this._debugLog(`Map base layer setup, webgl2=${supportsWebGL2()}`);
         if (supportsWebGL2() && (await this._createVectorLayer())) return;
+        this._debugLog("Map using raster tiles");
         this._createRasterLayer();
     }
 
     async _refreshTilesToken() {
         try {
             this._tilesToken = await this._fetchTilesToken();
-        } catch {
+            this._debugLog("Map tiles token refreshed");
+        } catch (err) {
             // Older Home Assistant has no tile proxy.
+            this._debugLog(`Map tiles token refresh failed: ${err?.message ?? err}`);
         }
     }
 
@@ -135,7 +142,8 @@ export class TimelineLeafletMap {
             });
             // The adapter builds the MapLibre map in `onAdd`, which throws on a refused context.
             layer.addTo(this._leafletMap);
-        } catch {
+        } catch (err) {
+            this._debugLog(`Map vector layer setup failed: ${err?.message ?? err}`);
             try {
                 layer?.remove();
             } catch {
@@ -149,18 +157,25 @@ export class TimelineLeafletMap {
         this._mapElement?.classList.remove("raster-tiles");
 
         const glMap = layer.getMaplibreMap();
+        glMap.on("load", () => this._debugLog("Map vector layer loaded"));
         glMap.on("webglcontextlost", () => {
+            this._debugLog("Map WebGL context lost");
             this._contextLost = true;
             this._scheduleRasterFallback();
         });
         glMap.on("webglcontextrestored", () => {
+            this._debugLog("Map WebGL context restored");
             this._contextLost = false;
             clearTimeout(this._fallbackTimeout);
         });
         glMap.on("error", (event) => {
             const status = event.error?.status;
+            this._debugLog(`Map error status=${status} url=${event.error?.url?.split("?")[0]} message=${event.error?.message}`);
             if (status !== undefined && status !== 403 && status !== 404) return;
-            if (Date.now() - this._lastTokenRecovery < 30000) return;
+            if (Date.now() - this._lastTokenRecovery < 30000) {
+                this._debugLog("Map token recovery skipped, recovered less than 30s ago");
+                return;
+            }
             this._lastTokenRecovery = Date.now();
             this._refreshTilesToken().then(() => this._applyStyle({diff: false}));
         });
@@ -193,6 +208,7 @@ export class TimelineLeafletMap {
     }
 
     _swapToRaster() {
+        this._debugLog("Map WebGL context not restored, swapping to raster tiles");
         const layer = this._vectorLayer;
         this._vectorLayer = null;
         document.removeEventListener("visibilitychange", this._handleVisibilityChange);
@@ -220,10 +236,12 @@ export class TimelineLeafletMap {
             .then((style) => {
                 if (request !== this._styleRequest || !this._vectorLayer) return;
                 this._appliedDarkMode = darkMode;
+                this._debugLog(`Map style applied, diff=${options?.diff ?? true}`);
                 this._vectorLayer.getMaplibreMap()?.setStyle(style, options);
             })
-            .catch(() => {
+            .catch((err) => {
                 // Keep the current style.
+                this._debugLog(`Map style load failed: ${err?.message ?? err}`);
             });
     }
 
