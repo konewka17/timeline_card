@@ -60,7 +60,6 @@ interface TimelineMapOptions {
     zoom: number;
     showZones: boolean;
     cluster: boolean;
-    debugLog: (message: string) => void;
 }
 
 interface DayPath {
@@ -732,7 +731,6 @@ export class TimelineMap {
             if (onFallback) {
                 throw err;
             }
-            this._options.debugLog(`Map engine setup failed, falling back to Leaflet: ${err}`);
             this._forceLeaflet = true;
             await this._loadMap();
         }
@@ -761,7 +759,6 @@ export class TimelineMap {
             if (attempt !== this._setupAttempt) {
                 return;
             }
-            this._options.debugLog(`Map engine ${this._vectorEngine ? "MapLibre" : "Leaflet"}`);
             this._startingEngine = engine;
             this._drawnFallback = window.setTimeout(() => this._markDrawn(attempt), DRAWN_FALLBACK);
             await engine.init(map, {
@@ -804,7 +801,6 @@ export class TimelineMap {
         if (this._forceLeaflet) {
             return;
         }
-        this._options.debugLog("Map engine fatal, falling back to Leaflet");
         this._forceLeaflet = true;
         if (this._loading) {
             this._startingEngine?.destroy();

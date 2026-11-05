@@ -201,11 +201,6 @@ class TimelineCard extends HTMLElement {
         this._ensureDay(this._selectedDate).then(() => this._render());
     }
 
-    _logCacheToConsole() {
-        console.log("%c[Location Timeline Debug]", "color: white; background-color: #03a9f4; font-weight: bold;");
-        console.log(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
-    }
-
     _debugLog(message) {
         if (!this._config.debug) return;
         this._hass.callService("system_log", "write", {
@@ -376,30 +371,22 @@ class TimelineCard extends HTMLElement {
 
     _attachMapCard() {
         const container = this.shadowRoot.getElementById("overview-map");
-        if (!container || !this._hass || this._mapView || this._isLoadingMap) return;
+        if (!container || !this._hass || this._mapView) return;
         if (!this.isConnected || !container.isConnected) {
             requestAnimationFrame(() => this._attachMapCard());
             return;
         }
 
-        this._isLoadingMap = true;
-        try {
-            this._mapView = new TimelineMap(container, this._hass, {
-                themeMode: this._config.theme_mode,
-                mapStyle: this._config.map_style,
-                scaleRuler: this._config.scale_ruler,
-                currentLocationMarker: this._config.current_location_marker,
-                showZones: this._config.show_zones,
-                cluster: this._mapCluster,
-                zoom: this._config.default_zoom,
-                debugLog: (message) => this._debugLog(message),
-            });
-            this._drawMapPaths();
-        } catch (err) {
-            console.warn("Timeline card: map setup failed", err);
-        } finally {
-            this._isLoadingMap = false;
-        }
+        this._mapView = new TimelineMap(container, this._hass, {
+            themeMode: this._config.theme_mode,
+            mapStyle: this._config.map_style,
+            scaleRuler: this._config.scale_ruler,
+            currentLocationMarker: this._config.current_location_marker,
+            showZones: this._config.show_zones,
+            cluster: this._mapCluster,
+            zoom: this._config.default_zoom,
+        });
+        this._drawMapPaths();
     }
 
     _drawMapPaths() {
@@ -501,7 +488,7 @@ class TimelineCard extends HTMLElement {
             return renderTimeline(dayData.segments, this._hass?.locale, this._config);
         } catch (err) {
             const message = formatErrorMessage(err);
-            console.warn("Timeline card: timeline render failed", err);
+            this._debugLog(`Timeline render failed: ${err?.stack ?? err}`);
             this._setCurrentDayError(err);
             return `<div class="error">${message}</div>`;
         }
@@ -521,7 +508,7 @@ class TimelineCard extends HTMLElement {
             });
             this._cache.set(key, {loading: false, tracks, error: null});
         } catch (err) {
-            console.warn("Timeline card: history fetch failed", err);
+            this._debugLog(`History fetch failed: ${err?.stack ?? err}`);
             this._cache.set(key, {
                 loading: false,
                 tracks: null,
@@ -647,7 +634,7 @@ class TimelineCard extends HTMLElement {
                 this._mapView?.setCluster(this._mapCluster);
                 this._updateMapFitButton();
             } else if (action === "debug") {
-                this._logCacheToConsole();
+                this._debugLog(JSON.stringify(this._cache.get(formatDate(this._selectedDate))));
             } else if (action === "open-date-picker") {
                 this._openDatePicker();
             } else if (action === "select-entity") {
