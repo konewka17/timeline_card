@@ -28,7 +28,7 @@ release. Background: `src/ha-frontend/README.md`.
      into. Port what touches behaviour this card has; skip features it does not
      have (editing, the panel overview, history options). Changes to the static
      styles of `ha-map.ts` go into `src/ha-map-styles.ts` verbatim. New options in
-     `hui-map-card.ts` follow the config rule in `docs/v2-map-rebuild-plan.md`.
+     `hui-map-card.ts` follow the options rule in the README.
 
 4. **Check the deviations** in the README: whatever HA now does itself, remove
    from our code and from the table.

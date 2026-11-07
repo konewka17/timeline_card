@@ -73,6 +73,20 @@ shape of an upstream PR; if HA accepts it, it disappears at the next sync.
 | `show_zones`: all non-passive zones (HA: zones listed as entities, or `show_all`) | v2 | `timeline-map.ts` |
 | `map_height_px` | #28, #36 | card layout |
 
+## Options
+
+Where an option means the same as in HA's map card, it gets the same name and the same
+values. HA options that mean nothing for a day timeline are not taken over.
+
+- Per entity, as HA's `MapEntityConfig`: `entity`, `name`, `color`, `label_mode`,
+  `attribute`, `unit`.
+- Map level, as HA's `MapCardConfig`: `theme_mode`, `map_style`, `default_zoom`,
+  `cluster`, `scale_ruler`.
+- Not taken over: `hours_to_show`, `show_all`, `geo_location_sources` (the map shows
+  one day of the chosen entities); `auto_fit`, `focus` (our own fit modes);
+  `aspect_ratio` (`map_height_px` instead, until the panel layout, #114); `dark_mode`
+  (deprecated in HA); `title`, `conditions` (generic card options).
+
 ## Syncing
 
 Against release tags, not `dev`: the code has to match the core of a released HA.
