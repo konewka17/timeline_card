@@ -1,13 +1,11 @@
 {
   "card": {
     "labels": {
-      "reset_map_zoom": "Kaartzoom resetten",
       "previous_day": "Vorige dag",
       "debug": "Debug",
       "pick_date": "Datum kiezen",
       "refresh": "Verversen",
-      "next_day": "Volgende dag",
-      "update_interval": "Update-interval"
+      "next_day": "Volgende dag"
     },
     "timeline": {
       "loading": "Tijdlijn laden..."
