@@ -52,7 +52,13 @@ import type {
   MapPathHandle,
   MapView,
 } from "../map-engine";
-import { destinationPoint, distanceMeters, pointEastOf } from "../map-engine";
+import type { MapPathDash } from "../map-engine";
+import {
+  animatePathDash,
+  destinationPoint,
+  distanceMeters,
+  pointEastOf,
+} from "../map-engine";
 import type { ResolvedMapStyle } from "../map-styles";
 import {
   createResizeHandleElement,
@@ -1254,14 +1260,42 @@ export class MapLibreMapEngine implements MapEngine {
 
     this._addCustomSource(`${id}-lines`, pathLines(path));
     this._addCustomSource(`${id}-points`, pathPoints(path));
+    if (path.border) {
+      this._addCustomLayer({
+        id: `${id}-border`,
+        type: "line",
+        source: `${id}-lines`,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": path.border.color,
+          "line-width": path.border.width,
+          "line-opacity": ["get", "opacity"],
+        },
+      });
+    }
+    const width = path.width ?? 3;
+    // No dash offset in MapLibre; the shifted pattern is spelled out per step, in line widths.
+    // Butt caps: a shifted pattern can start with a zero-length dash, which round caps draw as a dot.
+    const dashArray = ({ dash, gap }: MapPathDash, offset: number) =>
+      (offset <= gap
+        ? [0, offset, dash, gap - offset]
+        : [offset - gap, gap, dash + gap - offset, 0]
+      ).map((length) => length / width);
     this._addCustomLayer({
       id: `${id}-lines`,
       type: "line",
       source: `${id}-lines`,
+      layout: {
+        "line-cap": path.animated ? "butt" : "round",
+        "line-join": "round",
+      },
       paint: {
         "line-color": ["get", "color"],
-        "line-width": 3,
+        "line-width": width,
         "line-opacity": ["get", "opacity"],
+        ...(path.animated && {
+          "line-dasharray": dashArray(path.animated, 0),
+        }),
       },
     });
     this._addCustomLayer({
@@ -1315,6 +1349,32 @@ export class MapLibreMapEngine implements MapEngine {
     map.on("click", onMapClick);
     this._pathPointLayers.add(layerId);
 
+    const lineLayerId = `${id}-lines`;
+    const onLineClick = () => path.onClick?.();
+    const onLineEnter = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+    const onLineLeave = () => {
+      map.getCanvas().style.cursor = "";
+    };
+    if (path.onClick) {
+      map.on("click", lineLayerId, onLineClick);
+      map.on("mouseenter", lineLayerId, onLineEnter);
+      map.on("mouseleave", lineLayerId, onLineLeave);
+    }
+    const animated = path.animated;
+    const stopDash = animated
+      ? animatePathDash(animated, (offset) => {
+          if (map.getLayer(lineLayerId)) {
+            map.setPaintProperty(
+              lineLayerId,
+              "line-dasharray",
+              dashArray(animated, offset)
+            );
+          }
+        })
+      : undefined;
+
     return {
       update: (next) => {
         this._setCustomSourceData(`${id}-lines`, pathLines(next));
@@ -1327,6 +1387,11 @@ export class MapLibreMapEngine implements MapEngine {
         map.off("click", onMapClick);
         this._pathPointLayers.delete(layerId);
         popup.remove();
+        map.off("click", lineLayerId, onLineClick);
+        map.off("mouseenter", lineLayerId, onLineEnter);
+        map.off("mouseleave", lineLayerId, onLineLeave);
+        stopDash?.();
+        this._removeCustomLayer(`${id}-border`);
         this._removeCustomLayer(`${id}-lines`);
         this._removeCustomLayer(`${id}-points`);
         this._removeCustomSource(`${id}-lines`);

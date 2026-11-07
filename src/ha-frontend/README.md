@@ -10,7 +10,8 @@ minimum Home Assistant version in `hacs.json`.
 
 ## Rules
 
-- Everything here stays byte-for-byte equal to upstream.
+- Change files here only as part of the patch below. Everything else stays
+  byte-for-byte equal to upstream.
 - New map behaviour: take it from HA first.
 
 ## Files
@@ -27,6 +28,19 @@ Build globals (`rollup.config.js`):
   `urls.json`, whose sprite path changes per HA build.
 - `__MAPLIBRE_WORKER_URL__`: a blob URL of our own maplibre worker, so it always
   matches the bundled maplibre.
+
+## Patch
+
+Paths: line width, a border, an animated dash, and a click callback. Kept in the
+shape of an upstream PR; if HA accepts it, it disappears at the next sync.
+
+- `map-engine.ts`: the optional `MapPath` fields, and `MapPathDash` and
+  `animatePathDash` at the end.
+- `engines/maplibre-map-engine.ts` `addPath`: a `-border` line layer, the dash
+  stepped through `line-dasharray` with butt caps, round caps and joins otherwise, click
+  and pointer on the line layer.
+- `engines/leaflet-map-engine.ts` `addPath` / `_drawPath`: a border polyline, the
+  dash moved through `dashOffset` with butt caps, click on the line.
 
 ## Syncing
 
