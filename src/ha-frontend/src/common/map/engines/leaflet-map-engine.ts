@@ -19,6 +19,7 @@ import type {
   MapEngine,
   MapEngineOptions,
   MapFitOptions,
+  MapItemHandle,
   MapLatLng,
   MapMarkerHandle,
   MapMarkerOptions,
@@ -26,6 +27,7 @@ import type {
   MapPathHandle,
   MapView,
 } from "../map-engine";
+import { animatePathDash } from "../map-engine";
 import type { ResolvedMapStyle } from "../map-styles";
 import { setMarkerAccessibility } from "../marker-accessibility";
 
@@ -303,26 +305,45 @@ export class LeafletMapEngine implements MapEngine {
   }
 
   public addPath(path: MapPath): MapPathHandle {
-    let items = this._drawPath(path);
+    let drawn = this._drawPath(path);
     return {
       update: (next) => {
-        items.forEach((item) => item.remove());
-        items = this._drawPath(next);
+        drawn.remove();
+        drawn = this._drawPath(next);
       },
-      remove: () => items.forEach((item) => item.remove()),
+      remove: () => drawn.remove(),
     };
   }
 
-  private _drawPath(path: MapPath): (Polyline | CircleMarker)[] {
+  private _drawPath(path: MapPath): MapItemHandle {
     const items: (Polyline | CircleMarker)[] = [];
+    const lines: Polyline[] = [];
     for (const segment of path.segments) {
-      items.push(
-        this.Leaflet!.polyline(segment.points, {
-          color: path.color,
-          opacity: segment.opacity,
-          interactive: false,
-        })
-      );
+      if (path.border) {
+        items.push(
+          this.Leaflet!.polyline(segment.points, {
+            color: path.border.color,
+            weight: path.border.width,
+            opacity: segment.opacity,
+            interactive: false,
+          })
+        );
+      }
+      const line = this.Leaflet!.polyline(segment.points, {
+        color: path.color,
+        weight: path.width ?? 3,
+        opacity: segment.opacity,
+        dashArray: path.animated
+          ? `${path.animated.dash} ${path.animated.gap}`
+          : undefined,
+        lineCap: path.animated ? "butt" : "round",
+        interactive: Boolean(path.onClick),
+      });
+      if (path.onClick) {
+        line.on("click", () => path.onClick!());
+      }
+      lines.push(line);
+      items.push(line);
     }
     for (const pathMarker of path.markers) {
       items.push(
@@ -336,7 +357,17 @@ export class LeafletMapEngine implements MapEngine {
       );
     }
     items.forEach((item) => item.addTo(this.leafletMap!));
-    return items;
+    const stopDash = path.animated
+      ? animatePathDash(path.animated, (offset) =>
+          lines.forEach((line) => line.setStyle({ dashOffset: `${-offset}` }))
+        )
+      : undefined;
+    return {
+      remove: () => {
+        stopDash?.();
+        items.forEach((item) => item.remove());
+      },
+    };
   }
 
   public setClustering(options: MapClusterOptions | null): void {

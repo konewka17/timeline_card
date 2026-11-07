@@ -116,6 +116,13 @@ export interface MapPath {
   color: string;
   segments: MapPathSegment[];
   markers: MapPathMarker[];
+  /** Line width in pixels, 3 when not given */
+  width?: number;
+  /** A wider line drawn under it */
+  border?: { color: string; width: number };
+  /** Dashes and gaps of these lengths in pixels, moving along the line */
+  animated?: MapPathDash;
+  onClick?(): void;
 }
 
 /** Handle to anything placed on the map; remove() must be idempotent */
@@ -374,4 +381,27 @@ export const pixelDistance = (
   const pb = projectMercator(b, scale);
   const dx = Math.abs(pa.x - pb.x);
   return Math.hypot(Math.min(dx, scale - dx), pa.y - pb.y);
+};
+
+export interface MapPathDash {
+  dash: number;
+  gap: number;
+}
+
+/** Calls back with each new dash offset in pixels, one dash and gap a second; returns a stop function */
+export const animatePathDash = (
+  { dash, gap }: MapPathDash,
+  onOffset: (offset: number) => void
+): (() => void) => {
+  const period = dash + gap;
+  let last: number | undefined;
+  let frame = requestAnimationFrame(function step(time) {
+    const offset = Math.floor((time / 1000) * period) % period;
+    if (offset !== last) {
+      last = offset;
+      onOffset(offset);
+    }
+    frame = requestAnimationFrame(step);
+  });
+  return () => cancelAnimationFrame(frame);
 };
