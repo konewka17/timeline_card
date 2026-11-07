@@ -14,7 +14,7 @@ import {
 import {TimelineMap} from "./timeline-map.ts";
 import {clearPersistentCache, clearReverseGeocodingQueue} from "./reverse-geocoding.js";
 import {renderTimeline} from "./timeline.js";
-import {getConfigFormSchema} from "./config-flow.js";
+import "./config-flow.js";
 import {localize} from "./localize/localize.js";
 
 const DEFAULT_CONFIG = {
@@ -106,8 +106,8 @@ class TimelineCard extends HTMLElement {
     }
 
     // noinspection JSUnusedGlobalSymbols
-    static getConfigForm() {
-        return getConfigFormSchema(DEFAULT_CONFIG);
+    static getConfigElement() {
+        return Object.assign(document.createElement("location-timeline-card-editor"), {defaults: DEFAULT_CONFIG});
     }
 
     // noinspection JSUnusedGlobalSymbols

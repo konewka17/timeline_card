@@ -1,5 +1,6 @@
 import {formatTime} from "custom-card-helpers";
 import {localize} from "./localize/localize.js";
+import {computeCssColor} from "./ha-frontend/src/common/color/compute-color";
 
 export function formatDate(date, locale = null) {
     if (locale) {
@@ -110,7 +111,7 @@ export function toPoint(state) {
 
 export function getTrackColor(index, color) {
     if (color) {
-        return color;
+        return computeCssColor(color);
     }
 
     if (index === 0) {

@@ -383,7 +383,7 @@ export class TimelineMap {
                 color: accentColor,
                 width: 7,
                 border: pathBorder(accentColor, 10),
-                animated: this._animateHighlightedPath,
+                animated: this._animateHighlightedPath ? { dash: 14, gap: 10 } : undefined,
             },
             1,
             this._highlightHandles,

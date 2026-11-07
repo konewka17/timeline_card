@@ -76,37 +76,28 @@ type: custom:location-timeline-card
 entity:
     - person.alice
     - person.bob
-places_entity:
-    - sensor.places_alice
-    - sensor.places_bob
 ```
 
-When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
+When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls.
 
 ## Configuration options
 
+The options follow the sections of the visual editor.
+
 | Name                        | Type     | Default      | Description                                                                                                                                                             |
 |-----------------------------|----------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `entity`                    | string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from.                                                                                                |
-| **Reverse geocoding**       |          |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
-| `places_entity`             | string[] | `[]`         | Optional list of `sensor` entities from the Places integration, used first for reverse geocoding. Must match `entity` order/count when provided.                       |
-| `osm_api_key`               | string   | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
-| _Advanced mode_             | yaml     |              | Reverse geocoding also supports advanced mode, see [`advanced.md`](advanced.md)                                                                                         |
-| **Detection parameters**    |          |              |                                                                                                                                                                         |
-| `stay_radius_m`             | number   | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
-| `min_stay_minutes`          | number   | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
-| `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
+| `entity`                    | list     | **required** | One or more `device_tracker`/`person` entities to pull GPS history from, as ids or with [per-entity options](#per-entity-options).                                      |
 | **Map display**             |          |              |                                                                                                                                                                         |
 | `theme_mode`                | string   | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
 | `map_style`                 | string   | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                      |
+| `current_location_marker`   | string   | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                  |
 | `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
 | `default_zoom`              | number   | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
 | `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
-| `current_location_marker`   | string   | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                  |
+| `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
 | `show_zones`                | boolean  | `false`      | Draw all (non-passive) zones on the map, as HA's map card does.                                                                                                         |
 | `cluster`                   | boolean  | `true`       | Group nearby entity markers into one bubble, as HA's map card does. Can also be toggled with the button on the map.                                                    |
 | `scale_ruler`               | boolean  | `false`      | Show a scale ruler, in your unit system.                                                                                                                                |
-| `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
 | `animate_highlighted_path`  | boolean  | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
 | **Timeline display**        |          |              |                                                                                                                                                                         |
 | `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
@@ -114,32 +105,41 @@ When multiple entities are configured, the card renders all tracks on the map an
 | `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
 | `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
 | `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
-| **Misc**                    |          |              |                                                                                                                                                                         |
+| `activity_icon_map`         | object   | `{}`         | Icons per activity, for entities with an `activity_entity`. See [`advanced.md`](advanced.md#activity-icons).                                                           |
+| **Location names**          |          |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
+| `osm_api_key`               | string   | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
+| `places_entity`             | list     | `[]`         | YAML only. Places sensors for all entities at once, matched by tracker or by list position. Setting `places_entity` per entity is simpler.                             |
+| **Advanced**                |          |              |                                                                                                                                                                         |
+| `stay_radius_m`             | number   | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
+| `min_stay_minutes`          | number   | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
+| `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
 | `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
 
 ## Per-entity options
 
-Entities can also be given as objects (YAML mode), with the same marker options as Home Assistant's map card:
+Each entity can have its own options, with the same marker options as Home Assistant's map card. In the visual editor, use the pencil next to an entity.
 
 ```yaml
 type: custom:location-timeline-card
 entity:
     - entity: person.alice
-      color: "#e91e63"
+      color: pink
+      places_entity: sensor.places_alice
     - entity: device_tracker.bobs_car
       name: Car
       label_mode: icon
 ```
 
-| Name             | Description                                                                                          |
-|------------------|------------------------------------------------------------------------------------------------------|
-| `entity`         | The `device_tracker`/`person` entity.                                                                |
-| `color`          | Track and marker color for this entity. Without it, the card's default colors are used.             |
-| `name`           | Name on the marker, instead of the entity's initials.                                                |
-| `label_mode`     | Marker content instead of the picture: `state`, `attribute` or `icon`, as in HA's map card.          |
-| `attribute`      | Attribute shown with `label_mode: attribute`.                                                        |
-| `unit`           | Unit after the attribute with `label_mode: attribute`.                                               |
-| `places_entity`  | Places sensor for this entity, instead of the top-level list.                                        |
+| Name              | Description                                                                                                         |
+|-------------------|---------------------------------------------------------------------------------------------------------------------|
+| `entity`          | The `device_tracker`/`person` entity.                                                                               |
+| `name`            | Name on the marker, instead of the entity's initials.                                                               |
+| `color`           | Track and marker color: a theme color such as `pink`, or any CSS color. Without it, the card's default colors are used. |
+| `label_mode`      | Marker content instead of the picture: `state`, `attribute` or `icon`, as in HA's map card.                         |
+| `attribute`       | Attribute shown with `label_mode: attribute`.                                                                       |
+| `unit`            | Unit after the attribute with `label_mode: attribute`.                                                              |
+| `places_entity`   | Places sensor for this entity, for location names.                                                                  |
+| `activity_entity` | Activity sensor for this entity, see [`advanced.md`](advanced.md#activity-icons).                                   |
 
 ## Map interactions
 
@@ -176,9 +176,8 @@ Example:
 ```yaml
 type: custom:location-timeline-card
 entity:
-    - device_tracker.my_phone
-places_entity:
-    - sensor.places_my_phone
+    - entity: device_tracker.my_phone
+      places_entity: sensor.places_my_phone
 osm_api_key: me@example.com
 ```
 

@@ -1,55 +1,10 @@
 # Advanced Configuration
 
-This document covers advanced YAML-only configuration options for the Location Timeline Card. These options are not available through the GUI editor — switch to the YAML editor to use them.
+This document covers advanced configuration of the Location Timeline Card.
 
-## Entity object syntax
+## Places sensors
 
-Each item in the `entity` list can be a plain string (entity ID) or an object. The object form lets you attach an `activity_entity` or `places_entity` directly to a specific tracked entity.
-
-### Object properties
-
-| Property          | Required | Description                                                                                                                                                          |
-| ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entity`          | **Yes**  | The `device_tracker` or `person` entity ID.                                                                                                                          |
-| `activity_entity` | No       | A `sensor` entity that tracks the current activity (e.g. walking, running, cycling). When set, move segments display the resolved activity name instead of "Moving". |
-| `places_entity`   | No       | A `sensor` entity from the [Places integration](https://github.com/custom-components/places). Takes precedence over the top-level `places_entity` for this entity.   |
-| `color`           | No       | A color code (like `#ff0000`, `red`, or `var(--orange-color)`) for this entity's track and marker.                                                                      |
-
-### Examples
-
-**Simple — all entities as strings (works in GUI and YAML):**
-
-```yaml
-type: custom:location-timeline-card
-entity:
-    - person.alice
-    - person.bob
-```
-
-**Object form — per-entity activity and places sensors:**
-
-```yaml
-type: custom:location-timeline-card
-entity:
-    - entity: person.alice
-      activity_entity: sensor.alice_activity
-      places_entity: sensor.places_alice
-      color: "#e91e63"
-    - entity: person.bob
-      activity_entity: sensor.bob_activity
-      places_entity: sensor.places_bob
-      color: "#2196f3"
-```
-
-**Mixed — strings and objects together:**
-
-```yaml
-type: custom:location-timeline-card
-entity:
-    - person.alice
-    - entity: person.bob
-      activity_entity: sensor.bob_activity
-```
+See [Per-entity options](README.md#per-entity-options) for the options each entity can have.
 
 ### How `places_entity` resolution works
 
@@ -96,7 +51,3 @@ activity_icon_map:
     Cycling: mdi:bike
     "In car": mdi:car
 ```
-
-### GUI editor behavior
-
-When entity objects are detected in the configuration, the GUI editor is automatically disabled and the card switches to YAML mode. To return to the GUI editor, convert all entity items back to plain strings and configure `places_entity` separately or remove it.

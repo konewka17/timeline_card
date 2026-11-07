@@ -8,68 +8,50 @@ const withDefaults = (schema, defaults) =>
         ...(defaults[item.name] !== undefined && typeof defaults[item.name] !== "object" && {default: defaults[item.name]}),
     }));
 
-export function getConfigFormSchema(defaults) {
-    return {
-        schema: withDefaults([
-            {
-                name: "entity",
+const label = (hass, name) =>
+    hass.localize(`ui.panel.lovelace.editor.card.generic.${name}`) ||
+    name.charAt(0).toUpperCase() + name.slice(1).split("_").join(" ");
+
+const entityFields = (hass) =>
+    Object.fromEntries(
+        Object.entries({
+            entity: {
                 required: true,
+                selector: {entity: {filter: [{domain: ["person", "device_tracker"]}]}},
+            },
+            name: {selector: {text: {}}},
+            color: {selector: {ui_color: {}}},
+            label_mode: {
                 selector: {
-                    entity: {
-                        multiple: true,
-                        filter: [{domain: ["person", "device_tracker"]}],
+                    select: {
+                        mode: "dropdown",
+                        options: ["state", "attribute", "icon"].map((mode) => ({
+                            value: mode,
+                            label: hass.localize(`ui.panel.lovelace.editor.card.map.label_modes.${mode}`) || mode,
+                        })),
                     },
                 },
             },
+            attribute: {selector: {text: {}}},
+            unit: {selector: {text: {}}},
+            places_entity: {selector: {entity: {filter: [{domain: "sensor", integration: "places"}]}}},
+            activity_entity: {selector: {entity: {filter: [{domain: "sensor"}]}}},
+        }).map(([name, field]) => [name, {...field, label: label(hass, name)}]),
+    );
+
+const schema = (hass, defaults) =>
+    withDefaults(
+        [
             {
-                type: "expandable",
-                name: "",
-                title: "Reverse geocoding",
-                flatten: true,
-                schema: [
-                    {
-                        name: "places_entity",
-                        selector: {
-                            entity: {
-                                multiple: true,
-                                filter: [{domain: "sensor", integration: "places"}],
-                            },
-                        },
-                    },
-                    {name: "osm_api_key", selector: {text: {type: "email"}}},
-                ],
-            },
-            {
-                type: "expandable",
-                name: "",
-                title: "Detection parameters",
-                flatten: true,
-                schema: [
-                    {
-                        type: "grid",
-                        name: "",
-                        flatten: true,
-                        schema: [
-                            {
-                                name: "stay_radius_m",
-                                selector: {number: {min: 1, step: 1, mode: "box"}},
-                            },
-                            {
-                                name: "min_stay_minutes",
-                                selector: {number: {min: 1, step: 1, mode: "box"}},
-                            },
-                            {
-                                name: "max_reasonable_speed_kmh",
-                                selector: {number: {min: 0, step: 1, mode: "box"}},
-                            },
-                        ],
-                    },
-                ],
+                name: "entity",
+                required: true,
+                selector: {object: {multiple: true, label_field: "entity", fields: entityFields(hass)}},
             },
             {
                 type: "expandable",
                 name: "",
                 title: "Map display",
+                icon: "mdi:map",
                 flatten: true,
                 schema: [
                     {
@@ -79,39 +61,18 @@ export function getConfigFormSchema(defaults) {
                         schema: [
                             {
                                 name: "theme_mode",
-                                selector: {
-                                    select: {
-                                        options: ["auto", "light", "dark"],
-                                        mode: "dropdown",
-                                    },
-                                },
+                                selector: {select: {options: ["auto", "light", "dark"], mode: "dropdown"}},
                             },
                             {
                                 name: "map_style",
-                                selector: {
-                                    select: {
-                                        options: [...MAP_STYLES],
-                                        mode: "dropdown",
-                                    },
-                                },
+                                selector: {select: {options: [...MAP_STYLES], mode: "dropdown"}},
                             },
                             {
                                 name: "current_location_marker",
-                                selector: {
-                                    select: {
-                                        options: ["default", "entity"],
-                                        mode: "dropdown",
-                                    },
-                                },
+                                selector: {select: {options: ["default", "entity"], mode: "dropdown"}},
                             },
-                            {
-                                name: "map_height_px",
-                                selector: {number: {unit_of_measurement: "px"}},
-                            },
-                            {
-                                name: "default_zoom",
-                                selector: {number: {min: 1, max: 20, mode: "box"}},
-                            },
+                            {name: "map_height_px", selector: {number: {unit_of_measurement: "px"}}},
+                            {name: "default_zoom", selector: {number: {min: 1, max: 20, mode: "box"}}},
                         ],
                     },
                     {
@@ -133,13 +94,12 @@ export function getConfigFormSchema(defaults) {
                 type: "expandable",
                 name: "",
                 title: "Timeline display",
+                icon: "mdi:timeline-clock-outline",
                 flatten: true,
                 schema: [
                     {
                         name: "distance_unit",
-                        selector: {
-                            select: {options: ["metric", "imperial"], mode: "dropdown"},
-                        },
+                        selector: {select: {options: ["metric", "imperial"], mode: "dropdown"}},
                     },
                     {
                         type: "grid",
@@ -166,21 +126,69 @@ export function getConfigFormSchema(defaults) {
             {
                 type: "expandable",
                 name: "",
-                title: "Updates",
+                title: "Location names",
+                icon: "mdi:map-marker-question-outline",
+                flatten: true,
+                schema: [{name: "osm_api_key", selector: {text: {type: "email"}}}],
+            },
+            {
+                type: "expandable",
+                name: "",
+                title: "Advanced",
+                icon: "mdi:tune-variant",
                 flatten: true,
                 schema: [
                     {
-                        name: "update_interval",
-                        selector: {number: {min: 0, step: 1, unit_of_measurement: "sec", mode: "box"}},
+                        type: "grid",
+                        name: "",
+                        flatten: true,
+                        schema: [
+                            {name: "stay_radius_m", selector: {number: {min: 1, step: 1, mode: "box"}}},
+                            {name: "min_stay_minutes", selector: {number: {min: 1, step: 1, mode: "box"}}},
+                            {name: "max_reasonable_speed_kmh", selector: {number: {min: 0, step: 1, mode: "box"}}},
+                            {
+                                name: "update_interval",
+                                selector: {number: {min: 0, step: 1, unit_of_measurement: "sec", mode: "box"}},
+                            },
+                        ],
                     },
                 ],
             },
-        ], defaults),
-        assertConfig: (config) => {
-            const entities = Array.isArray(config.entity) ? config.entity : [];
-            if (entities.some((e) => e && typeof e === "object")) {
-                throw new Error("Entity objects must be configured in YAML mode.");
-            }
-        },
-    };
+        ],
+        defaults,
+    );
+
+const fireConfigChanged = (element, config) =>
+    element.dispatchEvent(new CustomEvent("config-changed", {detail: {config}, bubbles: true, composed: true}));
+
+class TimelineCardEditor extends HTMLElement {
+    setConfig(config) {
+        // The entity list edits objects only; plain ids become objects, as HA's map card editor migrates dark_mode.
+        if (config.entity?.some((item) => typeof item === "string")) {
+            config = {...config, entity: config.entity.map((item) => (typeof item === "string" ? {entity: item} : item))};
+            fireConfigChanged(this, config);
+        }
+        this._config = config;
+        this._render();
+    }
+
+    set hass(hass) {
+        this._hass = hass;
+        this._render();
+    }
+
+    _render() {
+        if (!this._hass || !this._config) return;
+        if (!this._form) {
+            this._form = document.createElement("ha-form");
+            this._form.schema = schema(this._hass, this.defaults);
+            this._form.computeLabel = (item) => label(this._hass, item.name);
+            this._form.addEventListener("value-changed", (ev) => fireConfigChanged(this, ev.detail.value));
+            this.appendChild(this._form);
+        }
+        this._form.hass = this._hass;
+        this._form.data = this._config;
+    }
 }
+
+customElements.define("location-timeline-card-editor", TimelineCardEditor);
