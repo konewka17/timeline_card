@@ -9,13 +9,23 @@
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-replace": "^6.0.3",
+    "esbuild": "^0.28.2",
     "rollup": "^4.34.6",
+    "rollup-plugin-esbuild": "^6.2.1",
     "rollup-plugin-import-css": "^3.5.8"
   },
   "dependencies": {
-    "@maplibre/maplibre-gl-leaflet": "^0.1.4",
+    "@maplibre/maplibre-gl-leaflet": "0.1.4",
+    "@versatiles/style": "7.0.1",
+    "color-name": "2.1.1",
+    "culori": "4.0.2",
     "custom-card-helpers": "^1.9.0",
-    "leaflet": "^1.9.4",
-    "maplibre-gl": "^5.24.0"
+    "home-assistant-js-websocket": "9.8.0",
+    "leaflet": "1.9.4",
+    "leaflet.markercluster": "1.5.3",
+    "lit": "3.3.3",
+    "maplibre-gl": "6.16.0",
+    "memoize-one": "6.0.0"
   }
 }

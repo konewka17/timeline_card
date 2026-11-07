@@ -63,6 +63,20 @@ If in doubt, prefer no comment at all over a short one.
 - Keep testing to a minimum
 - Don't spin up test servers for every minor change.
 
+## Home Assistant map code
+
+The map runs on Home Assistant's own map engines, kept in `src/ha-frontend/`.
+Read `src/ha-frontend/README.md` before changing anything map-related.
+
+- Don't edit files under `src/ha-frontend/` except as part of the patch documented
+  there.
+- Before writing map code, check whether HA's frontend already does it, and take it
+  from there. Check the upstream history too: something HA seems to lack may have
+  been dropped on purpose.
+- Our own map code is only for the deviations listed in that README. Each time you
+  touch it, look at whether it can get simpler.
+- Syncing with upstream: follow `docs/syncing-ha-frontend.md`.
+
 ## If you're unsure
 
 If a request is ambiguous, make the smallest reasonable assumption, state it
