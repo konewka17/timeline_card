@@ -3,7 +3,7 @@
 [![Stable][releases-shield]][releases] [![HACS Badge][hacs-badge]][hacs-link] ![Project Maintenance][maintenance-shield] [![GitHub Activity][commits-shield]][commits] [![License][license-shield]](LICENSE.md) [![Community Forum][forum-shield]][forum] [![Reddit][reddit-shield]][reddit]
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/konewka17/timeline_card.svg
-[commits]: https://github.com/custom-cards/button-card/commits/master
+[commits]: https://github.com/konewka17/timeline_card/commits/master
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg
 [forum]: https://community.home-assistant.io/t/location-timeline-card-to-easily-show-location-history/989513
 [reddit-shield]: https://img.shields.io/badge/discussion%20post-reddit-orange.svg
@@ -25,8 +25,12 @@ Location Timeline Card is a custom Lovelace card that builds a **timeline–styl
 - Groups points into **stays** and **moves** using configurable thresholds
 - Shows zone names when points are inside Home Assistant `zone.*` entities
 - Supports reverse geocoding for stays outside zones
+- Updates today's timeline and map live, through Home Assistant's history stream
 - Keeps a per-day in-memory cache for snappy day-to-day navigation
 - Runs fully in the frontend (no extra backend integration required)
+- Draws the map with Home Assistant's own map engine, so it looks and behaves like HA's map card
+
+Requires Home Assistant **2026.11** or newer.
 
 ## Installation (HACS)
 
@@ -60,7 +64,8 @@ Add the card in the Lovelace UI editor or with manual YAML.
 
 ```yaml
 type: custom:location-timeline-card
-entity: device_tracker.my_phone
+entities:
+    - device_tracker.my_phone
 ```
 
 The entity must expose latitude/longitude attributes.
@@ -69,50 +74,77 @@ The entity must expose latitude/longitude attributes.
 
 ```yaml
 type: custom:location-timeline-card
-entity:
+entities:
     - person.alice
     - person.bob
-places_entity:
-    - sensor.places_alice
-    - sensor.places_bob
 ```
 
-When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls. The configured `places_entity` list must either be empty or match the same length/order as `entity`.
+When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls.
 
 ## Configuration options
 
-| Name                        | Type     | Default      | Description                                                                                                                                                             |
-|-----------------------------|----------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `entity`                    | string[] | **required** | One or more `device_tracker`/`person` entities to pull GPS history from.                                                                                                |
-| **Reverse geocoding**       |          |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
-| `places_entity`             | string[] | `[]`         | Optional `sensor` entity (or list) from Places integration used first for reverse geocoding. Lists must match `entity` order/count when provided.                       |
-| `osm_api_key`               | string   | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
-| _Advanced mode_             | yaml     |              | Reverse geocoding also supports advanced mode, see [`advanced.md`](advanced.md)                                                                                         |
-| **Detection parameters**    |          |              |                                                                                                                                                                         |
-| `stay_radius_m`             | number   | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
-| `min_stay_minutes`          | number   | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
-| `max_reasonable_speed_kmh`  | number   | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
-| **Map display**             |          |              |                                                                                                                                                                         |
-| `distance_unit`             | string   | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
-| `map_appearance`            | string   | `"auto"`     | Map appearance: `auto` (align with HA theme), `light`, or `dark`.                                                                                                       |
-| `map_height_px`             | number   | `200`        | Height of the map area in pixels.                                                                                                                                       |
-| `default_zoom`              | number   | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
-| `map_tile_url`              | string   | `null`       | Raster tile URL template for the fallback base map (see [Base map](#base-map)). Only used when vector tiles are unavailable.                                             |
-| `map_attribution`           | string   | `null`       | Attribution shown for a custom `map_tile_url`. Defaults to OpenStreetMap.                                                                                               |
-| `hide_current_location`     | boolean  | `false`      | Hide the current location when viewing today.                                                                                                                           |
-| `hide_unselected_on_map`    | boolean  | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
-| `hide_moving`               | boolean  | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
-| `reverse_timeline_order`    | boolean  | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                     |
-| `collapse_timeline`         | boolean  | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
-| `timeline_use_entity_color` | boolean  | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
-| `animate_highlighted_path`  | boolean  | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
-| `colors`                    | string[] | `[]`         | Optional list of per-entity track colors. When set, these colors are used in order (cycled if needed) instead of HA `--primary-color`/`--color-x` variables.            |
-| **Misc**                    |          |              |                                                                                                                                                                         |
-| `update_interval`           | number   | `300`        | How often to refresh the card (in seconds).                                                                                                                             |
+The options follow the sections of the visual editor.
+
+| Name                        | Type    | Default      | Description                                                                                                                                                             |
+|-----------------------------|---------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `entities`                  | list    | **required** | One or more `device_tracker`/`person` entities to pull GPS history from, as ids or with [per-entity options](#per-entity-options).                                      |
+| **Map display**             |         |              |                                                                                                                                                                         |
+| `theme_mode`                | string  | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
+| `map_style`                 | string  | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                        |
+| `current_location_marker`   | string  | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                   |
+| `map_height_px`             | number  | `200`        | Height of the map area in pixels.                                                                                                                                       |
+| `default_zoom`              | number  | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
+| `hide_current_location`     | boolean | `false`      | Hide the current location when viewing today.                                                                                                                           |
+| `hide_unselected_on_map`    | boolean | `false`      | Fully hide non-selected entities' tracks/markers on the map instead of dimming them. Only the selected entity is shown.                                                 |
+| `show_zones`                | boolean | `false`      | Draw all (non-passive) zones on the map, as HA's map card does.                                                                                                         |
+| `cluster`                   | boolean | `true`       | Group nearby entity markers into one bubble, as HA's map card does. Can also be toggled with the button on the map.                                                     |
+| `scale_ruler`               | boolean | `false`      | Show a scale ruler, in your unit system.                                                                                                                                |
+| `animate_highlighted_path`  | boolean | `true`       | Animate ("marching ants") the currently-highlighted move segment to show direction of travel.                                                                           |
+| **Timeline display**        |         |              |                                                                                                                                                                         |
+| `distance_unit`             | string  | `"metric"`   | Distance unit for moving segments: `metric` (m, km) or `imperial` (ft, mi).                                                                                             |
+| `hide_moving`               | boolean | `false`      | Hide moving rows and keep only stays.                                                                                                                                   |
+| `reverse_timeline_order`    | boolean | `false`      | Show timeline items from latest to earliest within the selected day.                                                                                                    |
+| `collapse_timeline`         | boolean | `false`      | Start with the timeline section collapsed on first render.                                                                                                              |
+| `timeline_use_entity_color` | boolean | `false`      | Use the active entity track color for the timeline spine/dots/text instead of always using HA `--primary-color`.                                                        |
+| `activity_icon_map`         | object  | `{}`         | Icons per activity, for entities with an `activity_entity`. See [Activity icons](#activity-icons).                                                                      |
+| **Location names**          |         |              | see [Reverse Geocoding](#reverse-geocoding) below                                                                                                                       |
+| `osm_api_key`               | string  | `null`       | Optional OSM Nominatim email address (used as API key) for reverse geocoding fallback.                                                                                  |
+| **Advanced**                |         |              |                                                                                                                                                                         |
+| `stay_radius_m`             | number  | `75`         | Radius (meters) used to detect a stay.                                                                                                                                  |
+| `min_stay_minutes`          | number  | `10`         | Minimum duration (minutes) required to qualify as a stay.                                                                                                               |
+| `max_reasonable_speed_kmh`  | number  | `300`        | Maximum plausible apparent speed (km/h) between GPS points. Removes one-point GPS jumps when the direct path around that point is within the limit. Set `0` to disable. |
+
+## Per-entity options
+
+Each entity can have its own options, with the same marker options as Home Assistant's map card. When specifying per-entity options, the entity id itself gets the key `entity: `. In the visual editor, use the pencil next to an entity.
+
+```yaml
+type: custom:location-timeline-card
+entities:
+    - entity: person.alice
+      color: pink
+      places_entity: sensor.places_alice
+    - entity: device_tracker.bobs_car
+      name: Car
+      label_mode: icon
+```
+
+| Name              | Description                                                                                                             |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `entity`          | The `device_tracker`/`person` entity.                                                                                   |
+| `name`            | Name on the marker, instead of the entity's initials.                                                                   |
+| `color`           | Track and marker color: a theme color such as `pink`, or any CSS color. Without it, the card's default colors are used. |
+| `label_mode`      | Marker content instead of the picture: `state`, `attribute` or `icon`, as in HA's map card.                             |
+| `attribute`       | Attribute shown with `label_mode: attribute`.                                                                           |
+| `unit`            | Unit after the attribute with `label_mode: attribute`.                                                                  |
+| `places_entity`   | Places sensor for this entity, see [Reverse Geocoding](#reverse-geocoding).                                             |
+| `activity_entity` | Activity sensor for this entity, see [Activity icons](#activity-icons).                                                 |
 
 ## Map interactions
 
 - Hovering a timeline entry (desktop) highlights the matching segment on the map. A highlighted **move** segment animates ("marching ants") to show direction of travel when `animate_highlighted_path` is enabled (default).
+- Clicking another entity's track, or its marker, selects that entity.
+- The buttons under the zoom controls switch the map fit (full path, current location) and toggle marker grouping.
 
 ## Reverse Geocoding
 
@@ -120,10 +152,10 @@ For stays that are not clearly inside a Home Assistant zone, the card can resolv
 
 By default, Home Assistant only stores raw GPS coordinates in history. If you want meaningful labels like "Starbucks" or "Main Street 12" instead of just coordinates, you need to configure one of the following options.
 
-1. **Preferred:** configure the [Places integration](https://github.com/custom-components/places) and set `places_entity`.
+1. **Preferred:** configure the [Places integration](https://github.com/custom-components/places) and set `places_entity` on the entity.
     - Install the Places integration (via HACS) and configure it for your tracked entity.
     - This integration creates a `sensor.places_*` entity that stores resolved place names.
-    - Set the card’s `places_entity` option to that sensor.
+    - Set that sensor as the [`places_entity`](#per-entity-options) of the tracked entity.
     - This is recommended because Places writes location labels into Home Assistant history. That means:
         - Labels are stored persistently.
         - Historic days load instantly without repeated API calls.
@@ -142,41 +174,37 @@ Example:
 
 ```yaml
 type: custom:location-timeline-card
-entity:
-    - device_tracker.my_phone
-places_entity:
-    - sensor.places_my_phone
+entities:
+    - entity: device_tracker.my_phone
+      places_entity: sensor.places_my_phone
 osm_api_key: me@example.com
 ```
 
 If `osm_api_key` is not set, unresolved stays remain **Unknown location**.
 
-### Places v3 compatibility
+## Activity icons
 
-Places v3 is a breaking change in the Places integration itself: attributes such as `place_name` move from the main sensor to separate child sensors (e.g. `sensor.places_alice_place_name`). The card supports both Places v2 and v3 — no configuration changes are needed:
+When an entity has an `activity_entity`, the card shows the activity on its move segments. `activity_icon_map` sets the icon per activity: keys are the activity names as your sensor reports them, values are MDI icons. Without a match, the default icon is used.
 
-- Keep pointing `places_entity` at the **main** Places sensor. On v3, the card automatically detects and reads the `..._place_name` child sensor (enabled by default in Places v3). Pointing `places_entity` directly at the `..._place_name` sensor also works.
-- With a top-level `places_entity` list, v2 sensors are matched to trackers via their `devicetracker_entityid` attribute. That attribute no longer exists in v3, so the card falls back to matching by list position — make sure the list has the same length and order as `entity` (as was already documented).
-- History from before the v3 upgrade keeps working: for those periods the card still reads the old attributes.
-- The main v3 sensor's state is not an address but the string built from your Places *display options*. The card only uses it when it reads as a name (e.g. with the `formatted_place` option); a raw field list such as `not_home, house, 13, Beatrixstraat` is ignored, and the stay is named from the `..._place_name` sensor or from reverse geocoding (`osm_api_key`) instead.
-- Places' `show_time` option appends `(since HH:MM)` to the state, or `(since MM/DD)` once it is over a day old. Both are stripped before the name is used, so stays are not labelled with the moment the sensor happened to change.
+```yaml
+type: custom:location-timeline-card
+entities:
+    - entity: person.alice
+      activity_entity: sensor.alice_activity
+activity_icon_map:
+    Walking: mdi:walk
+    Running: mdi:run
+    Cycling: mdi:bike
+    "In car": mdi:car
+```
 
 ## Base map
 
-The card draws the base map the same way Home Assistant's own map does since 2026.9: [Shortbread vector tiles](https://vector.openstreetmap.org/) from the OpenStreetMap Foundation, rendered with MapLibre GL. The style, glyphs and sprites are the ones Home Assistant serves at `/static/map/`, so nothing extra is downloaded from a third party and dark mode uses a real dark style instead of an inverted light one.
+The map runs on Home Assistant's own map engine, taken from the Home Assistant frontend: the same vector map styles, controls, markers and clustering as HA's map card, rendered with MapLibre GL. Browsers without WebGL2 get HA's raster fallback through Home Assistant's tile proxy. Nothing is downloaded from a third party beyond what HA's own map loads.
 
-The card falls back to raster tiles when those assets are missing (Home Assistant older than 2026.9) or when the browser has no WebGL2. That fallback is CARTO's raster service, which now watermarks tiles requested without an API key and is being retired. Two ways out on an older Home Assistant:
+## Upgrading from v1
 
-```yaml
-# Your own free CARTO key (https://carto.com/basemaps/apikey)
-map_tile_url: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=YOUR_KEY
-```
-
-```yaml
-# Or any other raster tile server
-map_tile_url: https://tile.example.org/{z}/{x}/{y}.png
-map_attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-```
+v2 changes several options. See [`upgrading-from-v1.md`](upgrading-from-v1.md) for how to convert your configuration.
 
 ## Notes
 
@@ -185,33 +213,15 @@ map_attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenS
 - All timeline processing happens in the browser.
 - [Discussion post](https://community.home-assistant.io/t/location-timeline-card-to-easily-show-location-history/989513) on the Community
 
-### Fix GUI form not displaying `entity` or `places_entity` when card was set up prior to `v1.6.0`
-
-If your configuration form does not display `entity` or `places_entity` and you first set up your card prior to `v1.6.0`, this is due to a breaking change where the card now supports multiple users.
-You can fix this by manually changing the YAML from
-
-```
-entity: person.my_person
-```
-
-to
-
-```
-entity:
-- person.my_person
-```
-
-You can replace `entity: null` or `places_entity: null` with `entity: []`
-
 ## Debug mode
 In some cases for me to properly debug issues, you will need to enable debug mode and send me the logs. If this is necessary, please follow these steps:
 - Upgrade the card to the latest version by going to this repo in HACS, and clicking Update information.
 - Hard refresh your dashboard with `Shift+F5`
 - Go to this card's configuration, switch to yaml mode, and add the option `debug: true` as a parameter
 - Save the config, you will now see a debug icon appear next to the date picker
-- Navigate to a day where to issue occurs
-- Open your Developer Tools console (Chrome: `Ctrl+Shift+J`)
-- Click the debug icon, and you should see a log be generated in the console
-- Copy that full log into a file, and send it to me privately via [email](mailto:konewka17.github@gmail.com)
+- The card now writes map events to the Home Assistant log, under the logger `timeline_card`
+- Navigate to a day where to issue occurs, and click the debug icon to also write that day's data to the log
+- Go to Settings → System → Logs, open the ⋮ menu and choose Show raw logs (the regular view only keeps the last few messages), and search for `timeline_card`
+- Copy those lines into a file, and send it to me privately via [email](mailto:konewka17.github@gmail.com)
   - Note that this log will contains your coordinates for that day, I'll handle them carefully and will only use it for debugging
 - Please also share your full configuration

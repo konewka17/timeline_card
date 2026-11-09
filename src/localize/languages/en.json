@@ -1,13 +1,10 @@
 {
   "card": {
     "labels": {
-      "reset_map_zoom": "Reset map zoom",
       "previous_day": "Previous day",
       "debug": "Debug",
       "pick_date": "Pick date",
-      "refresh": "Refresh",
-      "next_day": "Next day",
-      "update_interval": "Update interval"
+      "next_day": "Next day"
     },
     "timeline": {
       "loading": "Loading timeline..."

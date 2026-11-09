@@ -1,402 +1,360 @@
 :host {
-  display: block;
-  font-family: var(--ha-card-header-font-family, "Helvetica Neue", Arial, sans-serif);
+    display: block;
+    font-family: var(--ha-card-header-font-family, "Helvetica Neue", Arial, sans-serif);
 }
 
 ha-card {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--card-background-color, var(--ha-card-background, #fff));
-  border-bottom: 1px solid var(--divider-color);
-  flex-wrap: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card-background-color, var(--ha-card-background, #fff));
+    border-bottom: 1px solid var(--divider-color);
+    flex-wrap: nowrap;
 }
 
 .date-wrap {
-  display: flex;
-  justify-content: center;
-  flex: 1;
-  min-width: 0;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
 }
 
 .date-trigger {
-  display: inline-flex;
-  align-items: center;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  padding: 2px 4px;
-  margin: 0;
-  min-width: 0;
-  cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    padding: 2px 4px;
+    margin: 0;
+    min-width: 0;
+    cursor: pointer;
 }
 
 .date {
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .date-caret {
-  color: var(--secondary-text-color);
-  --mdc-icon-size: 20px;
+    color: var(--secondary-text-color);
+    --mdc-icon-size: 20px;
 }
 
 .date-picker-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
 }
 
 .nav-button {
-  --mdc-icon-button-size: 36px;
-  color: var(--primary-text-color);
+    --mdc-icon-button-size: 36px;
+    color: var(--primary-text-color);
 }
 
 .header-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .nav-button[disabled] {
-  opacity: 0.4;
-  cursor: default;
+    opacity: 0.4;
+    cursor: default;
 }
 
 .entity-selector {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px 6px 0;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px 6px 0;
 }
 
 .entity-selector[hidden] {
-  display: none;
+    display: none;
 }
 
 .selector-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--divider-color);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--divider-color);
 }
 
 .selector-collapse {
-  --mdc-icon-button-size: 34px;
+    --mdc-icon-button-size: 34px;
 }
 
 .selector-row[hidden] {
-  display: none;
+    display: none;
 }
 
 .timeline-section {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition:
-    grid-template-rows 260ms ease,
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 260ms ease,
     opacity 260ms ease;
-  opacity: 1;
+    opacity: 1;
 }
 
 .timeline-content {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 .timeline-section.collapsed {
-  grid-template-rows: 0fr;
-  opacity: 0;
+    grid-template-rows: 0fr;
+    opacity: 0;
 }
 
 .entity-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, #ddd 60%, var(--entity-track-color));
-  color: var(--entity-track-color);
-  padding: 3px 10px 3px 3px;
-  cursor: pointer;
-  white-space: nowrap;
-  background: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, #ddd 60%, var(--entity-track-color));
+    color: var(--entity-track-color);
+    padding: 3px 10px 3px 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    background: none;
 }
 
 .entity-chip.active {
-  padding-left: 4px;
-  background: #eee;
+    padding-left: 4px;
+    background: #eee;
 }
 
 .entity-chip.active span {
-  font-weight: 700;
+    font-weight: 700;
 }
 
 .entity-chip img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .entity-chip ha-icon {
-  --mdc-icon-size: 24px;
-  color: color-mix(in srgb, var(--entity-track-color, var(--secondary-text-color)) 70%, var(--secondary-text-color));
+    --mdc-icon-size: 24px;
+    color: color-mix(in srgb, var(--entity-track-color, var(--secondary-text-color)) 70%, var(--secondary-text-color));
 }
 
 .entity-avatar-icon {
-  color: var(--entity-track-color, var(--secondary-text-color));
+    color: var(--entity-track-color, var(--secondary-text-color));
 }
 
 .body {
-  padding: 8px 16px 16px;
-  max-height: 420px;
-  overflow: auto;
-  touch-action: pan-y;
+    padding: 8px 16px 16px;
+    max-height: 420px;
+    overflow: auto;
+    touch-action: pan-y;
 }
 
 .loading,
 .error,
 .empty {
-  padding: 16px 0;
-  color: var(--secondary-text-color);
-  text-align: center;
+    padding: 16px 0;
+    color: var(--secondary-text-color);
+    text-align: center;
 }
 
 .error {
-  color: var(--error-color, #c62828);
+    color: var(--error-color, #c62828);
 }
 
 .timeline {
-  position: relative;
-  padding: 8px 0;
+    position: relative;
+    padding: 8px 0;
 }
 
 .spine {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 72px;
-  width: 12px;
-  background: var(--timeline-color, var(--primary-color));
-  border-radius: 999px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 72px;
+    width: 12px;
+    background: var(--timeline-color, var(--primary-color));
+    border-radius: 999px;
 }
 
 .timeline.trim-spine-top .spine {
-  top: 32px;
+    top: 32px;
 }
 
 .timeline.trim-spine-bottom .spine {
-  bottom: 32px;
+    bottom: 32px;
 }
 
 .entry {
-  position: relative;
-  display: grid;
-  grid-template-columns: 50px 32px 1fr auto;
-  align-items: center;
-  column-gap: 12px;
-  padding: 12px 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: 50px 32px 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    padding: 12px 0;
 }
 
 .left-icon {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 4px;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 4px;
 }
 
 .icon-ring {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--card-background-color, #fff);
-  border: 3px solid var(--timeline-color, var(--primary-color));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 4px var(--card-background-color, #fff);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--card-background-color, #fff);
+    border: 3px solid var(--timeline-color, var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px var(--card-background-color, #fff);
 }
 
 .line-slot {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .line-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: color-mix(in srgb, white 45%, transparent);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: color-mix(in srgb, white 45%, transparent);
 }
 
 .stay-icon {
-  color: var(--timeline-color, var(--primary-color));
+    color: var(--timeline-color, var(--primary-color));
 }
 
 .move-icon {
-  color: var(--secondary-text-color);
+    color: var(--secondary-text-color);
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .content.location {
-  align-items: flex-start;
+    align-items: flex-start;
 }
 
 .content.location.travel {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  color: var(--secondary-text-color);
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    color: var(--secondary-text-color);
 }
 
 .content.time {
-  justify-self: end;
-  text-align: right;
+    justify-self: end;
+    text-align: right;
 }
 
 .content.time.multiline {
-  gap: 0;
+    gap: 0;
 }
 
 .entry.move .title {
-  margin-left: 10px;
-  color: var(--secondary-text-color);
+    margin-left: 10px;
+    color: var(--secondary-text-color);
 }
 
 .entry.stay .title {
-  background-color: #0001;
-  padding: 3px 10px;
-  border-radius: 20px;
+    background-color: #0001;
+    padding: 3px 10px;
+    border-radius: 20px;
 }
 
 .title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--primary-text-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary-text-color);
 }
 
 .meta {
-  font-size: 0.85rem;
-  color: var(--secondary-text-color);
-  font-weight: normal;
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+    font-weight: normal;
 }
 
 .meta.small {
-  font-size: 0.65rem;
+    font-size: 0.65rem;
 }
 
 .meta.duration {
-  color: color-mix(in srgb, var(--secondary-text-color) 60%, var(--primary-background-color));
+    color: color-mix(in srgb, var(--secondary-text-color) 60%, var(--primary-background-color));
 }
 
 .map-wrap {
-  position: relative;
+    position: relative;
 }
 
 #overview-map {
-  height: 200px;
-  --map-filter: invert(0);
+    height: 200px;
 }
 
-#overview-map.dark {
-  background: #090909;
+timeline-map {
+    height: 100%;
 }
 
-/* Vector tiles have a real dark style, so only raster tiles are inverted. */
-#overview-map.dark.raster-tiles {
-  --map-filter: invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3);
+/* As #buttons in HA's hui-map-card */
+#map-buttons {
+    position: absolute;
+    top: 75px;
+    left: 3px;
+    display: flex;
+    flex-direction: column;
 }
 
-.leaflet-tile-pane {
-  filter: var(--map-filter);
+#map-buttons [hidden] {
+    display: none;
 }
 
-#overview-map.dark .leaflet-bar a {
-  background-color: #1c1c1c;
-  color: #ffffff;
+.map-collapse {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    z-index: 1000;
+    --mdc-icon-button-size: 34px;
+    background: var(--card-background-color, #fff);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px #0003;
 }
 
-#overview-map.dark .leaflet-bar a:hover {
-  background-color: #313131;
-}
-
-.map-reset {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1000;
-  --mdc-icon-button-size: 34px;
-  background: var(--card-background-color, #fff);
-  border-radius: 50%;
-  box-shadow: 0 2px 6px #0003;
-}
-
-.map-reset-left {
-  left: 8px;
-  right: auto;
-  top: auto;
-  bottom: 8px;
-}
-
-.map-reset[hidden] {
-  display: none;
-}
-
-#map-fit-mode[hidden] {
-  display: none;
-}
-
-.leaflet-pane {
-  z-index: 0 !important;
-}
-
-.leaflet-control,
-.leaflet-top,
-.leaflet-bottom {
-  z-index: 1 !important;
-}
-
-.timeline-marching-ants {
-  stroke-dasharray: 14 10;
-  animation: timeline-marching-ants 1s linear infinite;
-}
-
-/* -24px is the negated sum of the dash pattern above; keep the two in step.
-   Do not rewrite this as a calc() over custom properties: an unresolved calc() is not
-   interpolatable, so the dashes jump between endpoints once per cycle instead of sliding. */
-@keyframes timeline-marching-ants {
-  to {
-    stroke-dashoffset: -24px;
-  }
+.map-collapse[hidden] {
+    display: none;
 }
