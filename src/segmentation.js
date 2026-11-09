@@ -186,22 +186,15 @@ function collectZones(hass) {
         .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
 }
 
-async function fetchEntityHistory(hass, entityId, date) {
-    if (!hass || !entityId) return [];
-    const historyPadding = 6 * 60 * 60 * 1000;
-    const message = {
-        type: "history/history_during_period",
-        start_time: new Date(startOfDay(date).getTime() - historyPadding).toISOString(),
-        end_time: new Date(endOfDay(date).getTime() + historyPadding).toISOString(),
-        entity_ids: [entityId],
-        minimal_response: false,
-        no_attributes: false,
-        significant_changes_only: false,
-    };
-
-    const response = await callWS(hass, message);
-    const states = extractEntityStates(response, entityId);
-    return clampHistoryToDay(states, date);
+export function historyEntityIds(config, hass) {
+    const entityIds = config.entities.flatMap(({entity, places_entity, activity_entity}) => [
+        entity,
+        places_entity,
+        // Places v3 moved place_name from a state attribute to a separate child sensor
+        resolvePlaceNameEntity(hass, places_entity),
+        activity_entity,
+    ]);
+    return [...new Set(entityIds.filter(Boolean))];
 }
 
 function clampHistoryToDay(states, date) {
@@ -240,55 +233,38 @@ function clampHistoryToDay(states, date) {
     return currentDayStates;
 }
 
-async function callWS(hass, message) {
-    if (typeof hass.callWS === "function") {
-        return hass.callWS(message);
-    }
-    if (hass.connection && typeof hass.connection.sendMessagePromise === "function") {
-        return hass.connection.sendMessagePromise(message);
-    }
-    throw new Error("Home Assistant connection not available");
-}
-
-function extractEntityStates(response, entityId) {
-    if (!response) return [];
-    if (!Array.isArray(response) && typeof response === "object") {
-        const list = response[entityId];
-        return Array.isArray(list) ? list : [];
-    }
-    if (!Array.isArray(response)) return [];
-    if (response.length === 0) return [];
-    if (Array.isArray(response[0])) {
-        return response[0] || [];
-    }
-    return response.filter((state) => state.entity_id === entityId);
-}
 
 export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
-    const entityEntries = config.entity;
+    const historyPadding = 6 * 60 * 60 * 1000;
+    const history = await hass.callWS({
+        type: "history/history_during_period",
+        start_time: new Date(startOfDay(date).getTime() - historyPadding).toISOString(),
+        end_time: new Date(endOfDay(date).getTime() + historyPadding).toISOString(),
+        entity_ids: historyEntityIds(config, hass),
+        minimal_response: false,
+        no_attributes: false,
+        significant_changes_only: false,
+    });
+    return segmentTracks(history, date, config, hass, onQueueUpdate);
+}
+
+export function segmentTracks(history, date, config, hass, onQueueUpdate, previousTracks) {
     const zones = collectZones(hass);
+    const dayStates = (entityId) => clampHistoryToDay(history[entityId] ?? [], date);
 
-    return await Promise.all(
-        entityEntries.map(async (entry) => {
-            const entityId = entry.entity;
-            const rawStates = await fetchEntityHistory(hass, entityId, date);
-            const rawPoints = rawStates.map((state) => toPoint(state)).filter(Boolean).filter((p) => p.lat !== 0 || p.lon !== 0);
-            const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
+    return config.entities.map((entry, index) => {
+        const entityId = entry.entity;
+        const rawPoints = dayStates(entityId).map((state) => toPoint(state)).filter(Boolean).filter((p) => p.point[0] !== 0 || p.point[1] !== 0);
+        const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
 
-            const placeEntityId = entry.places_entity || null;
-            // Places v3 moved place_name from a state attribute to a separate child sensor
-            const placeNameEntityId = resolvePlaceNameEntity(hass, placeEntityId);
-            const activityEntityId = entry.activity_entity || null;
-            const [placeStates, placeNameStates, activityStates] = await Promise.all([
-                placeEntityId ? fetchEntityHistory(hass, placeEntityId, date) : [],
-                placeNameEntityId ? fetchEntityHistory(hass, placeNameEntityId, date) : [],
-                activityEntityId ? fetchEntityHistory(hass, activityEntityId, date) : [],
-            ]);
+        const placeEntityId = entry.places_entity || null;
+        const activityEntityId = entry.activity_entity || null;
+        const placeStates = dayStates(placeEntityId);
+        const placeNameStates = dayStates(resolvePlaceNameEntity(hass, placeEntityId));
 
-            const baseSegments = segmentTimeline(points, config, zones);
-            resolveStaySegments(baseSegments, placeStates, placeNameStates, date, config.osm_api_key, onQueueUpdate);
-            const segments = resolveActivities(baseSegments, activityStates, date, config.activity_icon_map, zones);
-            return {entityId, placeEntityId, activityEntityId, points, segments};
-        }),
-    );
+        const baseSegments = segmentTimeline(points, config, zones);
+        resolveStaySegments(baseSegments, placeStates, placeNameStates, date, config.osm_api_key, onQueueUpdate, previousTracks?.[index].segments);
+        const segments = resolveActivities(baseSegments, dayStates(activityEntityId), date, config.activity_icon_map, zones);
+        return {entityId, placeEntityId, activityEntityId, points, segments};
+    });
 }

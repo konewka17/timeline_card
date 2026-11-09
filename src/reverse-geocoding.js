@@ -48,13 +48,21 @@ export function clearReverseGeocodingQueue() {
     }
 }
 
-export function resolveStaySegments(segments, placeStates, placeNameStates, date, osmApiKey, onUpdate) {
+export function resolveStaySegments(segments, placeStates, placeNameStates, date, osmApiKey, onUpdate, previousSegments) {
     // v3 main sensor state = display-options string; child sensor wins.
     const placeNameIntervals = buildIntervals(placeNameStates, date, placeNameSensorDisplayName);
     const placeIntervals = buildIntervals(placeStates, date, placeDisplayName);
     for (const segment of segments) {
         if (segment.type !== "stay" || segment.zoneName) continue;
         if (segment.placeName && segment.placeName !== LOADING_LOCATION) continue;
+
+        // The center of an ongoing stay drifts with every point; name it once.
+        const previous = previousSegments?.find((other) => other.type === "stay" && other.reverseGeocoding && +other.start === +segment.start);
+        if (previous) {
+            segment.placeName = previous.placeName;
+            segment.reverseGeocoding = previous.reverseGeocoding;
+            continue;
+        }
 
         // Load from persistent cache
         const segmentKey = toPersistentCacheKey(segment);

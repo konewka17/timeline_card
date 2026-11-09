@@ -326,35 +326,29 @@ ha-card {
 
 #overview-map {
   height: 200px;
-  --map-filter: invert(0);
 }
 
-#overview-map.dark {
-  background: #090909;
+timeline-map {
+  height: 100%;
 }
 
-/* Vector tiles have a real dark style, so only raster tiles are inverted. */
-#overview-map.dark.raster-tiles {
-  --map-filter: invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3);
-}
-
-.leaflet-tile-pane {
-  filter: var(--map-filter);
-}
-
-#overview-map.dark .leaflet-bar a {
-  background-color: #1c1c1c;
-  color: #ffffff;
-}
-
-#overview-map.dark .leaflet-bar a:hover {
-  background-color: #313131;
-}
-
-.map-reset {
+/* As #buttons in HA's hui-map-card */
+#map-buttons {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 75px;
+  left: 3px;
+  display: flex;
+  flex-direction: column;
+}
+
+#map-buttons [hidden] {
+  display: none;
+}
+
+.map-collapse {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
   z-index: 1000;
   --mdc-icon-button-size: 34px;
   background: var(--card-background-color, #fff);
@@ -362,41 +356,6 @@ ha-card {
   box-shadow: 0 2px 6px #0003;
 }
 
-.map-reset-left {
-  left: 8px;
-  right: auto;
-  top: auto;
-  bottom: 8px;
-}
-
-.map-reset[hidden] {
+.map-collapse[hidden] {
   display: none;
-}
-
-#map-fit-mode[hidden] {
-  display: none;
-}
-
-.leaflet-pane {
-  z-index: 0 !important;
-}
-
-.leaflet-control,
-.leaflet-top,
-.leaflet-bottom {
-  z-index: 1 !important;
-}
-
-.timeline-marching-ants {
-  stroke-dasharray: 14 10;
-  animation: timeline-marching-ants 1s linear infinite;
-}
-
-/* -24px is the negated sum of the dash pattern above; keep the two in step.
-   Do not rewrite this as a calc() over custom properties: an unresolved calc() is not
-   interpolatable, so the dashes jump between endpoints once per cycle instead of sliding. */
-@keyframes timeline-marching-ants {
-  to {
-    stroke-dashoffset: -24px;
-  }
 }
