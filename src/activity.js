@@ -39,8 +39,7 @@ export function resolveActivities(segments, activityStates, date, activityIconMa
                     activityGroups.push(currentGroup);
                 }
                 currentGroup = {
-                    name: bestActivity,
-                    startIndex: pIndex, // Share boundary point
+                    name: bestActivity, startIndex: pIndex, // Share boundary point
                 };
             }
         }
@@ -65,23 +64,13 @@ export function resolveActivities(segments, activityStates, date, activityIconMa
             const end = groupPoints[groupPoints.length - 1].timestamp;
 
             const newSegment = {
-                type: "move",
-                start,
-                end,
-                durationMs: end - start,
-                distanceM: distance,
-                points: groupPoints,
+                type: "move", start, end, durationMs: end - start, distanceM: distance, points: groupPoints,
             };
 
             const actName = group.name && group.name !== "unknown" ? group.name : null;
             if (actName) {
                 newSegment.activityName = actName;
-                newSegment.activityIcon =
-                    activityIconMap[actName] ??
-                    zones.find(
-                        (zone) =>
-                            zone.id === actName.toLowerCase() || zone.name.toLowerCase() === actName.toLowerCase(),
-                    )?.icon;
+                newSegment.activityIcon = activityIconMap[actName] ?? zones.find((zone) => zone.id === actName.toLowerCase() || zone.name.toLowerCase() === actName.toLowerCase(),)?.icon;
             }
 
             if (newSegment.durationMs > 0 || newSegment.distanceM > 0) {
@@ -100,9 +89,7 @@ function buildActivityIntervals(activityStates, date) {
         const end = next ? new Date(next.lu * 1000) : endOfDay;
         let name = state.s;
         return {
-            start: new Date(state.lu * 1000),
-            end,
-            name,
+            start: new Date(state.lu * 1000), end, name,
         };
     });
 }

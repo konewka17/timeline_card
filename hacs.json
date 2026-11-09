@@ -7,5 +7,6 @@
   "documentation": "https://github.com/konewka17/timeline_card",
   "domain": "location-timeline-card",
   "issues": "https://github.com/konewka17/timeline_card/issues",
-  "filename": "timeline_card.js"
+  "filename": "timeline_card.js",
+  "homeassistant": "2026.11.0"
 }

@@ -1,14 +1,12 @@
 import {formatTime} from "custom-card-helpers";
 import {localize} from "./localize/localize.js";
+import {computeCssColor} from "./ha-frontend/src/common/color/compute-color";
 
 export function formatDate(date, locale = null) {
     if (locale) {
         try {
             return new Intl.DateTimeFormat(locale.language, {
-                weekday: "short",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
+                weekday: "short", year: "numeric", month: "short", day: "numeric",
             }).format(date);
         } catch {}
     }
@@ -87,12 +85,7 @@ export function haversineMeters(a, b) {
     const lat2 = toRad(b.lat);
     const sin1 = Math.sin(dLat / 2);
     const sin2 = Math.sin(dLon / 2);
-    const c =
-        2 *
-        Math.atan2(
-            Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2),
-            Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)),
-        );
+    const c = 2 * Math.atan2(Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2), Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)),);
     return r * c;
 }
 
@@ -108,13 +101,9 @@ export function toPoint(state) {
     return {point: [lat, lon], timestamp: new Date(state.lu * 1000)};
 }
 
-export function getTrackColor(index, colors = [], specificColor = null) {
-    if (specificColor) {
-        return specificColor;
-    }
-
-    if (colors.length) {
-        return colors[index % colors.length];
+export function getTrackColor(index, color) {
+    if (color) {
+        return computeCssColor(color);
     }
 
     if (index === 0) {
@@ -125,75 +114,7 @@ export function getTrackColor(index, colors = [], specificColor = null) {
 
 export function escapeHtml(text) {
     if (!text) return "";
-    return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-}
-
-export function normalizeList(value) {
-    if (!value) return [];
-    const list = Array.isArray(value) ? value : [value];
-    return list.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
-}
-
-export function normalizeEntityEntries(config, hass = null) {
-    const value = config.entity;
-    if (!value) return [];
-    const list = Array.isArray(value) ? value : [value];
-    const entries = list
-        .map((item) => {
-            if (typeof item === "string") {
-                const trimmed = item.trim();
-                return trimmed ? {entity: trimmed} : null;
-            }
-            if (item && typeof item === "object" && typeof item.entity === "string") {
-                const entity = item.entity.trim();
-                if (!entity) return null;
-                const entry = {entity};
-                if (typeof item.activity_entity === "string" && item.activity_entity.trim()) {
-                    entry.activity_entity = item.activity_entity.trim();
-                }
-                if (typeof item.places_entity === "string" && item.places_entity.trim()) {
-                    entry.places_entity = item.places_entity.trim();
-                }
-                if (typeof item.color === "string" && item.color.trim()) {
-                    entry.color = item.color.trim();
-                }
-                if (typeof item.icon === "string" && item.icon.trim()) {
-                    entry.icon = item.icon.trim();
-                }
-                return entry;
-            }
-            return null;
-        })
-        .filter(Boolean);
-
-    if (hass) {
-        const placeEntityIds = Array.isArray(config.places_entity) ? config.places_entity : [];
-        const trackedEntities = new Set(entries.map((e) => e.entity));
-
-        const topLevelPlacesMap = new Map();
-        placeEntityIds.forEach((placeEntityId) => {
-            const trackerEntityId = hass?.states?.[placeEntityId]?.attributes?.devicetracker_entityid;
-            if (trackerEntityId && trackedEntities.has(trackerEntityId)) {
-                topLevelPlacesMap.set(trackerEntityId, placeEntityId);
-            }
-        });
-
-        const attributeMatched = new Set(topLevelPlacesMap.values());
-        entries.forEach((entry, index) => {
-            if (entry.places_entity) return;
-            const fallbackPlace = topLevelPlacesMap.get(entry.entity);
-            if (fallbackPlace) {
-                entry.places_entity = fallbackPlace;
-                return;
-            }
-            // Places v3 exposes no devicetracker_entityid.
-            if (placeEntityIds.length === entries.length && placeEntityIds[index] && !attributeMatched.has(placeEntityIds[index])) {
-                entry.places_entity = placeEntityIds[index];
-            }
-        });
-    }
-
-    return entries;
+    return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
 }
 
 export function resolvePlaceNameEntity(hass, placeEntityId) {

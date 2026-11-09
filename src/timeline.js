@@ -19,17 +19,12 @@ export function renderTimeline(segments, locale, config) {
     <div class="${timelineClass.join(" ")}">
       <div class="spine"></div>
       ${entries
-          .map(({segment, index}) =>
-              renderSegment(segment, index, {
-                  locale: locale,
-                  iconMap: config.activity_icon_map || {},
-                  distanceUnit: config.distance_unit || "metric",
-                  hideMoving: Boolean(config.hide_moving),
-                  hideStartTime: index === 0 && segment.type === "stay",
-                  hideEndTime: index === segments.length - 1 && segment.type === "stay",
-              }),
-          )
-          .join("")}
+        .map(({segment, index}) => renderSegment(segment, index, {
+            locale: locale, iconMap: config.activity_icon_map || {}, distanceUnit: config.distance_unit || "metric",
+            hideMoving: Boolean(config.hide_moving), hideStartTime: index === 0 && segment.type === "stay",
+            hideEndTime: index === segments.length - 1 && segment.type === "stay",
+        }),)
+        .join("")}
     </div>
   `;
 }
