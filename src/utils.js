@@ -6,10 +6,7 @@ export function formatDate(date, locale = null) {
     if (locale) {
         try {
             return new Intl.DateTimeFormat(locale.language, {
-                weekday: "short",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
+                weekday: "short", year: "numeric", month: "short", day: "numeric",
             }).format(date);
         } catch {}
     }
@@ -88,12 +85,7 @@ export function haversineMeters(a, b) {
     const lat2 = toRad(b.lat);
     const sin1 = Math.sin(dLat / 2);
     const sin2 = Math.sin(dLon / 2);
-    const c =
-        2 *
-        Math.atan2(
-            Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2),
-            Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)),
-        );
+    const c = 2 * Math.atan2(Math.sqrt(sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2), Math.sqrt(1 - (sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2)),);
     return r * c;
 }
 
@@ -122,7 +114,7 @@ export function getTrackColor(index, color) {
 
 export function escapeHtml(text) {
     if (!text) return "";
-    return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
 }
 
 export function resolvePlaceNameEntity(hass, placeEntityId) {

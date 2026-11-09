@@ -87,12 +87,8 @@ function detectStays(points, config) {
             const radius = maxDistance(center, cluster);
             const nextPoint = points[lastInIndex + 1];
             stays.push({
-                startIndex: i,
-                endIndex: lastInIndex,
-                start: points[i].timestamp,
-                end: nextPoint ? nextPoint.timestamp : points[lastInIndex].timestamp,
-                center,
-                radius,
+                startIndex: i, endIndex: lastInIndex, start: points[i].timestamp,
+                end: nextPoint ? nextPoint.timestamp : points[lastInIndex].timestamp, center, radius,
             });
             i = lastInIndex + 1;
         } else {
@@ -103,14 +99,11 @@ function detectStays(points, config) {
 }
 
 function meanCenter(cluster) {
-    const sum = cluster.reduce(
-        (acc, point) => {
-            acc.lat += point.lat;
-            acc.lon += point.lon;
-            return acc;
-        },
-        {lat: 0, lon: 0},
-    );
+    const sum = cluster.reduce((acc, point) => {
+        acc.lat += point.lat;
+        acc.lon += point.lon;
+        return acc;
+    }, {lat: 0, lon: 0},);
     return {lat: sum.lat / cluster.length, lon: sum.lon / cluster.length};
 }
 
@@ -126,14 +119,8 @@ function maxDistance(center, cluster) {
 function buildStaySegment(stay, zones) {
     const zone = resolveZone(stay.center, zones);
     return {
-        type: "stay",
-        start: stay.start,
-        end: stay.end,
-        durationMs: stay.end - stay.start,
-        center: stay.center,
-        radius: stay.radius,
-        zoneName: zone ? zone.name : null,
-        zoneIcon: zone ? zone.icon : null,
+        type: "stay", start: stay.start, end: stay.end, durationMs: stay.end - stay.start, center: stay.center,
+        radius: stay.radius, zoneName: zone ? zone.name : null, zoneIcon: zone ? zone.icon : null,
     };
 }
 
@@ -147,11 +134,7 @@ function buildMoveSegment(points, startPoint = null) {
     const start = points[0].timestamp;
     const end = points[points.length - 1].timestamp;
     return {
-        type: "move",
-        start,
-        end,
-        durationMs: end - start,
-        distanceM: distance,
+        type: "move", start, end, durationMs: end - start, distanceM: distance,
         points: startPoint ? [startPoint, ...points] : points,
     };
 }
@@ -176,24 +159,17 @@ function collectZones(hass) {
     return states
         .filter((state) => state.entity_id?.startsWith("zone.") && state.attributes?.passive !== true)
         .map((state) => ({
-            id: state.entity_id.replace("zone.", ""),
-            name: state.attributes?.friendly_name || state.entity_id,
-            icon: state.attributes?.icon || null,
-            lat: Number(state.attributes?.latitude),
-            lon: Number(state.attributes?.longitude),
-            radius: Number(state.attributes?.radius) || 100,
+            id: state.entity_id.replace("zone.", ""), name: state.attributes?.friendly_name || state.entity_id,
+            icon: state.attributes?.icon || null, lat: Number(state.attributes?.latitude),
+            lon: Number(state.attributes?.longitude), radius: Number(state.attributes?.radius) || 100,
         }))
         .filter((zone) => Number.isFinite(zone.lat) && Number.isFinite(zone.lon));
 }
 
 export function historyEntityIds(config, hass) {
-    const entityIds = config.entities.flatMap(({entity, places_entity, activity_entity}) => [
-        entity,
-        places_entity,
+    const entityIds = config.entities.flatMap(({entity, places_entity, activity_entity}) => [entity, places_entity,
         // Places v3 moved place_name from a state attribute to a separate child sensor
-        resolvePlaceNameEntity(hass, places_entity),
-        activity_entity,
-    ]);
+        resolvePlaceNameEntity(hass, places_entity), activity_entity,]);
     return [...new Set(entityIds.filter(Boolean))];
 }
 
@@ -240,9 +216,7 @@ export async function getSegmentedTracks(date, config, hass, onQueueUpdate) {
         type: "history/history_during_period",
         start_time: new Date(startOfDay(date).getTime() - historyPadding).toISOString(),
         end_time: new Date(endOfDay(date).getTime() + historyPadding).toISOString(),
-        entity_ids: historyEntityIds(config, hass),
-        minimal_response: false,
-        no_attributes: false,
+        entity_ids: historyEntityIds(config, hass), minimal_response: false, no_attributes: false,
         significant_changes_only: false,
     });
     return segmentTracks(history, date, config, hass, onQueueUpdate);
@@ -254,7 +228,8 @@ export function segmentTracks(history, date, config, hass, onQueueUpdate, previo
 
     return config.entities.map((entry, index) => {
         const entityId = entry.entity;
-        const rawPoints = dayStates(entityId).map((state) => toPoint(state)).filter(Boolean).filter((p) => p.point[0] !== 0 || p.point[1] !== 0);
+        const rawPoints = dayStates(entityId).map((state) => toPoint(state)).filter(Boolean)
+                                             .filter((p) => p.point[0] !== 0 || p.point[1] !== 0);
         const points = filterSpeedOutliers(rawPoints, config.max_reasonable_speed_kmh);
 
         const placeEntityId = entry.places_entity || null;

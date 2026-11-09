@@ -1,19 +1,19 @@
-import { css } from "lit";
-import type { PropertyValues } from "lit";
-import { hexBlend } from "../ha-frontend/src/common/color/hex";
-import { computeDomain } from "../ha-frontend/src/common/entity/compute_domain";
+import {css} from "lit";
+import type {PropertyValues} from "lit";
+import {hexBlend} from "../ha-frontend/src/common/color/hex";
+import {computeDomain} from "../ha-frontend/src/common/entity/compute_domain";
 import type {
     MapClusterIcon,
     MapItemHandle,
     MapLatLng,
     MapMarkerHandle,
 } from "../ha-frontend/src/common/map/map-engine";
-import { deepEqual } from "../ha-frontend/src/common/util/deep-equal";
-import { floatingMarkerFootprint } from "../ha-frontend/src/components/map/ha-entity-marker";
-import { HaMap, type HaMapEntity } from "../ha-frontend/src/components/map/ha-map";
-import type { StyledMapPath } from "./path-style";
+import {deepEqual} from "../ha-frontend/src/common/util/deep-equal";
+import {floatingMarkerFootprint} from "../ha-frontend/src/components/map/ha-entity-marker";
+import {HaMap, type HaMapEntity} from "../ha-frontend/src/components/map/ha-map";
+import type {StyledMapPath} from "./path-style";
 
-const pathBorder = (color: string, width: number) => ({ color: hexBlend("#000", color, 30), width });
+const pathBorder = (color: string, width: number) => ({color: hexBlend("#000", color, 30), width});
 
 interface DayPath {
     entityIndex: number;
@@ -33,35 +33,23 @@ interface CurrentLocation {
 
 export class TimelineMap extends HaMap {
     public currentLocationMarker: "default" | "entity" = "default";
-
     public showZones = false;
-
     private _dayHandles: MapItemHandle[] = [];
-
     private _highlightHandles: MapItemHandle[] = [];
-
     private _dayPaths: DayPath[] = [];
-
     private _segments: any[] = [];
-
     private _highlightedPath: MapLatLng[] = [];
-
     private _highlightedStay: any = null;
-
     private _onTrackClick: (entityIndex: number) => void = () => undefined;
-
     private _animateHighlightedPath = false;
-
     private _locations: CurrentLocation[] = [];
-
     private _lastFit?: () => void;
-
     private _superCreateClusterBubble = this._createClusterBubble;
 
     constructor() {
         super();
         this.addEventListener("hass-more-info", (ev) => {
-            const location = this._locations.find(({ entityId }) => entityId === (ev as CustomEvent).detail.entityId);
+            const location = this._locations.find(({entityId}) => entityId === (ev as CustomEvent).detail.entityId);
             if (location) {
                 ev.stopPropagation();
                 this._onTrackClick(location.entityIndex);
@@ -71,7 +59,7 @@ export class TimelineMap extends HaMap {
 
     public setDaySegments(
         tracks: any[],
-        { activeEntityIndex, onTrackClick, colors, hideUnselected, animateHighlightedPath, currentLocations, live }: any,
+        {activeEntityIndex, onTrackClick, colors, hideUnselected, animateHighlightedPath, currentLocations, live}: any,
     ): void {
         this._onTrackClick = onTrackClick;
         this._animateHighlightedPath = animateHighlightedPath;
@@ -125,7 +113,7 @@ export class TimelineMap extends HaMap {
             this.setView([this._config.latitude, this._config.longitude], this.zoom);
             return;
         }
-        this.fitBounds(points, { padding: { top: this._markerLift } });
+        this.fitBounds(points, {padding: {top: this._markerLift}});
     }
 
     // HA fits to its entities once the engine is up, also after falling back to Leaflet.
@@ -173,7 +161,7 @@ export class TimelineMap extends HaMap {
         const activeLast = [...this._locations].sort((a, b) => Number(a.isActive) - Number(b.isActive));
         return [
             ...zones,
-            ...activeLast.map(({ entityId, color, config }) => ({
+            ...activeLast.map(({entityId, color, config}) => ({
                 entity_id: entityId,
                 color: this._resolveColor(color),
                 name: config.name,
@@ -214,11 +202,11 @@ export class TimelineMap extends HaMap {
         expanded = false,
     ): MapClusterIcon => {
         const entityOrder = (member: MapMarkerHandle) =>
-            this._locations.findIndex(({ entityId }) => entityId === (member.clusterData as any).entityId);
+            this._locations.findIndex(({entityId}) => entityId === (member.clusterData as any).entityId);
         const inEntityOrder = [...members].sort((a, b) => entityOrder(a) - entityOrder(b));
         const icon = this._superCreateClusterBubble(inEntityOrder, location, zoneId, expanded);
         icon.element.querySelectorAll<any>("timeline-ha-entity-marker").forEach((avatar) => {
-            const isActive = this._locations.find(({ entityId }) => entityId === avatar.entityId)?.isActive;
+            const isActive = this._locations.find(({entityId}) => entityId === avatar.entityId)?.isActive;
             avatar.style.setProperty("--ha-marker-border-width", "2px");
             avatar.style.setProperty("--ha-marker-color", isActive ? avatar.entityColor : "transparent");
         });
@@ -249,7 +237,7 @@ export class TimelineMap extends HaMap {
             width: 4,
             border: path.isActive ? pathBorder(color, 7) : undefined,
             onClick: path.isActive ? undefined : () => this._onTrackClick(path.entityIndex),
-            segments: [{ points: path.points, opacity: path.isActive ? 1 : 0.8 }],
+            segments: [{points: path.points, opacity: path.isActive ? 1 : 0.8}],
             markers: [],
         };
     }
@@ -266,7 +254,7 @@ export class TimelineMap extends HaMap {
             .forEach((stay) => {
                 const element = createStayMarker(stay.zoneIcon, 14, activeColor);
                 this._dayHandles.push(
-                    engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [22, 22], interactive: false }),
+                    engine.addMarker(element, [stay.center.lat, stay.center.lon], {size: [22, 22], interactive: false}),
                 );
             });
 
@@ -295,7 +283,7 @@ export class TimelineMap extends HaMap {
                 color: accentColor,
                 width: 7,
                 border: pathBorder(accentColor, 10),
-                animated: this._animateHighlightedPath ? { dash: 14, gap: 10 } : undefined,
+                animated: this._animateHighlightedPath ? {dash: 14, gap: 10} : undefined,
             },
             1,
             this._highlightHandles,
@@ -304,7 +292,11 @@ export class TimelineMap extends HaMap {
             const stay = this._highlightedStay;
             const element = createStayMarker(stay.zoneIcon, 22, "var(--accent-color)");
             this._highlightHandles.push(
-                engine.addMarker(element, [stay.center.lat, stay.center.lon], { size: [26, 26], interactive: false, raised: true }),
+                engine.addMarker(element, [stay.center.lat, stay.center.lon], {
+                    size: [26, 26],
+                    interactive: false,
+                    raised: true
+                }),
             );
         }
     }
@@ -316,7 +308,7 @@ export class TimelineMap extends HaMap {
         handles: MapItemHandle[],
     ): void {
         if (points.length < 2) return;
-        handles.push(this._engine!.addPath({ ...path, segments: [{ points, opacity }], markers: [] }));
+        handles.push(this._engine!.addPath({...path, segments: [{points, opacity}], markers: []}));
     }
 
     // MapLibre cannot read CSS variables.

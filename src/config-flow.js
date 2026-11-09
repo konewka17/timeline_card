@@ -162,7 +162,10 @@ class TimelineCardEditor extends HTMLElement {
         // The entity list edits objects only; plain ids become objects, as HA's map card editor migrates dark_mode.
         if (config.entity || config.entities?.some((item) => typeof item === "string")) {
             const {entity, ...rest} = config;
-            config = {...rest, entities: (config.entities ?? entity).map((item) => (typeof item === "string" ? {entity: item} : item))};
+            config = {
+                ...rest,
+                entities: (config.entities ?? entity).map((item) => (typeof item === "string" ? {entity: item} : item))
+            };
             fireConfigChanged(this, config);
         }
         this._config = config;
