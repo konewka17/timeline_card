@@ -30,7 +30,7 @@ Location Timeline Card is a custom Lovelace card that builds a **timeline–styl
 - Runs fully in the frontend (no extra backend integration required)
 - Draws the map with Home Assistant's own map engine, so it looks and behaves like HA's map card
 
-v2 of this card works best with Home Assistant **2026.11** or newer.
+Requires Home Assistant 2026.10 or newer. On 2026.10 the current location markers don’t have rounded corners yet, this is fixed by updating to 2026.11.
 
 ## Installation (HACS)
 
