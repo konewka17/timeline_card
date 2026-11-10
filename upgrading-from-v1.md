@@ -1,9 +1,6 @@
 # Upgrading from v1 to v2
 
-Home Assistant has recently made a lot of changes to its
-[native map card](https://www.home-assistant.io/dashboards/map/), most notably the switch to a different mapping
-engine. v2 of the Location Timeline Card aligns its code to these changes, making it much easier to bring new features
-of the HA map to this card. As part of this major release, a few configuration options have moved or have been removed.
+Over the past few months, the Home Assistant development team has made a lot of improvements to its [native map card](https://www.home-assistant.io/dashboards/map/), most notably the switch to a different mapping engine. v2.0 of the location timeline card aligns its code to these changes, making it much easier in the future to bring new features of the HA map to this card as well. As part of this major release, a few configuration options have moved or have been removed.
 
 v2 requires Home Assistant **2026.10** or newer. On 2026.10 the current location markers don't have rounded corners
 yet, this is fixed by updating to 2026.11.
