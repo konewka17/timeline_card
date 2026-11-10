@@ -61,3 +61,16 @@ theme_mode: dark
 
 A top-level `places_entity` list has the same order as the entity list, so the first sensor goes on the first entity,
 and so on. The same goes for `colors`.
+
+Also, the card now requires the `entities` option to be a list, so if you have configured your card with a single entity, reconfigure it as a list like so:
+```yaml
+type: custom:location-timeline-card
+entity: person.alice
+``` 
+to
+```yaml
+type: custom:location-timeline-card
+entities:
+  - entity: person.alice
+```
+
