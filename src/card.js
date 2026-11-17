@@ -29,7 +29,7 @@ const DEFAULT_CONFIG = {
     current_location_marker: "default",
     hide_moving: false,
     reverse_timeline_order: false,
-    collapse_timeline: false,
+    collapsed: "none",
     timeline_use_entity_color: false,
     debug: false,
     activity_icon_map: {},
@@ -46,7 +46,7 @@ class TimelineCard extends HTMLElement {
         this._rendered = false;
         this._touchStart = null;
         this._activeEntityIndex = 0;
-        this._timelineCollapsed = false;
+        this._collapsed = false;
         this._teardownTimeout = null;
         this._resetMapFitMode();
         this._addEventListeners();
@@ -55,6 +55,9 @@ class TimelineCard extends HTMLElement {
     // noinspection JSUnusedGlobalSymbols
     setConfig(config) {
         this._config = {...DEFAULT_CONFIG, entities: config.entity, ...config};
+        if (config.collapsed === undefined && config.collapse_timeline) {
+            this._config.collapsed = "timeline";
+        }
         this._checkConfig();
 
         this._unsubscribeToday();
@@ -64,7 +67,7 @@ class TimelineCard extends HTMLElement {
         }
 
         this._activeEntityIndex = 0;
-        this._timelineCollapsed = Boolean(this._config.collapse_timeline);
+        this._collapsed = this._config.collapsed !== "none";
         this._selectedDate = startOfDay(new Date());
         this._resetMapFitMode();
         this._mapCluster = this._config.cluster;
@@ -138,6 +141,9 @@ class TimelineCard extends HTMLElement {
         }
         if (!["auto", "light", "dark"].includes(this._config.theme_mode)) {
             throw new Error("theme_mode must be one of 'auto', 'light', or 'dark'");
+        }
+        if (!["none", "timeline", "map"].includes(this._config.collapsed)) {
+            throw new Error("collapsed must be one of 'none', 'timeline', or 'map'");
         }
         if (!["default", "entity"].includes(this._config.current_location_marker)) {
             throw new Error("current_location_marker must be either 'default' or 'entity'");
@@ -275,18 +281,20 @@ class TimelineCard extends HTMLElement {
           <style>${css}</style>
           <ha-card>
             <div class="card">
+              <div id="map-section" class="map-section">
               <div class="map-wrap">
                 <div id="overview-map"></div>
                 <div id="map-buttons">
                   <ha-icon-button id="map-cluster" data-action="toggle-map-cluster" label="Toggle grouping" hidden><ha-icon></ha-icon></ha-icon-button>
                   <ha-icon-button id="map-fit-mode" data-action="update-map-fit-mode"><ha-icon></ha-icon></ha-icon-button>
                 </div>
-                <ha-icon-button id="timeline-collapse-map" class="map-collapse" data-action="toggle-timeline-collapse" hidden>
+                <ha-icon-button id="collapse-map" class="map-collapse" data-action="toggle-collapse" hidden>
                   <ha-icon></ha-icon>
                 </ha-icon-button>
               </div>
+              </div>
               <div class="selector-row" id="selector-row" hidden>
-                <ha-icon-button id="timeline-collapse-selector" class="selector-collapse" data-action="toggle-timeline-collapse">
+                <ha-icon-button id="collapse-selector" class="selector-collapse" data-action="toggle-collapse">
                   <ha-icon></ha-icon>
                 </ha-icon-button>
                 <div id="entity-selector" class="entity-selector"></div>
@@ -295,6 +303,7 @@ class TimelineCard extends HTMLElement {
                 <div class="timeline-content">
                 <div class="header my-header">
                   <div class="header-actions">
+                      <ha-icon-button id="collapse-header" class="nav-button" data-action="toggle-collapse" hidden><ha-icon></ha-icon></ha-icon-button>
                       <ha-icon-button class="nav-button" data-action="prev" label="${localize("card.labels.previous_day")}"><ha-icon icon="mdi:chevron-left"></ha-icon></ha-icon-button>
                       ${this._config.debug ? `<ha-icon-button class="nav-button" data-action="debug" label="${localize("card.labels.debug")}"><ha-icon icon="mdi:bug"></ha-icon></ha-icon-button>` : ""}
                   </div>
@@ -446,25 +455,28 @@ class TimelineCard extends HTMLElement {
     }
 
     _updateCollapseButtons() {
-        const selectorCollapseBtn = this.shadowRoot?.getElementById("timeline-collapse-selector");
-        const mapCollapseBtn = this.shadowRoot?.getElementById("timeline-collapse-map");
-        const timelineSection = this.shadowRoot?.getElementById("timeline-section");
-        if (!selectorCollapseBtn || !mapCollapseBtn || !timelineSection) return;
+        const selectorCollapseBtn = this.shadowRoot?.getElementById("collapse-selector");
+        const mapCollapseBtn = this.shadowRoot?.getElementById("collapse-map");
+        const headerCollapseBtn = this.shadowRoot?.getElementById("collapse-header");
+        if (!selectorCollapseBtn || !mapCollapseBtn || !headerCollapseBtn) return;
 
-        const useSelectorButton = this._config.entities.length > 1;
-        const useMapButton = this._config.entities.length < 2;
-        const icon = this._timelineCollapsed ? "mdi:chevron-down" : "mdi:chevron-up";
-        const label = this._timelineCollapsed ? "Expand timeline" : "Collapse timeline";
+        const multiEntity = this._config.entities.length > 1;
+        const collapseMap = this._config.collapsed === "map";
+        const expandIcon = collapseMap ? "mdi:map-outline" : "mdi:chevron-down";
+        const icon = this._collapsed ? expandIcon : "mdi:chevron-up";
+        const label = `${this._collapsed ? "Expand" : "Collapse"} ${collapseMap ? "map" : "timeline"}`;
 
-        selectorCollapseBtn.toggleAttribute("hidden", !useSelectorButton);
-        mapCollapseBtn.toggleAttribute("hidden", !useMapButton);
+        selectorCollapseBtn.toggleAttribute("hidden", !multiEntity);
+        mapCollapseBtn.toggleAttribute("hidden", multiEntity || collapseMap);
+        headerCollapseBtn.toggleAttribute("hidden", multiEntity || !collapseMap);
 
-        selectorCollapseBtn.querySelector("ha-icon")?.setAttribute("icon", icon);
-        mapCollapseBtn.querySelector("ha-icon")?.setAttribute("icon", icon);
-        selectorCollapseBtn.setAttribute("label", label);
-        mapCollapseBtn.setAttribute("label", label);
+        for (const button of [selectorCollapseBtn, mapCollapseBtn, headerCollapseBtn]) {
+            button.querySelector("ha-icon").setAttribute("icon", icon);
+            button.setAttribute("label", label);
+        }
 
-        timelineSection.classList.toggle("collapsed", this._timelineCollapsed);
+        this.shadowRoot.getElementById("map-section").classList.toggle("collapsed", collapseMap && this._collapsed);
+        this.shadowRoot.getElementById("timeline-section").classList.toggle("collapsed", !collapseMap && this._collapsed);
     }
 
     _renderTimelineContent(dayData) {
@@ -616,8 +628,8 @@ class TimelineCard extends HTMLElement {
                 this._openDatePicker();
             } else if (action === "select-entity") {
                 this._setActiveEntityIndex(Number(target.dataset.entityIndex));
-            } else if (action === "toggle-timeline-collapse") {
-                this._timelineCollapsed = !this._timelineCollapsed;
+            } else if (action === "toggle-collapse") {
+                this._collapsed = !this._collapsed;
                 this._updateCollapseButtons();
             }
         });
