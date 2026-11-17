@@ -19,6 +19,7 @@ const DEFAULT_CONFIG = {
     theme_mode: "auto",
     map_height_px: 200,
     default_zoom: 14,
+    default_fit: "current_location",
     animate_highlighted_path: true,
     distance_unit: "metric",
     hide_current_location: false,
@@ -145,6 +146,9 @@ class TimelineCard extends HTMLElement {
         if (!["none", "timeline", "map"].includes(this._config.collapsed)) {
             throw new Error("collapsed must be one of 'none', 'timeline', or 'map'");
         }
+        if (!["current_location", "path"].includes(this._config.default_fit)) {
+            throw new Error("default_fit must be either 'current_location' or 'path'");
+        }
         if (!["default", "entity"].includes(this._config.current_location_marker)) {
             throw new Error("current_location_marker must be either 'default' or 'entity'");
         }
@@ -176,7 +180,7 @@ class TimelineCard extends HTMLElement {
     }
 
     _resetMapFitMode() {
-        if (isToday(this._selectedDate) && !this._config.hide_current_location) {
+        if (isToday(this._selectedDate) && !this._config.hide_current_location && this._config.default_fit === "current_location") {
             this._mapFitMode = "current_location";
         } else {
             this._mapFitMode = "selected_entity_path";
@@ -564,10 +568,10 @@ class TimelineCard extends HTMLElement {
     }
 
     _updateMapFitMode() {
-        if (this._mapFitMode === "current_location") {
-            this._mapFitMode = "selected_entity_path";
-        } else {
+        if (this._mapFitMode === "segment") {
             this._resetMapFitMode();
+        } else {
+            this._mapFitMode = this._mapFitMode === "current_location" ? "selected_entity_path" : "current_location";
         }
         this._updateMapFitButton();
         this._fitMapToCurrentMode();
