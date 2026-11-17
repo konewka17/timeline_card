@@ -8,12 +8,12 @@ const withDefaults = (schema, defaults) =>
         ...(defaults[item.name] !== undefined && typeof defaults[item.name] !== "object" && {default: defaults[item.name]}),
     }));
 
-const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+const toLabel = (text) => text.charAt(0).toUpperCase() + text.slice(1).split("_").join(" ");
 
 const label = (hass, name) =>
-    hass.localize(`ui.panel.lovelace.editor.card.generic.${name}`) || capitalize(name.split("_").join(" "));
+    hass.localize(`ui.panel.lovelace.editor.card.generic.${name}`) || toLabel(name);
 
-const selectOptions = (values) => values.map((value) => ({value, label: capitalize(value)}));
+const selectOptions = (values) => values.map((value) => ({value, label: toLabel(value)}));
 
 const entityFields = (hass) =>
     Object.fromEntries(
@@ -30,7 +30,7 @@ const entityFields = (hass) =>
                         mode: "dropdown",
                         options: ["state", "attribute", "icon"].map((mode) => ({
                             value: mode,
-                            label: hass.localize(`ui.panel.lovelace.editor.card.map.label_modes.${mode}`) || capitalize(mode),
+                            label: hass.localize(`ui.panel.lovelace.editor.card.map.label_modes.${mode}`) || toLabel(mode),
                         })),
                     },
                 },
@@ -76,6 +76,10 @@ const schema = (hass, defaults) =>
                             },
                             {name: "map_height_px", selector: {number: {unit_of_measurement: "px"}}},
                             {name: "default_zoom", selector: {number: {min: 1, max: 20, mode: "box"}}},
+                            {
+                                name: "default_fit",
+                                selector: {select: {options: selectOptions(["current_location", "path"]), mode: "dropdown"}},
+                            },
                         ],
                     },
                     {
