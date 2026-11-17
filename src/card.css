@@ -80,6 +80,10 @@ ha-card {
     gap: 6px;
 }
 
+.nav-button[hidden] {
+    display: none;
+}
+
 .nav-button[disabled] {
     opacity: 0.4;
     cursor: default;
@@ -110,11 +114,16 @@ ha-card {
     --mdc-icon-button-size: 34px;
 }
 
+.selector-row:has(+ .timeline-section.collapsed) {
+    border-bottom-color: transparent;
+}
+
 .selector-row[hidden] {
     display: none;
 }
 
-.timeline-section {
+.timeline-section,
+.map-section {
     display: grid;
     grid-template-rows: 1fr;
     transition: grid-template-rows 260ms ease,
@@ -126,7 +135,8 @@ ha-card {
     overflow: hidden;
 }
 
-.timeline-section.collapsed {
+.timeline-section.collapsed,
+.map-section.collapsed {
     grid-template-rows: 0fr;
     opacity: 0;
 }
@@ -321,6 +331,7 @@ ha-card {
 
 .map-wrap {
     position: relative;
+    overflow: hidden;
 }
 
 #overview-map {

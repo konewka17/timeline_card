@@ -105,13 +105,16 @@ const schema = (hass, defaults) =>
                         selector: {select: {options: selectOptions(["metric", "imperial"]), mode: "dropdown"}},
                     },
                     {
+                        name: "collapsed",
+                        selector: {select: {options: selectOptions(["none", "timeline", "map"]), mode: "dropdown"}},
+                    },
+                    {
                         type: "grid",
                         name: "",
                         flatten: true,
                         schema: [
                             {name: "hide_moving", selector: {boolean: {}}},
                             {name: "reverse_timeline_order", selector: {boolean: {}}},
-                            {name: "collapse_timeline", selector: {boolean: {}}},
                             {name: "timeline_use_entity_color", selector: {boolean: {}}},
                         ],
                     },
