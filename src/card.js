@@ -25,6 +25,7 @@ const DEFAULT_CONFIG = {
     hide_current_location: false,
     hide_unselected_on_map: false,
     show_zones: false,
+    fit_zones: false,
     cluster: true,
     scale_ruler: false,
     current_location_marker: "default",
@@ -386,7 +387,7 @@ class TimelineCard extends HTMLElement {
         this._mapView = Object.assign(document.createElement("timeline-map"), {
             themeMode: this._config.theme_mode, mapStyle: this._config.map_style, scaleRuler: this._config.scale_ruler,
             currentLocationMarker: this._config.current_location_marker, showZones: this._config.show_zones,
-            interactiveZones: true, clusterMarkers: this._mapCluster, zoom: this._config.default_zoom,
+            fitZones: this._config.fit_zones, interactiveZones: true, clusterMarkers: this._mapCluster, zoom: this._config.default_zoom,
         });
         container.append(this._mapView);
         this._drawMapPaths();
