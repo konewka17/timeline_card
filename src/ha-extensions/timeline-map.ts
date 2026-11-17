@@ -108,7 +108,7 @@ export class TimelineMap extends HaMap {
             this._pendingFit = this._lastFit;
             return;
         }
-        const points = bounds ?? this._activePath?.points ?? [];
+        const points = bounds ?? [...(this._activePath?.points ?? []), ...(this.fitZones ? this._focusZonePoints : [])];
         if (!points.length) {
             this.setView([this._config.latitude, this._config.longitude], this.zoom);
             return;

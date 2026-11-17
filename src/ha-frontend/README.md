@@ -76,7 +76,7 @@ values. HA options that mean nothing for a day timeline are not taken over.
 - Per entity, as HA's `MapEntityConfig`: `entity`, `name`, `color`, `label_mode`,
   `attribute`, `unit`.
 - Map level, as HA's `MapCardConfig`: `theme_mode`, `map_style`, `default_zoom`,
-  `cluster`, `scale_ruler`.
+  `cluster`, `scale_ruler`, `fit_zones`.
 - Not taken over: `hours_to_show`, `show_all`, `geo_location_sources` (the map shows
   one day of the chosen entities); `auto_fit`, `focus` (our own fit modes);
   `aspect_ratio` (`map_height_px` instead, until the panel layout, #114); `dark_mode`

@@ -90,6 +90,7 @@ const schema = (hass, defaults) =>
                             {name: "hide_current_location", selector: {boolean: {}}},
                             {name: "hide_unselected_on_map", selector: {boolean: {}}},
                             {name: "show_zones", selector: {boolean: {}}},
+                            {name: "fit_zones", selector: {boolean: {}}},
                             {name: "cluster", selector: {boolean: {}}},
                             {name: "scale_ruler", selector: {boolean: {}}},
                             {name: "animate_highlighted_path", selector: {boolean: {}}},
