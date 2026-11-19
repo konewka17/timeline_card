@@ -81,6 +81,10 @@ entities:
 
 When multiple entities are configured, the card renders all tracks on the map and adds a selector bar above the date controls.
 
+### Panel view
+
+In a [panel view](https://www.home-assistant.io/dashboards/panel/), the map fills the view and the timeline floats over it, as in Home Assistant's own map card: at the side on wide screens, at the bottom on narrow ones. On narrow screens, or with `collapsed` set, the collapse button folds the timeline down to its date controls.
+
 ## Configuration options
 
 The options follow the sections of the visual editor.
@@ -92,7 +96,7 @@ The options follow the sections of the visual editor.
 | `theme_mode`                | string  | `"auto"`     | Map theme: `auto` (follow the HA theme), `light`, or `dark`. As in HA's map card.                                                                                       |
 | `map_style`                 | string  | `"default"`  | Map style, as in HA's map card: `default`, `colorful`, `natural`, `muted`, `gray` or `toner`, or a custom style.                                                        |
 | `current_location_marker`   | string  | `"default"`  | With a single entity: `default` shows its current location as a blue dot, `entity` as HA's entity marker. Several entities always use entity markers.                   |
-| `map_height_px`             | number  | `200`        | Height of the map area in pixels.                                                                                                                                       |
+| `map_height_px`             | number  | `200`        | Height of the map area in pixels. Not used in a panel view.                                                                                                             |
 | `default_zoom`              | number  | `14`         | Maximum zoom level when the map fits itself to a stay or a short track (1–20). Higher is closer.                                                                        |
 | `default_fit`               | string  | `"current_location"`| Initial map fit when viewing today: `current_location` zooms to the current location, `path` fits the full path. Other days always fit the path.                        |
 | `hide_current_location`     | boolean | `false`      | Hide the current location when viewing today.                                                                                                                           |
