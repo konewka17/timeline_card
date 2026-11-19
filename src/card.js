@@ -302,9 +302,6 @@ class TimelineCard extends HTMLElement {
         };
 
         this.shadowRoot.getElementById("timeline-date").textContent = formatDate(this._selectedDate, this._hass?.locale,);
-        const datePicker = this.shadowRoot.getElementById("timeline-date-picker");
-        datePicker.value = formatDate(this._selectedDate);
-        datePicker.max = formatDate(new Date());
 
         this.shadowRoot
             .querySelector("[data-action='next']")
@@ -367,7 +364,7 @@ class TimelineCard extends HTMLElement {
                       <span id="timeline-date" class="date"></span>
                       <ha-icon class="date-caret" icon="mdi:menu-down"></ha-icon>
                     </button>
-                    <input id="timeline-date-picker" class="date-picker-input" type="date">
+                    <ha-date-input id="timeline-date-picker" class="date-picker-input"></ha-date-input>
                   </div>
                   <div class="header-actions">
                     <ha-icon-button class="nav-button" data-action="next" label="${localize("card.labels.next_day")}"><ha-icon icon="mdi:chevron-right"></ha-icon></ha-icon-button>
@@ -387,15 +384,44 @@ class TimelineCard extends HTMLElement {
         this._applyLayout();
     }
 
-    _openDatePicker() {
-        const input = this.shadowRoot?.getElementById("timeline-date-picker");
-        if (!input) return;
-        if (typeof input.showPicker === "function") {
-            input.showPicker();
-            return;
+    // HA loads ha-date-input on demand; its date entity row brings it in.
+    async _openDatePicker() {
+        if (!customElements.get("ha-date-input")) {
+            (await window.loadCardHelpers()).createRowElement({entity: "date.timeline_card"});
+            await customElements.whenDefined("ha-date-input");
         }
-        input.focus();
-        input.click();
+        const input = this.shadowRoot.getElementById("timeline-date-picker");
+        Object.assign(input, {
+            locale: this._hass.locale, value: formatDate(this._selectedDate), max: formatDate(new Date()),
+        });
+        const params = await new Promise((resolve) => {
+            input.addEventListener("show-dialog", (ev) => resolve(ev.detail.dialogParams), {once: true});
+            input._openDialog();
+        });
+
+        // HA's dialog only applies the date on OK; apply it on the day click instead.
+        const dialog = await this._datePickerDialog(params);
+        await dialog.updateComplete;
+        const applyDate = () => {
+            if (dialog.params === params) dialog._setValue();
+        };
+        dialog.shadowRoot.querySelector("calendar-date").addEventListener("change", applyDate);
+        dialog.shadowRoot.querySelector("calendar-date .heading ha-icon-button").addEventListener("click", applyDate);
+    }
+
+    // HA's dialog manager mounts its dialogs in the root element, and reuses them.
+    _datePickerDialog(params) {
+        const root = document.querySelector("home-assistant").shadowRoot;
+        const find = () => [...root.querySelectorAll("ha-dialog-date-picker")].find((dialog) => dialog.params === params);
+        return find() ?? new Promise((resolve) => {
+            const observer = new MutationObserver(() => {
+                const dialog = find();
+                if (!dialog) return;
+                observer.disconnect();
+                resolve(dialog);
+            });
+            observer.observe(root, {childList: true});
+        });
     }
 
     _updateMapFitButton() {
@@ -701,15 +727,11 @@ class TimelineCard extends HTMLElement {
             }
         });
 
-        this.shadowRoot.addEventListener("change", (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLInputElement) || target.id !== "timeline-date-picker" || !target.value) return;
-            const next = new Date(`${target.value}T00:00:00`);
-            if (!Number.isNaN(next.getTime())) {
-                this._selectedDate = startOfDay(next);
-                this._resetMapFitMode();
-                this._ensureDay(this._selectedDate).then(() => this._render());
-            }
+        this.shadowRoot.addEventListener("value-changed", (event) => {
+            if (event.target.id !== "timeline-date-picker") return;
+            this._selectedDate = startOfDay(new Date(`${event.detail.value}T00:00:00`));
+            this._resetMapFitMode();
+            this._ensureDay(this._selectedDate).then(() => this._render());
         });
 
         this.shadowRoot.addEventListener("mouseover", (e) => this._onSegmentEvent(e, (idx) => this._handleSegmentHoverStart(idx)),);

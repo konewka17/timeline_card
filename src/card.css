@@ -62,11 +62,7 @@ ha-card {
 }
 
 .date-picker-input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 0;
-    height: 0;
+    display: none;
 }
 
 .nav-button {
