@@ -36,6 +36,14 @@ Claude to work through with Tom, on a new branch. Background: `src/ha-frontend/R
    commit in `UPSTREAM`. Port what touches behaviour this card has (`src/card.js`,
    `src/card.css`, `src/config-flow.js`). New options follow the options rule in the README.
 
+   The date picker uses HA's own `ha-date-input`, not vendored (`_openDatePicker` in
+   `src/card.js`). Check that a `date` entity row (`hui-date-entity-row`) still imports
+   `ha-date-input`, and that `ha-date-input` still has `_openDialog()` and fires
+   `value-changed`. A day click applies the date at once: check that the dialog manager
+   still mounts `ha-dialog-date-picker` in `<home-assistant>`'s shadow root, and that the
+   dialog still has `_setValue()`, a `calendar-date` firing `change`, and the today button
+   as `ha-icon-button` in the calendar's `.heading`.
+
 6. **Check the deviations** in the README: whatever HA now does itself, remove from our
    code and from the table.
 
