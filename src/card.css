@@ -114,6 +114,10 @@ ha-card {
     --mdc-icon-button-size: 34px;
 }
 
+.selector-collapse[hidden] {
+    display: none;
+}
+
 .selector-row:has(+ .timeline-section.collapsed) {
     border-bottom-color: transparent;
 }
@@ -368,4 +372,117 @@ timeline-map {
 
 .map-collapse[hidden] {
     display: none;
+}
+
+#overview {
+    display: contents;
+}
+
+/* As the panel layout of HA's hui-map-card */
+:host(.panel-layout) {
+    height: 100%;
+}
+
+:host(.panel-layout) ha-card {
+    height: 100%;
+    overflow: visible;
+}
+
+:host(.panel-layout) .card {
+    position: relative;
+    container-type: inline-size;
+    --map-bleed-left: var(--view-container-inset-left, 0px);
+    --map-bleed-right: var(--view-container-inset-right, 0px);
+    --map-bleed-bottom: var(--view-container-inset-bottom, 0px);
+}
+
+:host(.panel-layout) .map-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+}
+
+:host(.panel-layout) #overview-map {
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: calc(-1 * var(--map-bleed-left));
+    right: calc(-1 * var(--map-bleed-right));
+    bottom: calc(-1 * var(--map-bleed-bottom));
+    height: auto;
+    --ha-map-left-inset: calc(var(--overview-width, 0px) + 2 * var(--ha-space-3) + var(--map-bleed-left));
+    --ha-map-right-inset: var(--map-bleed-right);
+    --ha-map-bottom-inset: var(--map-bleed-bottom);
+}
+
+:host(.panel-layout:dir(rtl)) #overview-map {
+    --ha-map-left-inset: var(--map-bleed-left);
+    --ha-map-right-inset: calc(var(--overview-width, 0px) + 2 * var(--ha-space-3) + var(--map-bleed-right));
+}
+
+:host(.panel-layout) #map-buttons {
+    left: auto;
+    inset-inline-start: auto;
+    inset-inline-end: 3px;
+}
+
+:host(.panel-layout) #overview {
+    position: absolute;
+    top: var(--ha-space-3);
+    inset-inline-start: var(--ha-space-3);
+    width: min(420px, calc(100% - 2 * var(--ha-space-3)));
+    max-height: calc(100% - 2 * var(--ha-space-3));
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: var(--ha-border-radius-xl);
+    background: var(--card-background-color);
+    color: var(--primary-text-color);
+    box-shadow: var(--ha-box-shadow-m);
+}
+
+:host(.panel-layout) .timeline-section {
+    min-height: 0;
+}
+
+:host(.panel-layout) .timeline-content {
+    display: flex;
+    flex-direction: column;
+}
+
+:host(.panel-layout) .body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+}
+
+:host(.panel-layout) #overview.collapsed .body {
+    display: none;
+}
+
+@container (min-width: 661px) {
+    :host(.panel-layout) #overview:not(.collapsible) #collapse-header {
+        display: none;
+    }
+}
+
+@container (max-width: 660px) {
+    :host(.panel-layout) #overview {
+        top: auto;
+        bottom: 0;
+        inset-inline-start: 0;
+        inset-inline-end: 0;
+        width: auto;
+        max-height: 70%;
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    :host(.panel-layout) #overview-map,
+    :host(.panel-layout:dir(rtl)) #overview-map {
+        --ha-map-left-inset: var(--map-bleed-left);
+        --ha-map-right-inset: var(--map-bleed-right);
+        --ha-map-bottom-inset: calc(var(--overview-height, 0px) + var(--ha-space-2));
+    }
 }

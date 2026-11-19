@@ -67,6 +67,8 @@ check them.
 | Single entity's current location as a blue dot, `current_location_marker` | #46 | `timeline-map.ts` |
 | `show_zones`: all non-passive zones (HA: zones listed as entities, or `show_all`) | v2 | `timeline-map.ts` |
 | `map_height_px` | #28, #36 | card layout |
+| Panel layout: the timeline floats over the map instead of HA's people/zones/devices overview, 420px wide (HA: 360px); a fixed bottom panel up to a card width of 660px (HA: a snap bottom sheet, up to a window width of 600px) | #114 | card layout |
+| Panel layout refits when the floating timeline changes size (HA: only auto-fit, or the selected entity) | #114 | card layout |
 
 ## Options
 
@@ -79,7 +81,7 @@ values. HA options that mean nothing for a day timeline are not taken over.
   `cluster`, `scale_ruler`, `fit_zones`.
 - Not taken over: `hours_to_show`, `show_all`, `geo_location_sources` (the map shows
   one day of the chosen entities); `auto_fit`, `focus` (our own fit modes);
-  `aspect_ratio` (`map_height_px` instead, until the panel layout, #114); `dark_mode`
+  `aspect_ratio` (`map_height_px` instead, and the panel layout); `dark_mode`
   (deprecated in HA); `title`, `conditions` (generic card options).
 
 ## Syncing

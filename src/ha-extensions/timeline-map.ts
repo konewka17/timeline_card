@@ -113,7 +113,7 @@ export class TimelineMap extends HaMap {
             this.setView([this._config.latitude, this._config.longitude], this.zoom);
             return;
         }
-        this.fitBounds(points, {padding: {top: this._markerLift}});
+        this.fitBounds(points, {padding: {...this.fitPadding, top: this._markerLift}});
     }
 
     // HA fits to its entities once the engine is up, also after falling back to Leaflet.
