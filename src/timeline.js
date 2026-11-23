@@ -34,7 +34,7 @@ function renderSegment(segment, index, options) {
         return `
           <div class="entry stay" data-segment-index="${index}" data-segment-type="stay">
             <div class="left-icon">
-              <div class="icon-ring">
+              <div class="icon-tile">
                 <ha-icon class="stay-icon" icon="${segment.zoneIcon || "mdi:map-marker"}"></ha-icon>
               </div>
             </div>
@@ -43,6 +43,7 @@ function renderSegment(segment, index, options) {
             </div>
             <div class="content location">
               <div class="title">${escapeHtml(segment.zoneName || segment.placeName || localize("timeline.unknown_location"))}</div>
+              ${segment.placeAddress && segment.placeAddress !== segment.placeName ? `<div class="meta address">${escapeHtml(segment.placeAddress)}</div>` : ""}
             </div>
             <div class="content time multiline">
               <div class="meta timerange">${formatTimeRange(segment.start, segment.end, options)}</div>
