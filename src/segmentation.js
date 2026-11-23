@@ -1,5 +1,5 @@
 import {endOfDay, haversineMeters, resolvePlacesChildEntity, startOfDay, toLatLon, toPoint} from "./utils.js";
-import {resolveStaySegments} from "./reverse-geocoding.js";
+import {PLACES_CHILD_KEYS, resolveStaySegments} from "./reverse-geocoding.js";
 import {resolveActivities} from "./activity.js";
 
 export function segmentTimeline(points, config, zones) {
@@ -168,8 +168,7 @@ function collectZones(hass) {
 
 export function historyEntityIds(config, hass) {
     const entityIds = config.entities.flatMap(({entity, places_entity, activity_entity}) => [entity, places_entity,
-        // Places v3 moved place_name from a state attribute to a separate child sensor
-        resolvePlacesChildEntity(hass, places_entity, "place_name"), activity_entity,]);
+        ...PLACES_CHILD_KEYS.map((key) => resolvePlacesChildEntity(hass, places_entity, key)), activity_entity,]);
     return [...new Set(entityIds.filter(Boolean))];
 }
 
@@ -235,10 +234,11 @@ export function segmentTracks(history, date, config, hass, onQueueUpdate, previo
         const placeEntityId = entry.places_entity || null;
         const activityEntityId = entry.activity_entity || null;
         const placeStates = dayStates(placeEntityId);
-        const placeNameStates = dayStates(resolvePlacesChildEntity(hass, placeEntityId, "place_name"));
+        const placesChildStates = Object.fromEntries(PLACES_CHILD_KEYS.map((key) => [key,
+            dayStates(resolvePlacesChildEntity(hass, placeEntityId, key))]));
 
         const baseSegments = segmentTimeline(points, config, zones);
-        resolveStaySegments(baseSegments, placeStates, placeNameStates, date, config.osm_api_key, onQueueUpdate, previousTracks?.[index].segments);
+        resolveStaySegments(baseSegments, placeStates, placesChildStates, config.osm_api_key, onQueueUpdate, previousTracks?.[index].segments);
         const segments = resolveActivities(baseSegments, dayStates(activityEntityId), date, config.activity_icon_map, zones);
         return {entityId, placeEntityId, activityEntityId, points, segments};
     });

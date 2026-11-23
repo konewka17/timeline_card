@@ -167,6 +167,7 @@ By default, Home Assistant only stores raw GPS coordinates in history. If you wa
         - Historic days load instantly without repeated API calls.
         - You get consistent naming over time.
     - Under the hood, Places uses the OpenStreetMap API to resolve coordinates into readable addresses or place names.
+    - To show the address below the place name, enable the Places sensors *Street*, *Street Number*, *Postal Code* and *City* (most are disabled by default). Addresses are only shown from the moment these sensors are enabled.
 
 2. **Fallback:** configure `osm_api_key` with your **email address**.
     - Set `osm_api_key` to your email address (required by OpenStreetMap Nominatim usage policy).

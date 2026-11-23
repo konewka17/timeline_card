@@ -19,6 +19,9 @@ const RAW_OPTION_TOKEN = /^([a-z][a-z0-9]*(_[a-z0-9]+)*|\d+[a-z]?)$/;
 // `helpers.clear_since_from_state`; the `[:/]` class is what covers the date form.
 const SINCE_SUFFIX = /\s*\(since \d\d[:/]\d\d\)$/;
 
+// Places v3 child sensors, matched by translation_key. All but place_name and city are disabled by default.
+export const PLACES_CHILD_KEYS = ["place_name", "street", "street_number", "postal_code", "city"];
+
 let reverseGeocodingConfig = {
     nominatim_reverse_url: "https://nominatim.openstreetmap.org/reverse",
     request_interval_ms: 1000,
@@ -48,56 +51,52 @@ export function clearReverseGeocodingQueue() {
     }
 }
 
-export function resolveStaySegments(segments, placeStates, placeNameStates, date, osmApiKey, onUpdate, previousSegments) {
-    // v3 main sensor state = display-options string; child sensor wins.
-    const placeNameIntervals = buildIntervals(placeNameStates, date, placeNameSensorDisplayName);
-    const placeIntervals = buildIntervals(placeStates, date, placeDisplayName);
+export function resolveStaySegments(segments, placeStates, placesChildStates, osmApiKey, onUpdate, previousSegments) {
+    const intervals = buildPlaceIntervals(placeStates, placesChildStates);
+
     for (const segment of segments) {
         if (segment.type !== "stay" || segment.zoneName) continue;
-        if (segment.placeName && segment.placeName !== LOADING_LOCATION) continue;
+
+        const place = pickPlace(intervals, segment.start, segment.end);
+        if (place) {
+            segment.placeName = place.name;
+            segment.placeAddress = place.address;
+            continue;
+        }
 
         // The center of an ongoing stay drifts with every point; name it once.
         const previous = previousSegments?.find((other) => other.type === "stay" && other.reverseGeocoding && +other.start === +segment.start);
         if (previous) {
-            segment.placeName = previous.placeName;
-            segment.reverseGeocoding = previous.reverseGeocoding;
+            applyNominatimResult(segment, previous.placeName, previous.reverseGeocoding);
             continue;
         }
 
-        // Load from persistent cache
         const segmentKey = toPersistentCacheKey(segment);
         const cached = persistentCache.get(segmentKey);
-        if (cached && cached.placeName) {
-            if (cached.placeName === UNKNOWN_LOCATION) {
-                persistentCache.delete(segmentKey);
-            } else {
-                segment.placeName = cached.placeName;
-                segment.reverseGeocoding = {...cached.reverseGeocoding, loadedFromPersistentCache: true};
-                continue;
-            }
-        }
-
-        // Load from `places`
-        const placeName = pickPlaceName(placeNameIntervals, segment.start, segment.end)
-            || pickPlaceName(placeIntervals, segment.start, segment.end);
-        if (placeName) {
-            segment.placeName = placeName;
-            segment.reverseGeocoding = {source: "places", name: placeName, intervals: [...placeNameIntervals, ...placeIntervals]};
-            setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
+        if (cached?.placeName === UNKNOWN_LOCATION) {
+            persistentCache.delete(segmentKey);
+        } else if (cached?.placeName) {
+            applyNominatimResult(segment, cached.placeName, cached.reverseGeocoding);
             continue;
         }
 
-        // Load from OSM Nominatim API
         if (osmApiKey) {
             segment.placeName = LOADING_LOCATION;
-            segment.reverseGeocoding = null;
             enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate);
             continue;
         }
 
         segment.placeName = UNKNOWN_LOCATION;
-        segment.reverseGeocoding = null;
     }
+}
+
+function applyNominatimResult(segment, name, result) {
+    segment.placeName = name;
+    segment.reverseGeocoding = result;
+    const geocoding = result?.features?.[0]?.properties?.geocoding;
+    segment.placeAddress = geocoding?.name
+        ? formatAddress(geocoding.street, geocoding.housenumber, geocoding.postcode, geocoding.city)
+        : null;
 }
 
 function enqueueReverseLookup(segment, segmentKey, osmApiKey, onUpdate) {
@@ -166,26 +165,47 @@ async function resolveQueuedRequest(request, sessionAtStart) {
     if (sessionAtStart !== queueSession) return;
 
     queuedSegments.delete(segment);
-    segment.placeName = name;
-    segment.reverseGeocoding = result;
+    applyNominatimResult(segment, name, result);
     if (name !== UNKNOWN_LOCATION) {
         setPersistentCache(segmentKey, segment.placeName, segment.reverseGeocoding);
     }
     onUpdate();
 }
 
-function buildIntervals(states, date, displayNameFn) {
-    const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-    return states.map((state, index) => {
-        const next = states[index + 1];
-        const end = next ? new Date(next.lu * 1000) : endOfDay;
-        const name = displayNameFn(state);
+// Places refreshes all its sensors at once, so each change yields one consistent name and address.
+function buildPlaceIntervals(placeStates, placesChildStates) {
+    const series = {place: placeStates, ...placesChildStates};
+    const times = [...new Set(Object.values(series).flat().map((state) => state.lu))].sort((a, b) => a - b);
+    return times.map((time, index) => {
+        const value = (key, toValue = childSensorValue) => {
+            const state = series[key].findLast((other) => other.lu <= time);
+            return state ? toValue(state) : null;
+        };
         return {
-            start: new Date(state.lu * 1000),
-            end,
-            name,
+            start: time * 1000,
+            end: (times[index + 1] ?? Infinity) * 1000,
+            // v3 main sensor state = display-options string; child sensor wins.
+            name: value("place_name") || value("place", placeDisplayName),
+            address: formatAddress(value("street"), value("street_number"), value("postal_code"), value("city")),
         };
     });
+}
+
+function pickPlace(intervals, start, end) {
+    const durations = new Map();
+    for (const interval of intervals) {
+        const overlapMs = Math.min(end, interval.end) - Math.max(start, interval.start);
+        if (overlapMs <= 0 || !interval.name) continue;
+        const key = `${interval.name}|${interval.address}`;
+        durations.set(key, {interval, ms: (durations.get(key)?.ms || 0) + overlapMs});
+    }
+    return [...durations.values()].reduce((best, entry) => (entry.ms > (best?.ms || 0) ? entry : best), null)?.interval;
+}
+
+function formatAddress(street, streetNumber, postalCode, city) {
+    if (!street) return null;
+    return [[street, streetNumber].filter(Boolean).join(" "), [postalCode, city].filter(Boolean).join(" ")]
+        .filter(Boolean).join(", ");
 }
 
 function placeDisplayName(state) {
@@ -223,7 +243,7 @@ function looksLikeRawDisplayOptions(name) {
     return !parts.length || parts.some((part) => RAW_OPTION_TOKEN.test(part));
 }
 
-function placeNameSensorDisplayName(state) {
+function childSensorValue(state) {
     return normalizeSensorState(state.s);
 }
 
@@ -231,25 +251,6 @@ function normalizeSensorState(value) {
     const text = typeof value === "string" ? value.trim() : "";
     if (!text || text === "unknown" || text === "unavailable" || text === "none") return null;
     return text;
-}
-
-function pickPlaceName(intervals, start, end) {
-    const counts = new Map();
-    for (const interval of intervals) {
-        const overlapMs = Math.min(end, interval.end) - Math.max(start, interval.start);
-        if (overlapMs <= 0 || !interval.name) continue;
-        counts.set(interval.name, (counts.get(interval.name) || 0) + overlapMs);
-    }
-
-    let best = null;
-    let bestMs = 0;
-    for (const [name, ms] of counts.entries()) {
-        if (ms > bestMs) {
-            best = name;
-            bestMs = ms;
-        }
-    }
-    return best;
 }
 
 function toPersistentCacheKey(segment) {
