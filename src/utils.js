@@ -117,22 +117,11 @@ export function escapeHtml(text) {
     return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
 }
 
-export function resolvePlaceNameEntity(hass, placeEntityId) {
-    if (!hass || !placeEntityId) return null;
-    if (placeEntityId.endsWith("_place_name")) return null;
-
-    const registry = hass.entities;
-    const deviceId = registry?.[placeEntityId]?.device_id;
-    if (deviceId) {
-        for (const [entityId, entry] of Object.entries(registry)) {
-            if (entityId !== placeEntityId && entry?.device_id === deviceId && entityId.endsWith("_place_name")) {
-                return entityId;
-            }
-        }
-    }
-
-    const conventionId = `${placeEntityId}_place_name`;
-    return hass.states?.[conventionId] ? conventionId : null;
+export function resolvePlacesChildEntity(hass, placeEntityId, translationKey) {
+    const deviceId = hass.entities[placeEntityId]?.device_id;
+    if (!deviceId) return null;
+    return Object.values(hass.entities).find((entry) => entry.device_id === deviceId && entry.platform === "places"
+        && entry.translation_key === translationKey)?.entity_id ?? null;
 }
 
 export function formatErrorMessage(err) {

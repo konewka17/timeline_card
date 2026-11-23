@@ -1,4 +1,4 @@
-import {endOfDay, haversineMeters, resolvePlaceNameEntity, startOfDay, toLatLon, toPoint} from "./utils.js";
+import {endOfDay, haversineMeters, resolvePlacesChildEntity, startOfDay, toLatLon, toPoint} from "./utils.js";
 import {resolveStaySegments} from "./reverse-geocoding.js";
 import {resolveActivities} from "./activity.js";
 
@@ -169,7 +169,7 @@ function collectZones(hass) {
 export function historyEntityIds(config, hass) {
     const entityIds = config.entities.flatMap(({entity, places_entity, activity_entity}) => [entity, places_entity,
         // Places v3 moved place_name from a state attribute to a separate child sensor
-        resolvePlaceNameEntity(hass, places_entity), activity_entity,]);
+        resolvePlacesChildEntity(hass, places_entity, "place_name"), activity_entity,]);
     return [...new Set(entityIds.filter(Boolean))];
 }
 
@@ -235,7 +235,7 @@ export function segmentTracks(history, date, config, hass, onQueueUpdate, previo
         const placeEntityId = entry.places_entity || null;
         const activityEntityId = entry.activity_entity || null;
         const placeStates = dayStates(placeEntityId);
-        const placeNameStates = dayStates(resolvePlaceNameEntity(hass, placeEntityId));
+        const placeNameStates = dayStates(resolvePlacesChildEntity(hass, placeEntityId, "place_name"));
 
         const baseSegments = segmentTimeline(points, config, zones);
         resolveStaySegments(baseSegments, placeStates, placeNameStates, date, config.osm_api_key, onQueueUpdate, previousTracks?.[index].segments);
