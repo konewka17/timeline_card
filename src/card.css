@@ -207,7 +207,7 @@ ha-card {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 72px;
+    left: 66px;
     width: 12px;
     background: var(--timeline-color, var(--primary-color));
     border-radius: 999px;
@@ -224,7 +224,7 @@ ha-card {
 .entry {
     position: relative;
     display: grid;
-    grid-template-columns: 50px 32px 1fr auto;
+    grid-template-columns: 50px 20px 1fr auto;
     align-items: center;
     column-gap: 12px;
     padding: 12px 0;
@@ -233,24 +233,21 @@ ha-card {
 .left-icon {
     display: flex;
     justify-content: flex-end;
-    padding-right: 4px;
 }
 
-.icon-ring {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--card-background-color, #fff);
-    border: 3px solid var(--timeline-color, var(--primary-color));
+.icon-tile {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--timeline-color, var(--primary-color));
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 0 4px var(--card-background-color, #fff);
 }
 
 .line-slot {
     position: relative;
-    width: 32px;
+    width: 20px;
     height: 32px;
     display: flex;
     align-items: center;
@@ -265,7 +262,7 @@ ha-card {
 }
 
 .stay-icon {
-    color: var(--timeline-color, var(--primary-color));
+    color: var(--text-primary-color, #fff);
 }
 
 .move-icon {
@@ -280,6 +277,7 @@ ha-card {
 
 .content.location {
     align-items: flex-start;
+    gap: 0;
 }
 
 .content.location.travel {
@@ -303,12 +301,6 @@ ha-card {
     color: var(--secondary-text-color);
 }
 
-.entry.stay .title {
-    background-color: #0001;
-    padding: 3px 10px;
-    border-radius: 20px;
-}
-
 .title {
     font-size: 0.95rem;
     font-weight: 600;
@@ -325,8 +317,12 @@ ha-card {
     font-size: 0.65rem;
 }
 
-.meta.duration {
+.meta.duration, .meta.address {
     color: color-mix(in srgb, var(--secondary-text-color) 60%, var(--primary-background-color));
+}
+
+.meta.address {
+    font-size: 0.78rem;
 }
 
 .map-wrap {
