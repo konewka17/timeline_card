@@ -1,0 +1,32 @@
+{
+  "card": {
+    "labels": {
+      "previous_day": "Día anterior",
+      "debug": "Depuración",
+      "pick_date": "Elegir fecha",
+      "next_day": "Día siguiente"
+    },
+    "timeline": {
+      "loading": "Cargando cronología..."
+    },
+    "description": "Cronología diaria de ubicaciones basada en el historial GPS."
+  },
+  "timeline": {
+    "empty": "No hay historial de ubicación para este día.",
+    "unknown_location": "Ubicación desconocida",
+    "moving": "En movimiento"
+  },
+  "utils": {
+    "time": {
+      "all_day": "todo el día"
+    },
+    "duration": {
+      "hour_short": "h",
+      "minute_short": "min"
+    },
+    "errors": {
+      "history_api_unavailable": "La API WebSocket de History no está disponible. Asegúrate de que la integración Recorder/History esté activada.",
+      "unable_to_load_history": "No se pudo cargar el historial."
+    }
+  }
+}
