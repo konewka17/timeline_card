@@ -1,7 +1,9 @@
 import en from "./languages/en.json";
 import nl from "./languages/nl.json";
+import de from "./languages/de.json";
+import de from "./languages/fr.json";
 
-const languages = {en, nl};
+const languages = {en, nl, de, fr};
 
 export function localize(string, search = "", replace = "") {
     let lang = localStorage.getItem("selectedLanguage")
