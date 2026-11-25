@@ -1,7 +1,7 @@
 import en from "./languages/en.json";
 import nl from "./languages/nl.json";
 import de from "./languages/de.json";
-import de from "./languages/fr.json";
+import fr from "./languages/fr.json";
 
 const languages = {en, nl, de, fr};
 
