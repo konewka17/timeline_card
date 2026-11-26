@@ -1,0 +1,32 @@
+{
+  "card": {
+    "labels": {
+      "previous_day": "Vorheriger Tag",
+      "debug": "Debug",
+      "pick_date": "Datum auswählen",
+      "next_day": "Nächster Tag"
+    },
+    "timeline": {
+      "loading": "Zeitleiste wird geladen..."
+    },
+    "description": "Täglicher Standortverlauf anhand der GPS-Historie."
+  },
+  "timeline": {
+    "empty": "Für diesen Tag ist kein Standortverlauf vorhanden.",
+    "unknown_location": "Unbekannter Standort",
+    "moving": "In Bewegung"
+  },
+  "utils": {
+    "time": {
+      "all_day": "ganztägig"
+    },
+    "duration": {
+      "hour_short": "Std.",
+      "minute_short": "Min."
+    },
+    "errors": {
+      "history_api_unavailable": "Die History-WebSocket-API ist nicht verfügbar. Stelle sicher, dass die Recorder-/History-Integration aktiviert ist.",
+      "unable_to_load_history": "Der Verlauf konnte nicht geladen werden."
+    }
+  }
+}

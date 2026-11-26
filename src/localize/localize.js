@@ -1,7 +1,10 @@
 import en from "./languages/en.json";
 import nl from "./languages/nl.json";
+import de from "./languages/de.json";
+import fr from "./languages/fr.json";
+import es from "./languages/es.json";
 
-const languages = {en, nl};
+const languages = {en, nl, de, fr, es};
 
 export function localize(string, search = "", replace = "") {
     let lang = localStorage.getItem("selectedLanguage")
@@ -9,7 +12,7 @@ export function localize(string, search = "", replace = "") {
         const _hass = document.querySelector("home-assistant").hass
         lang = _hass.selectedLanguage || _hass.language || _hass.locale?.language || "en";
     }
-    lang = lang.replace(/['"]+/g, "").replace("-", "_");
+    lang = lang.replace(/['"]+/g, "").split(/[-_]/)[0].toLowerCase();
 
     let translated;
     try {
